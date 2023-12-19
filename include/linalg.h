@@ -1,0 +1,119 @@
+/**
+	linalg.cpp
+
+	Purpose: Implementation of the linear algebra
+	methods.
+
+	@author Thomas Caleb
+
+	@version 1.0 15/11/2023
+*/
+
+#ifndef DEF_LINALG
+#define DEF_LINALG
+
+#pragma once
+
+#include <fstream>
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cmath>
+
+#include <dace/dace_s.h>
+
+#include "settings.h"
+
+// Define a symmetric tridagonal matxix type
+// The first vector contains the diagonal
+// The second vector contains the sub-diagonal
+using sym_tridiag_matrixdb = std::pair<
+	std::vector<DACE::matrixdb>,
+	std::vector<DACE::matrixdb>>;
+
+// Turns a sym_tridiag_matrixdb to a matrixdb
+// upperdiag = true (default) means the sub-diagonal is copied on the upper diagonal
+// upperdiag = false means the upper diagonal is 0, therefore, the output is not symmetric
+DACE::matrixdb sym_tridiag_matrixdb_2_matrixdb_(
+	sym_tridiag_matrixdb const& tridiag,
+	bool const& upperdiag = true);
+
+// Gets an identity matrix of size n
+DACE::matrixdb identity_(std::size_t const& n);
+
+// Determines the norm of A - diag(A)
+double diagonal_error_(
+	DACE::matrixdb const& A);
+
+// Returns a vector equal to the diagonal of A
+DACE::vectordb get_diag_vector_(DACE::matrixdb const& A);
+
+// Returns a diagonal matrix equal to a given vector
+DACE::matrixdb make_diag_matrix_(DACE::vectordb const& diag);
+
+// Computes the trace of a matrix
+double trace_(DACE::matrixdb const& A);
+
+// Checks is a given symmetric matrix is positive-definite
+// Using the eigenvalue criterion: Sp(S) > 0 and S in sym <=> S is def pos
+bool is_def_pos_(DACE::matrixdb const& S);
+
+// Computes the Frobenius norm of a matrix
+// That is sqrt(trace(A * A^t))
+double frobenius_norm_(DACE::matrixdb const& A);
+
+// Inverts a lower triangular matrix
+DACE::matrixdb inv_traingluar_matrix_(
+	DACE::matrixdb const& L);
+
+// Computes the Cholesky factorization of
+// a symetric positive-definite matrix.
+// That is the unique Lower triangular matrix such that:
+// S = L * L^t
+// See https://en.wikipedia.org/wiki/Cholesky_decomposition
+DACE::matrixdb cholesky_(DACE::matrixdb const& S);
+
+// Computes the Cholesky factorization of
+// a symetric positive-definite tridiagonal matrix.
+// That is the unique Lower triangular matrix such that:
+// S = L * L^t
+// See https://en.wikipedia.org/wiki/Cholesky_decompositionsym_tridiag_matrix 
+// This algorithm adapted to triadiagonal matrices was copied from [Cao et al. 2002]
+// DOI: https://doi.org/10.1109/ICPPW.2002.1039748
+sym_tridiag_matrixdb cholesky_(sym_tridiag_matrixdb const& tridiag_S); // tridiag version
+
+// Perfoms lower triangular system solving 
+DACE::vectordb forward_substitution_(
+	DACE::matrixdb const& L, DACE::vectordb const& b,
+	std::size_t const& starting_index=0);
+
+// Perfoms upper triangular system solving 
+// L is a lower triangular matrix, to avoid costly transposition
+DACE::vectordb backward_substitution_(
+	DACE::matrixdb const& L, DACE::vectordb const& b);
+
+// Solves the system: L * L^t * x = b
+// Where L is lower triangular, and b is a vector
+DACE::vectordb solve_cholesky_(
+	DACE::matrixdb const& L,
+	DACE::vectordb const& b);
+
+// Solves the system: L * L^t * X = B
+// Where L is lower triangular, and B is a matrix
+DACE::matrixdb solve_cholesky_(
+	DACE::matrixdb const& L,
+	DACE::matrixdb const& B);
+
+// Solves the system: L * L^t * x = b
+// Where L is lower triangular and tridiagonal, and b is a vector
+DACE::vectordb solve_cholesky_(
+	sym_tridiag_matrixdb const& tridiag_L,
+	DACE::vectordb const& b);
+
+// Jacobi eigenvalue algorithm
+// Only for symetric matrices
+// See https://en.wikipedia.org/wiki/Jacobi_eigenvalue_algorithm
+std::pair<DACE::vectordb, DACE::matrixdb> jacobi_eigenvalue_(
+	DACE::matrixdb S);
+
+#endif
