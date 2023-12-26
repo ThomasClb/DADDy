@@ -23,7 +23,7 @@ TEST(TestDDPSolver, Setters) {
 	vectordb x0(SIZE_VECTOR + 2, 1.0);
 	vectordb xg(SIZE_VECTOR + 2, 1.0);
 	vectorDA u(3, 1.0);
-	Dynamics dynamics = get_low_trust_2bp_SUN_dynamics();
+	Dynamics dynamics = get_tbp_SUN_low_thrust_dynamics();
 	SpacecraftParameters spacecraft_p(dynamics.constants());
 	SolverParameters solver_p;
 	DDPSolver ddp_solver(solver_p, spacecraft_p, dynamics);

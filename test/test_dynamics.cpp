@@ -29,13 +29,13 @@ TEST(TestDynamics, Acc2BSUN) {
 	vectorDA u(3, 1.0/ constants.thrustu() + DA(1));
 	double t = 0; double dt = 1.0;
 	SpacecraftParameters sp(constants);
-	vectorDA xf = acceleration_2bp_SUN(x0, u, t, sp, constants);
+	vectorDA xf = acceleration_tbp_SUN_low_thrust(x0, u, t, sp, constants);
 
 	// Tests
 	EXPECT_EQ(xf.size(), x0.size());
 
 	// For doubles
-	vectordb xf_db = acceleration_2bp_SUN(x0.cons(), u.cons(), t, sp, constants);
+	vectordb xf_db = acceleration_tbp_SUN_low_thrust(x0.cons(), u.cons(), t, sp, constants);
 
 	// Tests
 	EXPECT_EQ(xf_db.size(), x0.cons().size());
@@ -51,7 +51,7 @@ TEST(TestDynamics, DynamicsConsGet) {
 	DA::init(2, nb_variables);
 
 	// Init
-	Dynamics dynamics = get_low_trust_2bp_SUN_dynamics();
+	Dynamics dynamics = get_tbp_SUN_low_thrust_dynamics();
 	Constants constants = dynamics.constants();
 	vectordb xg(SIZE_VECTOR + 2, 1.0);
 	vectorDA x0(SIZE_VECTOR + 2, 1.0 + 2.0 * DA(2));
@@ -105,7 +105,7 @@ TEST(TestDynamics, CopyDynamicsConsGet) {
 	DA::init(2, nb_variables);
 
 	// Init
-	Dynamics dynamics = get_low_trust_2bp_SUN_dynamics();
+	Dynamics dynamics = get_tbp_SUN_low_thrust_dynamics();
 	Constants constants = dynamics.constants();
 	vectordb xg(SIZE_VECTOR + 2, 1.0);
 	vectorDA x0(SIZE_VECTOR + 2, 1.0 + 2.0 * DA(2));

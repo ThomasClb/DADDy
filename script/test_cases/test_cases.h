@@ -24,8 +24,8 @@
 #include "pn_solver.h"
 #include "visualisation.h"
 
-void low_thrust_2bp_SUN();
-void low_thrust_cr3bp();
+void tbp_SUN_low_thrust_earth_to_mars();
+void cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1();
 
 
 double real_constraints(

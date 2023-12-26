@@ -168,7 +168,7 @@ const tineqFunction_db Dynamics::terminal_inequality_constraints_db() const {
 
 // Returns dynamics with acceleration_2bp_SUN as accelerations.
 // Terminal constraints and thrust constraints.
-Dynamics get_low_trust_2bp_SUN_dynamics() {
+Dynamics get_tbp_SUN_low_thrust_dynamics() {
 	Constants constants(MU_SUN, SUN_EARTH_DISTANCE,
 		sqrt((MU_SUN) / pow(SUN_EARTH_DISTANCE, 3)), 1000);
 	dynFunction dyn([](
@@ -176,7 +176,7 @@ Dynamics get_low_trust_2bp_SUN_dynamics() {
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return dynamic_2bp_SUN(a, b, c, e, d); });
+			return dynamic_tbp_SUN_low_thrust(a, b, c, e, d); });
 	ctgFunction ctg([](
 		vectorDA const& a, vectorDA const& b,
 		SpacecraftParameters const& c,
@@ -194,13 +194,13 @@ Dynamics get_low_trust_2bp_SUN_dynamics() {
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return inequality_constraints_2bp_SUN(a, b, c, e, d); });
+			return inequality_constraints_low_thrust(a, b, c, e, d); });
 	tcFunction tc([](
 		vectorDA const& a, vectordb const& b,
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return terminal_cost_2bp_SUN(a, b, c, e, d); });
+			return terminal_cost(a, b, c, e, d); });
 	teqFunction teq([](
 		vectorDA const& a, vectordb const& b,
 		SpacecraftParameters const& c,
@@ -219,7 +219,7 @@ Dynamics get_low_trust_2bp_SUN_dynamics() {
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return dynamic_2bp_SUN(a, b, c, e, d); });
+			return dynamic_tbp_SUN_low_thrust(a, b, c, e, d); });
 	ctgFunction_db ctg_db([](
 		vectordb const& a, vectordb const& b,
 		SpacecraftParameters const& c,
@@ -237,13 +237,13 @@ Dynamics get_low_trust_2bp_SUN_dynamics() {
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return inequality_constraints_2bp_SUN(a, b, c, e, d); });
+			return inequality_constraints_low_thrust(a, b, c, e, d); });
 	tcFunction_db tc_db([](
 		vectordb const& a, vectordb const& b,
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return terminal_cost_2bp_SUN(a, b, c, e, d); });
+			return terminal_cost(a, b, c, e, d); });
 	teqFunction_db teq_db([](
 		vectordb const& a, vectordb const& b,
 		SpacecraftParameters const& c,
@@ -264,7 +264,7 @@ Dynamics get_low_trust_2bp_SUN_dynamics() {
 
 // Returns dynamics with acceleration_cr3bp as accelerations.
 // Terminal constraints and thrust constraints.
-Dynamics get_low_trust_cr3bp_dynamics() {
+Dynamics get_cr3bp_EARTH_MOON_low_thrust_dynamics() {
 	Constants constants(MU_MOON / (MU_MOON + MU_EARTH), EARTH_MOON_DISTANCE,
 		sqrt((MU_MOON + MU_EARTH) / pow(EARTH_MOON_DISTANCE, 3)), 1000);
 	dynFunction dyn([](
@@ -272,7 +272,7 @@ Dynamics get_low_trust_cr3bp_dynamics() {
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return dynamic_cr3bp(a, b, c, e, d); });
+			return dynamic_cr3bp_low_thrust(a, b, c, e, d); });
 	ctgFunction ctg([](
 		vectorDA const& a, vectorDA const& b,
 		SpacecraftParameters const& c,
@@ -290,13 +290,13 @@ Dynamics get_low_trust_cr3bp_dynamics() {
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return inequality_constraints_cr3bp(a, b, c, e, d); });
+			return inequality_constraints_low_thrust(a, b, c, e, d); });
 	tcFunction tc([](
 		vectorDA const& a, vectordb const& b,
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return terminal_cost_cr3bp(a, b, c, e, d); });
+			return terminal_cost(a, b, c, e, d); });
 	teqFunction teq([](
 		vectorDA const& a, vectordb const& b,
 		SpacecraftParameters const& c,
@@ -315,7 +315,7 @@ Dynamics get_low_trust_cr3bp_dynamics() {
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return dynamic_cr3bp(a, b, c, e, d); });
+			return dynamic_cr3bp_low_thrust(a, b, c, e, d); });
 	ctgFunction_db ctg_db([](
 		vectordb const& a, vectordb const& b,
 		SpacecraftParameters const& c,
@@ -333,13 +333,13 @@ Dynamics get_low_trust_cr3bp_dynamics() {
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return inequality_constraints_cr3bp(a, b, c, e, d); });
+			return inequality_constraints_low_thrust(a, b, c, e, d); });
 	tcFunction_db tc_db([](
 		vectordb const& a, vectordb const& b,
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return terminal_cost_cr3bp(a, b, c, e, d); });
+			return terminal_cost(a, b, c, e, d); });
 	teqFunction_db teq_db([](
 		vectordb const& a, vectordb const& b,
 		SpacecraftParameters const& c,

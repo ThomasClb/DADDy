@@ -35,7 +35,7 @@ TEST(TestIntegration, RK4) {
 	double t = 0; double dt = 1.0;
 	SpacecraftParameters sp;
 	Constants constants;
-	vectordb xf = RK4(acceleration_2bp_SUN, x0, u, t, dt, sp, constants);
+	vectordb xf = RK4(acceleration_tbp_SUN_low_thrust, x0, u, t, dt, sp, constants);
 
 	// Tests
 	EXPECT_EQ(xf.size(), x0.size());
@@ -52,14 +52,14 @@ TEST(TestIntegration, RK78) {
 	double t = 0; double dt = 1.0;
 	SpacecraftParameters sp;
 	Constants constants;
-	vectorDA xf = RK78(acceleration_2bp_SUN, x0, u, t, dt, sp, constants);
+	vectorDA xf = RK78(acceleration_tbp_SUN_low_thrust, x0, u, t, dt, sp, constants);
 
 	// Tests
 	EXPECT_EQ(xf.size(), x0.size());
 
 	// For doubles
 	/**/
-	vectordb xf_db = RK78(acceleration_2bp_SUN, x0.cons(), u.cons(), t, dt, sp, constants);
+	vectordb xf_db = RK78(acceleration_tbp_SUN_low_thrust, x0.cons(), u.cons(), t, dt, sp, constants);
 
 	// Tests
 	EXPECT_EQ(xf_db.size(), xf_db.size());

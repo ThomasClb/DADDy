@@ -11,8 +11,8 @@
 #include "test_cases.h"
 
 int main(int argc, char** argv) {
-	// low_thrust_cr3bp();
-	low_thrust_2bp_SUN();
+	// cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1();
+	tbp_SUN_low_thrust_earth_to_mars();
 
 	return 0;
 }
