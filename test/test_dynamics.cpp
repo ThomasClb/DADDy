@@ -24,17 +24,18 @@ TEST(TestDynamics, Acc2BSUN) {
 	DA::init(2, nb_variables);
 
 	// Init
+	Constants constants;
 	vectorDA x0(SIZE_VECTOR + 2, 1.0 + 2.0 * DA(2));
-	vectorDA u(3, 1.0/THRUSTU + DA(1));
+	vectorDA u(3, 1.0/ constants.thrustu() + DA(1));
 	double t = 0; double dt = 1.0;
-	SpacecraftParameters sp;
-	vectorDA xf = acceleration_2bp_SUN(x0, u, t, sp);
+	SpacecraftParameters sp(constants);
+	vectorDA xf = acceleration_2bp_SUN(x0, u, t, sp, constants);
 
 	// Tests
 	EXPECT_EQ(xf.size(), x0.size());
 
 	// For doubles
-	vectordb xf_db = acceleration_2bp_SUN(x0.cons(), u.cons(), t, sp);
+	vectordb xf_db = acceleration_2bp_SUN(x0.cons(), u.cons(), t, sp, constants);
 
 	// Tests
 	EXPECT_EQ(xf_db.size(), x0.cons().size());
@@ -50,33 +51,34 @@ TEST(TestDynamics, DynamicsConsGet) {
 	DA::init(2, nb_variables);
 
 	// Init
+	Dynamics dynamics = get_low_trust_2bp_SUN_dynamics();
+	Constants constants = dynamics.constants();
 	vectordb xg(SIZE_VECTOR + 2, 1.0);
 	vectorDA x0(SIZE_VECTOR + 2, 1.0 + 2.0 * DA(2));
-	vectorDA u(3, 1.0 / THRUSTU + DA(1));
+	vectorDA u(3, 1.0 / constants.thrustu() + DA(1));
 	double t = 0; double dt = 1.0;
 	double ToF = 1.0;
-	SpacecraftParameters spacecraft_p;
+	SpacecraftParameters spacecraft_p(constants);
 	SolverParameters solver_p;
 	solver_p.set_ToF(ToF);
-	Dynamics dynamics = get_low_trust_2bp_SUN_dynamics();
-	vectorDA xf = dynamics.dynamic()(x0, u, spacecraft_p, solver_p);
-	DA ctg = dynamics.cost_to_go()(x0, u, spacecraft_p, solver_p);
-	vectorDA eq = dynamics.equality_constraints()(x0, u, spacecraft_p, solver_p);
-	vectorDA ineq = dynamics.inequality_constraints()(x0, u, spacecraft_p, solver_p);
-	DA tc = dynamics.terminal_cost()(x0, xg, spacecraft_p, solver_p);
+	vectorDA xf = dynamics.dynamic()(x0, u, spacecraft_p, constants, solver_p);
+	DA ctg = dynamics.cost_to_go()(x0, u, spacecraft_p, constants, solver_p);
+	vectorDA eq = dynamics.equality_constraints()(x0, u, spacecraft_p, constants, solver_p);
+	vectorDA ineq = dynamics.inequality_constraints()(x0, u, spacecraft_p, constants, solver_p);
+	DA tc = dynamics.terminal_cost()(x0, xg, spacecraft_p, constants, solver_p);
 	vectorDA teq = dynamics.terminal_equality_constraints()(
-		x0, xg, spacecraft_p, solver_p);
+		x0, xg, spacecraft_p, constants, solver_p);
 	vectorDA tineq = dynamics.terminal_inequality_constraints()(
-		x0, xg, spacecraft_p, solver_p);
-	vectordb xf_db = dynamics.dynamic_db()(x0.cons(), u.cons(), spacecraft_p, solver_p);
-	double ctg_db = dynamics.cost_to_go_db()(x0.cons(), u.cons(), spacecraft_p, solver_p);
-	vectordb eq_db = dynamics.equality_constraints_db()(x0.cons(), u.cons(), spacecraft_p, solver_p);
-	vectordb ineq_db = dynamics.inequality_constraints_db()(x0.cons(), u.cons(), spacecraft_p, solver_p);
-	double tc_db = dynamics.terminal_cost_db()(x0.cons(), xg, spacecraft_p, solver_p);
+		x0, xg, spacecraft_p, constants, solver_p);
+	vectordb xf_db = dynamics.dynamic_db()(x0.cons(), u.cons(), spacecraft_p, constants, solver_p);
+	double ctg_db = dynamics.cost_to_go_db()(x0.cons(), u.cons(), spacecraft_p, constants, solver_p);
+	vectordb eq_db = dynamics.equality_constraints_db()(x0.cons(), u.cons(), spacecraft_p, constants, solver_p);
+	vectordb ineq_db = dynamics.inequality_constraints_db()(x0.cons(), u.cons(), spacecraft_p, constants, solver_p);
+	double tc_db = dynamics.terminal_cost_db()(x0.cons(), xg, spacecraft_p, constants, solver_p);
 	vectordb teq_db = dynamics.terminal_equality_constraints_db()(
-		x0.cons(), xg, spacecraft_p, solver_p);
+		x0.cons(), xg, spacecraft_p, constants, solver_p);
 	vectordb tineq_db = dynamics.terminal_inequality_constraints_db()(
-		x0.cons(), xg, spacecraft_p, solver_p);
+		x0.cons(), xg, spacecraft_p, constants, solver_p);
 
 	// Tests
 	EXPECT_EQ(xf.size(), x0.size());
@@ -103,34 +105,35 @@ TEST(TestDynamics, CopyDynamicsConsGet) {
 	DA::init(2, nb_variables);
 
 	// Init
+	Dynamics dynamics = get_low_trust_2bp_SUN_dynamics();
+	Constants constants = dynamics.constants();
 	vectordb xg(SIZE_VECTOR + 2, 1.0);
 	vectorDA x0(SIZE_VECTOR + 2, 1.0 + 2.0 * DA(2));
-	vectorDA u(3, 1.0 / THRUSTU + DA(1));
+	vectorDA u(3, 1.0 / constants.thrustu() + DA(1));
 	double t = 0; double dt = 1.0;
 	double ToF = 1.0;
-	SpacecraftParameters spacecraft_p;
+	SpacecraftParameters spacecraft_p(constants);
 	SolverParameters solver_p;
 	solver_p.set_ToF(ToF);
-	Dynamics dynamics = get_low_trust_2bp_SUN_dynamics();
 	Dynamics copy_dynamics = dynamics;
-	vectorDA xf = copy_dynamics.dynamic()(x0, u, spacecraft_p, solver_p);
-	DA ctg = copy_dynamics.cost_to_go()(x0, u, spacecraft_p, solver_p);
-	vectorDA eq = copy_dynamics.equality_constraints()(x0, u, spacecraft_p, solver_p);
-	vectorDA ineq = copy_dynamics.inequality_constraints()(x0, u, spacecraft_p, solver_p);
-	DA tc = copy_dynamics.terminal_cost()(x0, xg, spacecraft_p, solver_p);
+	vectorDA xf = copy_dynamics.dynamic()(x0, u, spacecraft_p, constants, solver_p);
+	DA ctg = copy_dynamics.cost_to_go()(x0, u, spacecraft_p, constants, solver_p);
+	vectorDA eq = copy_dynamics.equality_constraints()(x0, u, spacecraft_p, constants, solver_p);
+	vectorDA ineq = copy_dynamics.inequality_constraints()(x0, u, spacecraft_p, constants, solver_p);
+	DA tc = copy_dynamics.terminal_cost()(x0, xg, spacecraft_p, constants, solver_p);
 	vectorDA teq = copy_dynamics.terminal_equality_constraints()(
-		x0, xg, spacecraft_p, solver_p);
+		x0, xg, spacecraft_p, constants, solver_p);
 	vectorDA tineq = copy_dynamics.terminal_inequality_constraints()(
-		x0, xg, spacecraft_p, solver_p);
-	vectordb xf_db = copy_dynamics.dynamic_db()(x0.cons(), u.cons(), spacecraft_p, solver_p);
-	double ctg_db = copy_dynamics.cost_to_go_db()(x0.cons(), u.cons(), spacecraft_p, solver_p);
-	vectordb eq_db = copy_dynamics.equality_constraints_db()(x0.cons(), u.cons(), spacecraft_p, solver_p);
-	vectordb ineq_db = copy_dynamics.inequality_constraints_db()(x0.cons(), u.cons(), spacecraft_p, solver_p);
-	double tc_db = copy_dynamics.terminal_cost_db()(x0.cons(), xg, spacecraft_p, solver_p);
+		x0, xg, spacecraft_p, constants, solver_p);
+	vectordb xf_db = copy_dynamics.dynamic_db()(x0.cons(), u.cons(), spacecraft_p, constants, solver_p);
+	double ctg_db = copy_dynamics.cost_to_go_db()(x0.cons(), u.cons(), spacecraft_p, constants, solver_p);
+	vectordb eq_db = copy_dynamics.equality_constraints_db()(x0.cons(), u.cons(), spacecraft_p, constants, solver_p);
+	vectordb ineq_db = copy_dynamics.inequality_constraints_db()(x0.cons(), u.cons(), spacecraft_p, constants, solver_p);
+	double tc_db = copy_dynamics.terminal_cost_db()(x0.cons(), xg, spacecraft_p, constants, solver_p);
 	vectordb teq_db = dynamics.terminal_equality_constraints_db()(
-		x0.cons(), xg, spacecraft_p, solver_p);
+		x0.cons(), xg, spacecraft_p, constants, solver_p);
 	vectordb tineq_db = copy_dynamics.terminal_inequality_constraints_db()(
-		x0.cons(), xg, spacecraft_p, solver_p);
+		x0.cons(), xg, spacecraft_p, constants, solver_p);
 
 	// Tests
 	EXPECT_EQ(xf.size(), x0.size());

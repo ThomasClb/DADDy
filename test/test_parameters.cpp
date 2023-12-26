@@ -24,17 +24,18 @@ using namespace std;
 // Constructors
 TEST(TestSpacecraftParameters, EmptyConstructor) {
 	// Init
+	Constants constants;
 	SpacecraftParameters spacecraft_parameters;
 
 	// Default values
-	double initial_mass = 1000 / MASSU; // [MASSU]
-	double dry_mass = 500 / MASSU; // [MASSU]
-	double thrust = 0.5 / THRUSTU; // [THRUSTU]
-	double Isp = 2000 / TU; // [TU]
+	double initial_mass = 1000 / constants.massu(); // [MASSU]
+	double dry_mass = 500 / constants.massu(); // [MASSU]
+	double thrust = 0.5 / constants.thrustu(); // [THRUSTU]
+	double Isp = 2000 / constants.tu(); // [TU]
 
 	// Additionnal values
 	double initial_wet_mass = initial_mass - dry_mass; // [MASSU]
-	double ejection_velocity = G_0 * Isp; // [VU]
+	double ejection_velocity = G_0/(1000 * constants.vu()/ constants.tu()) * Isp; // [VU]
 	double mass_flow = thrust / ejection_velocity; // [MASSU/TU]
 
 	// Tests
@@ -46,19 +47,34 @@ TEST(TestSpacecraftParameters, EmptyConstructor) {
 	EXPECT_EQ(spacecraft_parameters.ejection_velocity(), ejection_velocity);
 	EXPECT_EQ(spacecraft_parameters.mass_flow(), mass_flow);
 }
-TEST(TestSpacecraftParameters, FilledConstructor) {
+TEST(TestSpacecraftParameters, FilledConstructors) {
 	// Init
-	double initial_mass = 1000 / MASSU; // [MASSU]
-	double dry_mass = 500 / MASSU; // [MASSU]
-	double thrust = 0.5 / THRUSTU; // [THRUSTU]
-	double Isp = 2000 / TU; // [TU]
+	Constants constants;
+	double initial_mass = 1000 / constants.massu(); // [MASSU]
+	double dry_mass = 500 / constants.massu(); // [MASSU]
+	double thrust = 0.5 / constants.thrustu(); // [THRUSTU]
+	double Isp = 2000 / constants.tu(); // [TU]
 	SpacecraftParameters spacecraft_parameters(
+		constants,
 		initial_mass, dry_mass, thrust, Isp);
 
 	// Additionnal values
 	double initial_wet_mass = initial_mass - dry_mass; // [MASSU]
-	double ejection_velocity = G_0 * Isp; // [VU]
+	double ejection_velocity = G_0 / (1000 * constants.vu() / constants.tu()) * Isp; // [VU]
 	double mass_flow = thrust / ejection_velocity; // [MASSU/TU]
+
+	// Tests
+	EXPECT_EQ(spacecraft_parameters.initial_mass(), initial_mass);
+	EXPECT_EQ(spacecraft_parameters.thrust(), thrust);
+	EXPECT_EQ(spacecraft_parameters.Isp(), Isp);
+	EXPECT_EQ(spacecraft_parameters.dry_mass(), dry_mass);
+	EXPECT_EQ(spacecraft_parameters.initial_wet_mass(), initial_wet_mass);
+	EXPECT_EQ(spacecraft_parameters.ejection_velocity(), ejection_velocity);
+	EXPECT_EQ(spacecraft_parameters.mass_flow(), mass_flow);
+
+	// Second constructor
+	spacecraft_parameters = SpacecraftParameters(
+		constants);
 
 	// Tests
 	EXPECT_EQ(spacecraft_parameters.initial_mass(), initial_mass);
@@ -71,17 +87,19 @@ TEST(TestSpacecraftParameters, FilledConstructor) {
 }
 TEST(TestSpacecraftParameters, CopyConstructor) {
 	// Init
-	double initial_mass = 1000 / MASSU; // [MASSU]
-	double dry_mass = 500 / MASSU; // [MASSU]
-	double thrust = 0.5 / THRUSTU; // [THRUSTU]
-	double Isp = 2000 / TU; // [TU]
+	Constants constants;
+	double initial_mass = 1000 / constants.massu(); // [MASSU]
+	double dry_mass = 500 / constants.massu(); // [MASSU]
+	double thrust = 0.5 / constants.thrustu(); // [THRUSTU]
+	double Isp = 2000 / constants.tu(); // [TU]
 	SpacecraftParameters spacecraft_parameters(
+		constants,
 		initial_mass, dry_mass, thrust, Isp);
 	SpacecraftParameters spacecraft_parameters_copy = spacecraft_parameters;
 
 	// Additionnal values
 	double initial_wet_mass = initial_mass - dry_mass; // [MASSU]
-	double ejection_velocity = G_0 * Isp; // [VU]
+	double ejection_velocity = G_0 / (1000 * constants.vu() / constants.tu()) * Isp; // [VU]
 	double mass_flow = thrust / ejection_velocity; // [MASSU/TU]
 
 	// Tests

@@ -84,6 +84,7 @@ void PNSolver::solve(vectordb const& x_goal) {
 	double constraint_tol = solver_parameters.PN_tol();
 	double cv_rate_threshold = solver_parameters.PN_cv_rate_threshold();
 	unsigned int verbosity = solver_parameters.verbosity();
+	Constants constants = ddp_solver.dynamics().constants();
 
 	// Output
 	if (verbosity < 1) {
@@ -107,7 +108,7 @@ void PNSolver::solve(vectordb const& x_goal) {
 		// Output
 		if (verbosity < 1) {
 			if (i % 5 == 0)
-				cout << i << " - " << prev_violation << " - " << list_x_[N][SIZE_VECTOR] * MASSU << endl;
+				cout << i << " - " << prev_violation << " - " << list_x_[N][SIZE_VECTOR] * constants.massu() << endl;
 		}
 
 		// Check termination constraints
@@ -410,14 +411,14 @@ void PNSolver::update_constraints_(
 
 		// Constraints evaluations
 		vectorDA eq_eval = dynamics.equality_constraints()(
-			x_DA, u_DA, spacecraft_parameters, solver_parameters);
+			x_DA, u_DA, spacecraft_parameters, dynamics.constants(), solver_parameters);
 		vectorDA ineq_eval = dynamics.inequality_constraints()(
-			x_DA, u_DA, spacecraft_parameters, solver_parameters);
+			x_DA, u_DA, spacecraft_parameters, dynamics.constants(), solver_parameters);
 
 		// Continuity constraints
 		vectorDA x_kp1_eval = dynamics.dynamic()(
 			x_DA, u_DA,
-			spacecraft_parameters, solver_parameters); // TO DO : test radius + evaluate 
+			spacecraft_parameters, dynamics.constants(), solver_parameters); // TO DO : test radius + evaluate 
 		list_dynamics_.push_back(x_kp1_eval);
 		x_kp1_eval -= list_x_[i + 1];
 
@@ -452,9 +453,9 @@ void PNSolver::update_constraints_(
 
 	// Constraints evaluations
 	vectorDA teq_eval = dynamics.terminal_equality_constraints()(
-		x_DA, x_goal, spacecraft_parameters, solver_parameters);
+		x_DA, x_goal, spacecraft_parameters, dynamics.constants(), solver_parameters);
 	vectorDA tineq_eval = dynamics.terminal_inequality_constraints()(
-		x_DA, x_goal, spacecraft_parameters, solver_parameters);
+		x_DA, x_goal, spacecraft_parameters, dynamics.constants(), solver_parameters);
 
 	// Get derivatives
 	vector<matrixdb> der_teq = deriv_xu(
@@ -506,14 +507,14 @@ pair<
 
 		// Constraints evaluations
 		vectordb eq_eval = dynamics.equality_constraints_db()(
-			x, u, spacecraft_parameters, solver_parameters);
+			x, u, spacecraft_parameters, dynamics.constants(), solver_parameters);
 		vectordb ineq_eval = dynamics.inequality_constraints_db()(
-			x, u, spacecraft_parameters, solver_parameters);
+			x, u, spacecraft_parameters, dynamics.constants(), solver_parameters);
 		eq_eval.reserve(Nx);
 
 		// Continuity constraints
 		vectordb x_kp1_eval = (dynamics.dynamic_db()(
-			x, u, spacecraft_parameters, solver_parameters) - list_x[i + 1]); // TO DO : use DA, test
+			x, u, spacecraft_parameters, dynamics.constants(), solver_parameters) - list_x[i + 1]); // TO DO : use DA, test
 
 		// Add continuity constraints
 		for (size_t k = 0; k < Nx; k++) {
@@ -532,9 +533,9 @@ pair<
 
 	// Constraints evaluations
 	vectordb teq_eval = dynamics.terminal_equality_constraints_db()(
-		x, x_goal, spacecraft_parameters, solver_parameters);
+		x, x_goal, spacecraft_parameters, dynamics.constants(), solver_parameters);
 	vectordb tineq_eval = dynamics.terminal_inequality_constraints_db()(
-		x, x_goal, spacecraft_parameters, solver_parameters);
+		x, x_goal, spacecraft_parameters, dynamics.constants(), solver_parameters);
 
 	// Assign
 	list_eq.emplace_back(teq_eval);

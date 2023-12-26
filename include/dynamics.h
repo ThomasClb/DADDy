@@ -23,7 +23,7 @@
 #include <dace/dace_s.h>
 
 #include "settings.h"
-
+#include "constants.h"
 #include "parameters.h"
 #include "integration.h"
 
@@ -37,7 +37,7 @@
 using dynFunction = std::function<DACE::vectorDA(
 	DACE::vectorDA const&,
 	DACE::vectorDA const&, SpacecraftParameters const&,
-	SolverParameters const&)>;
+	Constants const&, SolverParameters const&)>;
 
 // Returns the path equality contraints given
 // the current state, the control and the parameters.
@@ -54,6 +54,7 @@ using ineqFunction = dynFunction;
 using ctgFunction = std::function<DACE::DA(
 	DACE::vectorDA const&, DACE::vectorDA const&, 
 	SpacecraftParameters const&,
+	Constants const&,
 	SolverParameters const&)>;
 
 // vDA-vdb-SpacecraftParameters-SolverParameters->DA
@@ -63,6 +64,7 @@ using ctgFunction = std::function<DACE::DA(
 using tcFunction = std::function<DACE::DA(
 	DACE::vectorDA const&, DACE::vectordb const&,
 	SpacecraftParameters const&,
+	Constants const&,
 	SolverParameters const&)>;
 
 // vDA-vdb-SpacecraftParameters-SolverParameters->vDA
@@ -72,6 +74,7 @@ using tcFunction = std::function<DACE::DA(
 using teqFunction = std::function<DACE::vectorDA(
 	DACE::vectorDA const&, DACE::vectordb const&,
 	SpacecraftParameters const&,
+	Constants const&,
 	SolverParameters const&)>;
 
 // Returns the terminal inequality constraints given
@@ -88,6 +91,7 @@ using tineqFunction = teqFunction;
 using dynFunction_db = std::function<DACE::vectordb(
 	DACE::vectordb const&,
 	DACE::vectordb const&, SpacecraftParameters const&,
+	Constants const&,
 	SolverParameters const&)>;
 
 // Returns the path equality contraints given
@@ -105,6 +109,7 @@ using ineqFunction_db = dynFunction_db;
 using ctgFunction_db = std::function<double(
 	DACE::vectordb const&, DACE::vectordb const&,
 	SpacecraftParameters const&,
+	Constants const&,
 	SolverParameters const&)>;
 
 // vdb-vdb-SpacecraftParameters-SolverParameters->db
@@ -114,6 +119,7 @@ using ctgFunction_db = std::function<double(
 using tcFunction_db = std::function<double(
 	DACE::vectordb const&, DACE::vectordb const&,
 	SpacecraftParameters const&,
+	Constants const&,
 	SolverParameters const&)>;
 
 // vdb-vdb-SpacecraftParameters-SolverParameters->vdb
@@ -123,6 +129,7 @@ using tcFunction_db = std::function<double(
 using teqFunction_db = std::function<DACE::vectordb(
 	DACE::vectordb const&, DACE::vectordb const&,
 	SpacecraftParameters const&,
+	Constants const&,
 	SolverParameters const&)>;
 
 // Returns the terminal inequality constraints given
@@ -140,6 +147,8 @@ class Dynamics {
 
 	// Attributes
 protected:
+	Constants constants_;
+
 	// DA functions
 	dynFunction dynamic_;
 	ctgFunction cost_to_go_;
@@ -167,6 +176,7 @@ public:
 
 	// Constructor
 	Dynamics(
+		Constants const& constants,
 		dynFunction const& dynamic,
 		ctgFunction const& cost_to_go,
 		eqFunction const& equality_constraints,
@@ -189,6 +199,8 @@ public:
 	~Dynamics();
 
 	// Getters
+	const Constants constants() const;
+
 	const dynFunction dynamic() const;
 	const ctgFunction cost_to_go() const;
 	const eqFunction equality_constraints() const;
@@ -223,7 +235,8 @@ template<typename T>
 DACE::AlgebraicVector<T> acceleration_2bp_SUN(
 	DACE::AlgebraicVector<T> const& x,
 	DACE::AlgebraicVector<T> const& u, double const& t,
-	SpacecraftParameters const& spacecraft_parameters) {
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants) {
 	// Unpack
 	double v_e = spacecraft_parameters.ejection_velocity(); // [VU]
 
@@ -235,7 +248,7 @@ DACE::AlgebraicVector<T> acceleration_2bp_SUN(
 	output[7] = 0.0; // ToF
 
 	// Acceleration kepler
-	double mu = MU_SUN/MU;
+	double mu = MU_SUN/ constants.mu();
 	DACE::AlgebraicVector<T> r = x.extract(0, 2);
 	T r_2 = r.dot(r);
 	DACE::AlgebraicVector<T> acc_kep = -mu * r * pow(r_2, -1.5);
@@ -268,7 +281,8 @@ template<typename T>
 DACE::AlgebraicVector<T>  acceleration_cr3bp(
 	DACE::AlgebraicVector<T>  const& state_vector,
 	DACE::AlgebraicVector<T> const& u, double const& t,
-	SpacecraftParameters const& spacecraft_parameters) {
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants) {
 	// Unpack
 	T x = state_vector[0];
 	T y = state_vector[1];
@@ -288,7 +302,7 @@ DACE::AlgebraicVector<T>  acceleration_cr3bp(
 	output[7] = 0.0; // Period is constant
 
 	// Inversion
-	double mu = MU;
+	double mu = constants.mu();
 	T d_y_z_2 = y* y + z* z;
 	T inv_r_1_3 = (1 - mu) * pow((x + mu)* (x + mu) + d_y_z_2, -1.5);
 	T inv_r_2_3 = mu * pow(pow(x - (1 - mu), 2) + d_y_z_2, -1.5);
@@ -315,9 +329,10 @@ template<typename T>
 DACE::AlgebraicVector<T> dynamic_2bp_SUN(
 	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T>const& u,
 	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
 	SolverParameters const& solver_parameters) {
 	return RK78(acceleration_2bp_SUN, x, u, 0, 1.0,
-		spacecraft_parameters);
+		spacecraft_parameters, constants);
 }
 
 // Returns the next state given
@@ -327,9 +342,10 @@ template<typename T>
 DACE::AlgebraicVector<T> dynamic_cr3bp(
 	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T>const& u,
 	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
 	SolverParameters const& solver_parameters) {
 	return RK78(acceleration_cr3bp, x, u, 0, 1.0,
-		spacecraft_parameters);
+		spacecraft_parameters, constants);
 }
 
 // Returns the cost-to-go given
@@ -339,6 +355,7 @@ template<typename T>
 T cost_to_go(
 	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T> const& u,
 	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
 	SolverParameters const& solver_parameters) {
 	// Unpack parameters
 	double tol = solver_parameters.DDP_tol();
@@ -377,6 +394,7 @@ template<typename T>
 DACE::AlgebraicVector<T> equality_constraints(
 	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T> const& u,
 	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
 	SolverParameters const& solver_parameters) {
 	return DACE::AlgebraicVector<T>(0);
 }
@@ -390,6 +408,7 @@ template<typename T>
 DACE::AlgebraicVector<T> inequality_constraints_2bp_SUN(
 	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T> const& u,
 	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
 	SolverParameters const& solver_parameters) {
 	// Unpack parameters
 	double T_max = spacecraft_parameters.thrust(); // [THRUSTU]
@@ -418,6 +437,7 @@ template<typename T>
 DACE::AlgebraicVector<T> inequality_constraints_cr3bp(
 	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T> const& u,
 	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
 	SolverParameters const& solver_parameters) {
 	// Unpack parameters
 	double T_max = spacecraft_parameters.thrust(); // [THRUSTU]
@@ -445,6 +465,7 @@ template<typename T>
 T terminal_cost_2bp_SUN(
 	DACE::AlgebraicVector<T> const& x, DACE::vectordb const& x_goal,
 	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
 	SolverParameters const& solver_parameters) {
 	// Unpack
 	double gain = solver_parameters.terminal_cost_gain(); // [-]
@@ -467,6 +488,7 @@ template<typename T>
 T terminal_cost_cr3bp(
 	DACE::AlgebraicVector<T> const& x, DACE::vectordb const& x_goal,
 	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
 	SolverParameters const& solver_parameters) {
 	// Unpack
 	double gain = solver_parameters.terminal_cost_gain(); // [-]
@@ -489,6 +511,7 @@ template<typename T>
 DACE::AlgebraicVector<T> terminal_equality_constraints(
 	DACE::AlgebraicVector<T> const& x, DACE::vectordb const& x_goal,
 	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
 	SolverParameters const& solver_parameters) {
 	// Get vectors
 	DACE::AlgebraicVector<T> x_(x.extract(0, SIZE_VECTOR - 1));
@@ -507,6 +530,7 @@ template<typename T>
 DACE::AlgebraicVector<T> terminal_inequality_constraints(
 	DACE::AlgebraicVector<T> const& x, DACE::vectordb  const& x_goal,
 	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
 	SolverParameters const& solver_parameters) {
 	return DACE::AlgebraicVector<T>(0);
 }

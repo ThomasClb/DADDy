@@ -17,6 +17,7 @@
 #include <chrono>
 
 #include "settings.h"
+#include "constants.h"
 #include "dynamics.h"
 #include "ddp_solver.h"
 #include "aul_solver.h"

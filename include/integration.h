@@ -23,6 +23,7 @@
 #include <dace/dace_s.h>
 
 #include "settings.h"
+#include "constants.h"
 #include "parameters.h"
 
 // Declare integration constants
@@ -58,10 +59,12 @@ double normtmp(int const& N, DACE::vectordb const& X);
 DACE::vectorDA RK78(
 	DACE::vectorDA(*f)(
 		DACE::vectorDA const&, DACE::vectorDA const&,
-		double const&, SpacecraftParameters const&),
+		double const&, SpacecraftParameters const&,
+		Constants const&),
 	DACE::vectorDA Y0, DACE::vectorDA const& U,
 	double const& X0, double const& DX,
-	SpacecraftParameters const& spacecraft_parameters);
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants);
 
 // Propagates a state using a order 7(8) Runge - Kutta - Fehlberg embedded method(RK78)
 // See [Fehlberg 1968] Classical fifth-, sixth-, seventh-, and eighthorder
@@ -72,10 +75,11 @@ DACE::vectordb RK78(
 	DACE::vectordb(*f)(
 		DACE::vectordb  const&, DACE::vectordb  const&,
 		double const&,
-		SpacecraftParameters const&),
+		SpacecraftParameters const&, Constants const&),
 	DACE::vectordb Y0, DACE::vectordb const& U,
 	double const& X0, double const& DX,
-	SpacecraftParameters const& spacecraft_parameters);
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants);
 
 
 // Propagates a state using Runge-Kutta 4th order method
@@ -88,20 +92,22 @@ DACE::AlgebraicVector<T>  RK4(
 		DACE::AlgebraicVector<T> const&,
 		DACE::AlgebraicVector<T> const&,
 		double const&,
-		SpacecraftParameters const&),
+		SpacecraftParameters const&,
+		Constants const&),
 	DACE::AlgebraicVector<T>  const& x,
 	DACE::AlgebraicVector<T>  const& u,
 	double const& t, double const& dt,
-	SpacecraftParameters const& spacecraft_parameters) {
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants) {
 
 	DACE::AlgebraicVector<T>  k1 = acc(
-		x, u, t, spacecraft_parameters);
+		x, u, t, spacecraft_parameters, constants);
 	DACE::AlgebraicVector<T>  k2 = acc(
-		x + (dt / 2) * k1, u, t + dt / 2, spacecraft_parameters);
+		x + (dt / 2) * k1, u, t + dt / 2, spacecraft_parameters, constants);
 	DACE::AlgebraicVector<T>  k3 = acc(
-		x + (dt / 2) * k2, u, t + dt / 2, spacecraft_parameters);
+		x + (dt / 2) * k2, u, t + dt / 2, spacecraft_parameters, constants);
 	DACE::AlgebraicVector<T>  k4 = acc(
-		x + dt * k3, u, t + dt, spacecraft_parameters);
+		x + dt * k3, u, t + dt, spacecraft_parameters, constants);
 
 	return x + (dt / 6) * (k1 + 2 * (k2 + k3) + k4);
 }

@@ -22,9 +22,9 @@ TEST(TestAULSolver, Setters) {
 	vectordb x0(SIZE_VECTOR + 2, 1.0);
 	vectordb xg(SIZE_VECTOR + 2, 1.0);
 	vectorDA u(3, 1.0);
-	SpacecraftParameters spacecraft_p;
-	SolverParameters solver_p;
 	Dynamics dynamics = get_low_trust_2bp_SUN_dynamics();
+	SpacecraftParameters spacecraft_p(dynamics.constants());
+	SolverParameters solver_p;
 	AULSolver aul_solver(solver_p, spacecraft_p, dynamics);
 	vector<vectordb> list_lambda(solver_p.N(), vectordb(3));
 	vector<vectordb> list_mu(solver_p.N(), vectordb(3));

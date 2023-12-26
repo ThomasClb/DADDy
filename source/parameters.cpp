@@ -24,23 +24,39 @@ using namespace std;
 // Constructors
 
 // Default constructors
-// Values from GTOC 12
-// Link : https://gtoc12.tsinghua.edu.cn/competition/theProblem
-SpacecraftParameters::SpacecraftParameters() :
-	initial_mass_(1000 / MASSU), dry_mass_(500 / MASSU),
-	thrust_(0.5 / THRUSTU), Isp_(2000 / TU) {}
+// Values from [Lantoine and Russell 2012]
+// DOI : https://doi.org/10.1007/s10957-012-0039-0
+SpacecraftParameters::SpacecraftParameters() {
+	Constants constants;
+	constants_ = constants;
+	initial_mass_ = 1000 / constants.massu();
+	dry_mass_ = 500 / constants.massu();
+	thrust_ = 0.5 / constants.thrustu();
+	Isp_ = 2000 / constants.tu();
+}
 
-// Constructor
+// Constructors
+
+// Values from [Lantoine and Russell 2012]
+// DOI : https://doi.org/10.1007/s10957-012-0039-0
+SpacecraftParameters::SpacecraftParameters(Constants const& constants) :
+	constants_(constants),
+	initial_mass_(1000 / constants.massu()), dry_mass_(500 / constants.massu()),
+	thrust_(0.5 / constants.thrustu()), Isp_(2000 / constants.tu()) {}
+
 SpacecraftParameters::SpacecraftParameters(
+	Constants const& constants,
 	double const& initial_mass,
 	double const& dry_mass,
 	double const& thrust,
 	double const& Isp) :
+	constants_(constants),
 	initial_mass_(initial_mass), dry_mass_(dry_mass),
 	thrust_(thrust), Isp_(Isp) {}
 
 // Copy constructor
 SpacecraftParameters::SpacecraftParameters(SpacecraftParameters const& param) :
+	constants_(param.constants_),
 	initial_mass_(param.initial_mass_), dry_mass_(param.dry_mass_),
 	thrust_(param.thrust_), Isp_(param.Isp_) {}
 
@@ -48,6 +64,7 @@ SpacecraftParameters::SpacecraftParameters(SpacecraftParameters const& param) :
 SpacecraftParameters::~SpacecraftParameters() {}
 
 // Getters
+const Constants SpacecraftParameters::constants() const { return constants_; }
 const double SpacecraftParameters::initial_mass() const {return initial_mass_; }
 const double SpacecraftParameters::dry_mass() const { return dry_mass_; }
 const double SpacecraftParameters::initial_wet_mass() const {
@@ -55,7 +72,9 @@ const double SpacecraftParameters::initial_wet_mass() const {
 }
 const double SpacecraftParameters::thrust() const { return thrust_; }
 const double SpacecraftParameters::Isp() const { return Isp_; }
-const double SpacecraftParameters::ejection_velocity() const { return G_0*Isp_; }
+const double SpacecraftParameters::ejection_velocity() const {
+	return (G_0 * constants_.tu() / (1000 * constants_.vu()))*Isp_;
+}
 const double SpacecraftParameters::mass_flow() const {
 	return thrust_/ejection_velocity();
 }

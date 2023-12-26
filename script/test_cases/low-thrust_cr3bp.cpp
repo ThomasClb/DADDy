@@ -70,12 +70,24 @@ void low_thrust_cr3bp() {
 	typedef std::numeric_limits<double> dbl;
 	cout.precision(7);
 
+	// Get dynamics
+	Dynamics dynamics = get_low_trust_cr3bp_dynamics();
+
+	// Normalisation cosntants
+	Constants constants(dynamics.constants());
+	double lu = constants.lu();
+	double massu = constants.massu();
+	double tu = constants.tu();
+	double thrustu = constants.thrustu();
+	double vu = constants.vu();
+
 	// Spacecraft parameters (GTOC 12)
-	double m_0 = 1000 / MASSU; // [MASSU]
-	double dry_mass = 500.0 / MASSU; // [MASSU]
-	double T = 0.5 / THRUSTU; // [N]
-	double Isp = 2000.0 / TU; // [s]
+	double m_0 = 1000 / massu; // [MASSU]
+	double dry_mass = 500.0 / massu; // [MASSU]
+	double T = 0.5 / thrustu; // [N]
+	double Isp = 2000.0 / tu; // [s]
 	SpacecraftParameters spacecraft_parameters(
+		constants,
 		m_0, dry_mass, T, Isp);
 
 	// Init solver parameters
@@ -92,7 +104,7 @@ void low_thrust_cr3bp() {
 
 	// Initial conditions [3*LU, 3*VU, MASSU, TU]
 	// From NoDy paper
-	double ToF = 20 / SEC2DAYS / TU; // [TU]
+	double ToF = 20 / SEC2DAYS / tu; // [TU]
 	double dt = ToF / N; // [TU]
 	vectordb x0{ // T = 3.2746644337639852
 		1.1607973110000016, 0, 
@@ -106,15 +118,14 @@ void low_thrust_cr3bp() {
 		dry_mass, ToF };
 
 	// First guess command
-	vectordb u_init(Nu, 1e-6 / THRUSTU); // [VU]
+	vectordb u_init(Nu, 1e-6 / thrustu); // [VU]
 	vector<vectordb> list_u_init(N, u_init);
 
 	// Output
 	cout << "DEPARTURE : " << endl << x0.extract(0, Nx - 1 - 1) << endl;
 	cout << "ARRIVAL : " << endl << x_goal.extract(0, Nx - 1 - 1) << endl;
 
-	// Set dynamics
-	Dynamics dynamics = get_low_trust_cr3bp_dynamics();
+
 
 	// AULSolver
 	AULSolver solver(solver_parameters, spacecraft_parameters, dynamics);
@@ -142,7 +153,8 @@ void low_thrust_cr3bp() {
 	auto duration_PN = duration_cast<microseconds>(stop - start_inter);
 
 	// Get data
-	vector<vectordb> list_x(pn_solver.list_x()), list_u(pn_solver.list_u()); double cost(pn_solver.cost());
+	vector<vectordb> list_x(pn_solver.list_x()), list_u(pn_solver.list_u());
+	double cost(pn_solver.cost());
 
 	// Compute errors
 	vectordb loss = (list_x[N] - x_goal).extract(0, 5);
@@ -156,7 +168,7 @@ void low_thrust_cr3bp() {
 	cout << "	Total runtime : " + to_string(static_cast<int>(duration.count()) / 1e6) + "s" << endl;
 	cout << "	AUL solver runtime : " + to_string(static_cast<int>(duration_AUL.count()) / 1e6) + "s" << endl;
 	cout << "	PN solver runtime : " + to_string(static_cast<int>(duration_PN.count()) / 1e6) + "s" << endl;
-	cout << "	FINAL MASS [kg] : " << MASSU * final_mass << endl;
+	cout << "	FINAL MASS [kg] : " << massu * final_mass << endl;
 	cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
 
 	bool with_plots = true;
@@ -180,28 +192,28 @@ void low_thrust_cr3bp() {
 
 
 		figure();
-		plot(list_N * dt * SEC2DAYS * TU, MASSU * list_m);
+		plot(list_N * dt * SEC2DAYS * tu, massu * list_m);
 		xlabel("Time [days]"); ylabel("Remaining mass [kg]");
 
 		// Thrust
 		list_0 = vectordb(N); list_1 = vectordb(N); list_2 = vectordb(N); list_N = vectordb(N);
 		vectordb list_T(N); vectordb list_T_2(N);
-		double v_e = spacecraft_parameters.ejection_velocity(); // [m/s]
+		double v_e = spacecraft_parameters.ejection_velocity(); // [VU]
 		for (size_t i = 0; i < N; i++) {
 			list_N[i] = i;
 			list_0[i] = list_u[i][0];
 			list_1[i] = list_u[i][1];
 			list_2[i] = list_u[i][2];
-			list_T[i] = list_u[i].vnorm() * THRUSTU;
+			list_T[i] = list_u[i].vnorm() * thrustu;
 		}
 		figure();
 		/*
-		plot(list_N* dt* SEC2DAYS* TU, list_0);
-		plot(list_N * dt * SEC2DAYS * TU, list_1);
-		plot(list_N* dt* SEC2DAYS* TU, list_2);
+		plot(list_N* dt* SEC2DAYS* tu, list_0);
+		plot(list_N * dt * SEC2DAYS * tu, list_1);
+		plot(list_N* dt* SEC2DAYS* tu, list_2);
 		*/
-		plot(list_N * dt * SEC2DAYS * TU, list_T);
-		plot(list_N * dt * SEC2DAYS * TU, list_T * 0 + T * THRUSTU);
+		plot(list_N * dt * SEC2DAYS * tu, list_T);
+		plot(list_N * dt * SEC2DAYS * tu, list_T * 0 + T * thrustu);
 		ylabel("T [N]"); xlabel("Time [days]");
 
 		show();

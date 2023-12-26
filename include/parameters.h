@@ -22,6 +22,7 @@
 #include <dace/dace_s.h>
 
 #include "settings.h"
+#include "constants.h"
 
 
 /*
@@ -33,10 +34,11 @@ class SpacecraftParameters {
 
 // Attributes
 protected:
+	Constants constants_; // Dynamics normalisation constants 
 	double initial_mass_; // Spacecraft mass [MASSU]
 	double dry_mass_; // Spacecraft dry mass [MASSU]
-	double thrust_; // Spacecraft thrust [N]
-	double Isp_; // Spacecraft thrusted Isp [s]
+	double thrust_; // Spacecraft thrust [THRUSTU]
+	double Isp_; // Spacecraft thrust Isp [TU]
 
 // Methods
 public:
@@ -45,8 +47,10 @@ public:
 	// Default constructors
 	SpacecraftParameters();
 
-	// Constructor
+	// Constructors
+	SpacecraftParameters(Constants const& constants);
 	SpacecraftParameters(
+		Constants const& constants,
 		double const& initial_mass,
 		double const& dry_mass,
 		double const& thrust,
@@ -60,6 +64,7 @@ public:
 	~SpacecraftParameters();
 
 	// Getters
+	const Constants constants() const;
 	const double initial_mass() const;
 	const double dry_mass() const;
 	const double initial_wet_mass() const;
@@ -67,7 +72,6 @@ public:
 	const double Isp() const;
 	const double ejection_velocity() const;
 	const double mass_flow() const;
-
 };
 
 
@@ -186,5 +190,6 @@ public:
 	void set_ToF(double const& ToF);
 	void set_list_lambda(std::vector<DACE::vectordb> const& list_lambda);
 	void set_list_mu(std::vector<DACE::vectordb> const& list_mu);
+
 };
 #endif

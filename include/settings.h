@@ -33,38 +33,16 @@
 #define SUN_EARTH_DISTANCE (149597870.7)
 
 // Distance between the Earth and the Moon [km]
+// Same as in [Caleb et al. 2023]
+// DOI: https://doi.org/10.1007/s11071-023-08375-0
 #define EARTH_MOON_DISTANCE (384399)
 
-// Define normalization units
-
-// Similar as in [Caleb et al. 2023]
-// DOI: https://doi.org/10.1007/s11071-023-08375-0
-
-/* SUN CENTERED 2BP */
-#define MU (MU_SUN) // Main mass parameter [-]
-#define MU_SUM (MU) // Sum mass parameters [-]
-#define LU SUN_EARTH_DISTANCE // Lenght unit [km]
-
-
-/* EARTH-MOON CR3BP
-#define MU (MU_MOON/(MU_MOON + MU_EARTH)) // Mass parameter [-]
-#define MU_SUM (MU_MOON + MU_EARTH) // Sum of mass parameters [-]
-#define LU EARTH_MOON_DISTANCE // Lenght unit [km]
-*/
-
-// Generic
-#define WU (sqrt((MU_SUM)/pow(LU, 3))) // Pulsation unit [rad.s^-1]
-#define TU (1/WU) // Time unit [s]
-#define VU (LU/TU) // Velocity unit [km.s^-1]
-
 // Thrust
-#define G_0 (9.81/(1000*VU/TU)) // Earth gravity field [VU/TU]
-#define MASSU (1000) // Fuel mass unit [kg] 1 ton = 1000kg
-#define THRUSTU (1000*VU*MASSU/TU) // Thrust unit [N = kg.m.s^-2]
+#define G_0 (9.81) // Earth gravity field [m.s^-1]
 
 // Integration constants
-#define MIN_STEP (0.1/TU) // Minimum step size 0.1sec [TU]
-#define EPS 1e-13 // Tolerance of the intergration scheme [-]
+#define MIN_STEP (1e-8) // Minimum step size 0.1sec [TU]
+#define EPS (1e-13) // Tolerance of the intergration scheme [-]
 
 // Eigenvalue computation constants
 #define MAX_ITER_JAC 100 // Maximum number of iteration of the  matrix sqrt computation algorithm [-]

@@ -44,13 +44,13 @@ double real_constraints(
 
 		// Constraints evaluations
 		vectordb eq_eval = dynamics.equality_constraints_db()(
-			x, u, spacecraft_parameters, solver_parameters);
+			x, u, spacecraft_parameters, dynamics.constants(), solver_parameters);
 		vectordb ineq_eval = dynamics.inequality_constraints_db()(
-			x, u, spacecraft_parameters, solver_parameters);
+			x, u, spacecraft_parameters, dynamics.constants(), solver_parameters);
 
 		// Continuity constraints
 		vectordb x_kp1_eval = dynamics.dynamic_db()(
-			x, u, spacecraft_parameters, solver_parameters) - PNsolver.list_x()[i + 1];
+			x, u, spacecraft_parameters, dynamics.constants(), solver_parameters) - PNsolver.list_x()[i + 1];
 		x_kp1_eval[SIZE_VECTOR] /= spacecraft_parameters.initial_mass(); // Normalize mass
 		eq_eval = eq_eval.concat(x_kp1_eval);
 
@@ -75,9 +75,9 @@ double real_constraints(
 
 	// Constraints evaluations
 	vectordb teq_eval = dynamics.terminal_equality_constraints_db()(
-		x, x_goal, spacecraft_parameters, solver_parameters);
+		x, x_goal, spacecraft_parameters, dynamics.constants(), solver_parameters);
 	vectordb tineq_eval = dynamics.terminal_inequality_constraints_db()(
-		x, x_goal, spacecraft_parameters, solver_parameters);
+		x, x_goal, spacecraft_parameters, dynamics.constants(), solver_parameters);
 
 	// Assign
 	vectordb teq = teq_eval;

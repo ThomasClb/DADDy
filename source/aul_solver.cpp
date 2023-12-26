@@ -247,7 +247,7 @@ void AULSolver::solve(
 	vectordb mu_parameters = solver_parameters.mu_parameters();
 	vectordb lambda_parameters = solver_parameters.lambda_parameters();
 	unsigned int verbosity = solver_parameters.verbosity();
-
+	Constants constants = DDPsolver_.dynamics().constants();
 
 	// Init ToF
 	DDPsolver_.set_ToF(x_goal[x_goal.size() - 1]);
@@ -317,13 +317,13 @@ void AULSolver::solve(
 		if (verbosity < 1) {
 			cout << counter << " - RUNTIME [s] : "
 				<< to_string(static_cast<int>(duration_mapping.count()) / 1e6) << ", "
-				<< "FINAL MASS [kg] : " << DDPsolver_.list_x()[N][SIZE_VECTOR] * MASSU << ", "
+				<< "FINAL MASS [kg] : " << DDPsolver_.list_x()[N][SIZE_VECTOR] * constants.massu() << ", "
 				<< "MAX CONSTRAINT [-] : " << max_constraint << endl << endl;
 		}
 		else if (verbosity < 2) {
 			cout << "	" << counter << " - RUNTIME [s] : "
 				<< to_string(static_cast<int>(duration_mapping.count()) / 1e6) << ", "
-				<< "FINAL MASS [kg] : " << DDPsolver_.list_x()[N][SIZE_VECTOR] * MASSU << ", "
+				<< "FINAL MASS [kg] : " << DDPsolver_.list_x()[N][SIZE_VECTOR] * constants.massu() << ", "
 				<< "MAX CONSTRAINT [-] : " << max_constraint << endl;
 		}
 

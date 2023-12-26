@@ -138,10 +138,12 @@ vectorDA RK78(
     vectorDA(*f)(
         vectorDA const&, vectorDA const&,
         double const&,
-        SpacecraftParameters const&),
+        SpacecraftParameters const&,
+        Constants const&),
     vectorDA Y0, vectorDA const& U,
     double const& X0, double const& DX,
-    SpacecraftParameters const& spacecraft_parameters) {
+    SpacecraftParameters const& spacecraft_parameters,
+    Constants const& constants) {
 
     double X1 = X0 + DX;
     int N = Y0.size();
@@ -187,7 +189,7 @@ vectorDA RK78(
                 Y0[I] = H * Y0[I] + Z.at(I, 0);
             }
 
-            Y1 = f(Y0, U, X + H * A[J], spacecraft_parameters);
+            Y1 = f(Y0, U, X + H * A[J], spacecraft_parameters, constants);
 
             for (I = 0; I < N; I++) { Z.at(I, J + 3) = Y1[I]; }
         }
@@ -236,10 +238,12 @@ vectordb RK78(
     vectordb(*f)(
         vectordb const&, vectordb const&,
         double const&,
-        SpacecraftParameters const&),
+        SpacecraftParameters const&,
+        Constants const&),
     vectordb Y0, vectordb const& U,
     double const& X0, double const& DX,
-    SpacecraftParameters const& spacecraft_parameters) {
+    SpacecraftParameters const& spacecraft_parameters,
+    Constants const& constants) {
 
     double X1 = X0 + DX;
     int N = Y0.size();
@@ -289,7 +293,7 @@ vectordb RK78(
                 Y0[I] = H * Y0[I] + Z.at(I, 0);
             }
 
-            Y1 = f(Y0, U, X + H * A[J], spacecraft_parameters);
+            Y1 = f(Y0, U, X + H * A[J], spacecraft_parameters, constants);
 
             for (I = 0; I < N; I++) { Z.at(I, J + 3) = Y1[I]; }
         }

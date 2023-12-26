@@ -70,12 +70,24 @@ void low_thrust_2bp_SUN() {
 	typedef std::numeric_limits<double> dbl;
 	cout.precision(5);
 
+	// Set dynamics
+	Dynamics dynamics = get_low_trust_2bp_SUN_dynamics();
+	
+	// Normalisation constants
+	Constants constants(dynamics.constants());
+	double lu = constants.lu();
+	double massu = constants.massu();
+	double tu = constants.tu();
+	double thrustu = constants.thrustu();
+	double vu = constants.vu();
+
 	// Spacecraft parameters
-	double m_0 = 1000.0 / MASSU; // [MASSU]
-	double dry_mass = 500.0 / MASSU; // [MASSU]
-	double T = 0.5 / THRUSTU; // [THRUSTU]
-	double Isp = 2000.0 / TU; // [TU]
+	double m_0 = 1000.0 / massu; // [MASSU]
+	double dry_mass = 500.0 / massu; // [MASSU]
+	double T = 0.5 / thrustu; // [THRUSTU]
+	double Isp = 2000.0 / tu; // [TU]
 	SpacecraftParameters spacecraft_parameters(
+		constants,
 		m_0, dry_mass, T, Isp);
 
 	// Init solver parameters
@@ -91,31 +103,27 @@ void low_thrust_2bp_SUN() {
 	DA::setEps(1e-90);
 
 	// Initial conditions [3*LU, 3*VU, MASSU, TU]
-	double ToF = 348.79 / SEC2DAYS / TU; // [TU]
+	double ToF = 348.79 / SEC2DAYS / tu; // [TU]
 	double dt = ToF / N; // [TU]
 	vectordb x0{
-		-140699693 / LU, -51614428 / LU, 980 / LU,
-		9.774596 / VU, -28.07828 / VU, 4.337725e-4 / VU,
+		-140699693 / lu, -51614428 / lu, 980 / lu,
+		9.774596 / vu, -28.07828 / vu, 4.337725e-4 / vu,
 		m_0, dt };
 	vectordb x_goal{
-		-172682023 / LU, 176959469 / LU, 7948912 / LU,
-		-16.427384 / VU, -14.860506 / VU, 9.21486e-2 / VU,
+		-172682023 / lu, 176959469 / lu, 7948912 / lu,
+		-16.427384 / vu, -14.860506 / vu, 9.21486e-2 / vu,
 		dry_mass, ToF };
 
 	// First guess command
-	vectordb u_init(Nu, 1e-6 / THRUSTU); // [VU]
+	vectordb u_init(Nu, 1e-6 / thrustu); // [VU]
 	vector<vectordb> list_u_init(N, u_init);
 
 	// Output
 	cout << "DEPARTURE : " << endl << x0.extract(0, Nx - 1 - 1) << endl;
 	cout << "ARRIVAL : " << endl << x_goal.extract(0, Nx - 1 - 1) << endl;
 
-	// Set dynamics
-	Dynamics dynamics = get_low_trust_2bp_SUN_dynamics();
-
 	// AULSolver
 	AULSolver solver(solver_parameters, spacecraft_parameters, dynamics);
-	// DDPSolver solver(solver_parameters, spacecraft_parameters, dynamics);
 
 	// Run DDP
 	auto start = high_resolution_clock::now();
@@ -141,7 +149,8 @@ void low_thrust_2bp_SUN() {
 	auto duration_PN = duration_cast<microseconds>(stop - start_inter);
 
 	// Get data
-	vector<vectordb> list_x(pn_solver.list_x()), list_u(pn_solver.list_u()); double cost(pn_solver.cost());
+	vector<vectordb> list_x(pn_solver.list_x()), list_u(pn_solver.list_u());
+	double cost(pn_solver.cost());
 
 	// Compute errors
 	vectordb loss = (list_x[N] - x_goal).extract(0, 5);
@@ -155,7 +164,7 @@ void low_thrust_2bp_SUN() {
 	cout << "	Total runtime : " + to_string(static_cast<int>(duration.count()) / 1e6) + "s" << endl;
 	cout << "	AUL solver runtime : " + to_string(static_cast<int>(duration_AUL.count()) / 1e6) + "s" << endl;
 	cout << "	PN solver runtime : " + to_string(static_cast<int>(duration_PN.count()) / 1e6) + "s" << endl;
-	cout << "	FINAL MASS [kg] : " << MASSU * final_mass << endl;
+	cout << "	FINAL MASS [kg] : " << massu * final_mass << endl;
 	cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
 
 	bool with_plots = true;
@@ -177,9 +186,8 @@ void low_thrust_2bp_SUN() {
 		plot(list_0, list_1);
 		xlabel("X [AU]"); ylabel("Y [AU]");
 
-
 		figure();
-		plot(list_N * dt * SEC2DAYS * TU, MASSU * list_m);
+		plot(list_N * dt * SEC2DAYS * tu, massu * list_m);
 		xlabel("Time [days]"); ylabel("Remaining mass [kg]");
 
 		// Thrust
@@ -193,12 +201,12 @@ void low_thrust_2bp_SUN() {
 		}
 		figure();
 		/*
-		plot(list_N* dt* SEC2DAYS* TU, list_0);
-		plot(list_N * dt * SEC2DAYS * TU, list_1);
-		plot(list_N* dt* SEC2DAYS* TU, list_2);
+		plot(list_N* dt* SEC2DAYS* tu, list_0);
+		plot(list_N * dt * SEC2DAYS * tu, list_1);
+		plot(list_N* dt* SEC2DAYS* tu, list_2);
 		*/
-		plot(list_N * dt * SEC2DAYS * TU, list_T*THRUSTU);
-		plot(list_N * dt * SEC2DAYS * TU, list_T * 0 + T * THRUSTU);
+		plot(list_N * dt * SEC2DAYS * tu, list_T* thrustu);
+		plot(list_N * dt * SEC2DAYS * tu, list_T * 0 + T * thrustu);
 		ylabel("T [N]"); xlabel("Time [days]");
 
 		show();

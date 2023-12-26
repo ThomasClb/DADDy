@@ -16,7 +16,7 @@ using namespace std;
 
 // Empty constructor
 DDPSolver::DDPSolver() : solver_parameters_(SolverParameters()),
-spacecraft_parameters_(SpacecraftParameters()), dynamics_(Dynamics()),
+spacecraft_parameters_(SpacecraftParameters(Constants())), dynamics_(Dynamics()),
 list_x_(vector<vectordb>(0)), list_u_(vector<vectordb>(0)), cost_(0),
 list_eq_(vector<vectordb>(0)), list_ineq_(vector<vectordb>(0)),
 rho_(0.0), d_rho_(0.0) {}
@@ -94,15 +94,15 @@ vectorDA DDPSolver::get_AUL_cost_to_go(
 	// Evaluate ctg
 	DA ctg_eval = dynamics_.cost_to_go()(
 		x_star_DA, u_star_DA,
-		spacecraft_parameters_, solver_parameters_);
+		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
 	
 	// Constraints evaluations
 	vectorDA eq_eval = dynamics_.equality_constraints()(
 		x_star_DA, u_star_DA,
-		spacecraft_parameters_, solver_parameters_);
+		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
 	vectorDA ineq_eval = dynamics_.inequality_constraints()(
 		x_star_DA, u_star_DA,
-		spacecraft_parameters_, solver_parameters_);
+		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
 
 	// Assign to output
 	for (size_t i = 0; i < Neq; i++) {
@@ -151,15 +151,15 @@ vectorDA DDPSolver::get_AUL_terminal_cost(
 	// Evaluate terminal cost
 	DA tc_eval = dynamics_.terminal_cost()(
 		x_star_DA, x_goal,
-		spacecraft_parameters_, solver_parameters_);
+		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
 
 	// Constraints evaluations
 	vectorDA teq_eval = dynamics_.terminal_equality_constraints()(
 		x_star_DA, x_goal,
-		spacecraft_parameters_, solver_parameters_);
+		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
 	vectorDA tineq_eval = dynamics_.terminal_inequality_constraints()(
 		x_star_DA, x_goal,
-		spacecraft_parameters_, solver_parameters_);
+		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
 	
 	// Assign to output
 	for (size_t i = 0; i < Nteq; i++) {
@@ -209,15 +209,15 @@ vectordb DDPSolver::get_AUL_cost_to_go(
 	// Evaluate ctg
 	double ctg_eval = dynamics_.cost_to_go_db()(
 		x_star_DA, u_star_DA,
-		spacecraft_parameters_, solver_parameters_);
+		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
 
 	// Constraints evaluations
 	vectordb eq_eval = dynamics_.equality_constraints_db()(
 		x_star_DA, u_star_DA,
-		spacecraft_parameters_, solver_parameters_);
+		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
 	vectordb ineq_eval = dynamics_.inequality_constraints_db()(
 		x_star_DA, u_star_DA,
-		spacecraft_parameters_, solver_parameters_);
+		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
 
 	// Assign to output
 	for (size_t i = 0; i < Neq; i++) {
@@ -267,15 +267,15 @@ vectordb DDPSolver::get_AUL_terminal_cost(
 	// Evaluate terminal cost
 	double tc_eval = dynamics_.terminal_cost_db()(
 		x_star_DA, x_goal,
-		spacecraft_parameters_, solver_parameters_);
+		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
 
 	// Constraints evaluations
 	vectordb teq_eval = dynamics_.terminal_equality_constraints_db()(
 		x_star_DA, x_goal,
-		spacecraft_parameters_, solver_parameters_);
+		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
 	vectordb tineq_eval = dynamics_.terminal_inequality_constraints_db()(
 		x_star_DA, x_goal,
-		spacecraft_parameters_, solver_parameters_);
+		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
 
 	// Assign to output
 	for (size_t i = 0; i < Nteq; i++) {
@@ -754,7 +754,7 @@ void DDPSolver::forward_pass_(
 			// Evaluate dynamics
 			vectorDA dynamic_eval = dynamics_.dynamic()(
 				x_star_DA, u_star_DA,
-				spacecraft_parameters_, solver_parameters_);
+				spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
 			list_dynamic_eval.push_back(dynamic_eval);
 				
 			// Evaluate AUL ctg and store constraints
@@ -934,7 +934,7 @@ void DDPSolver::forward_pass_convRadius_(
 				// Evaluate dynamics from sractch
 				dynamic_eval = dynamics_.dynamic()(
 					x_star_DA, u_star_DA,
-					spacecraft_parameters_, solver_parameters_);
+					spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
 			}
 			list_dynamic_eval.push_back(dynamic_eval);
 
@@ -1115,7 +1115,7 @@ void DDPSolver::forward_pass_convRadius_ls_(
 				// Evaluate dynamics from sractch
 				dynamic_eval = dynamics_.dynamic()(
 					x_star_DA, u_star_DA,
-					spacecraft_parameters_, solver_parameters_);
+					spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
 			}
 			list_dynamic_eval.push_back(dynamic_eval);
 
@@ -1304,7 +1304,8 @@ void DDPSolver::forward_pass_convRadius_ls_Spencer_(
 				// Evaluate dynamics from sractch
 				dynamic_eval = dynamics_.dynamic_db()(
 					x_star, u_star,
-					spacecraft_parameters_, solver_parameters_);
+					spacecraft_parameters_, dynamics_.constants(),
+					solver_parameters_);
 			}
 
 			// Get constraints
@@ -1397,7 +1398,8 @@ void DDPSolver::forward_pass_convRadius_ls_Spencer_(
 						// Evaluate dynamics from sractch
 						dynamic_eval = dynamics_.dynamic()(
 							x_star_DA, u_star_DA,
-							spacecraft_parameters_, solver_parameters_);
+							spacecraft_parameters_, dynamics_.constants(),
+							solver_parameters_);
 					}
 					list_dynamic_eval_[i] = dynamic_eval;
 
@@ -1508,7 +1510,8 @@ void DDPSolver::solve(
 
 		// Get x_k+1
 		vectorDA x_kp1 = dynamics_.dynamic()(x_da, u_da,
-			spacecraft_parameters_, solver_parameters_);
+			spacecraft_parameters_, dynamics_.constants(),
+			solver_parameters_);
 		list_x_.emplace_back(x_kp1.cons());
 		list_dynamic_eval_.push_back(x_kp1);
 
