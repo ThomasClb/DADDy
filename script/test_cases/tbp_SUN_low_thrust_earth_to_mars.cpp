@@ -64,7 +64,7 @@ SolverParameters get_SolverParameters_tbp_SUN() {
 		verbosity);
 }
 
-void tbp_SUN_low_thrust_earth_to_mars() {
+void tbp_SUN_low_thrust_earth_to_mars(bool const& plot_graphs) {
 
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
@@ -167,8 +167,7 @@ void tbp_SUN_low_thrust_earth_to_mars() {
 	cout << "	FINAL MASS [kg] : " << massu * final_mass << endl;
 	cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
 
-	bool with_plots = true;
-	if (with_plots) {
+	if (plot_graphs) {
 		/**/
 
 		// Plot

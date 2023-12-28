@@ -65,7 +65,7 @@ SolverParameters get_SolverParameters_cr3bp() {
 		verbosity);
 }
 
-void cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1() {
+void cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1(bool const& plot_graphs) {
 
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
@@ -126,8 +126,6 @@ void cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1() {
 	cout << "DEPARTURE : " << endl << x0.extract(0, Nx - 1 - 1) << endl;
 	cout << "ARRIVAL : " << endl << x_goal.extract(0, Nx - 1 - 1) << endl;
 
-
-
 	// AULSolver
 	AULSolver solver(solver_parameters, spacecraft_parameters, dynamics);
 
@@ -135,7 +133,7 @@ void cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1() {
 	auto start = high_resolution_clock::now();
 	solver.set_homotopy_coefficient(0.0);
 	solver.solve(x0, list_u_init, x_goal);
-	vectordb homotopy_sequence{0.5, 1.0 - 1e-2 };
+	vectordb homotopy_sequence{0.5, 0.99};
 	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
 		solver.set_homotopy_coefficient(homotopy_sequence[i]);
 		solver.solve(x0, solver.list_u(), x_goal);
@@ -172,8 +170,7 @@ void cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1() {
 	cout << "	FINAL MASS [kg] : " << massu * final_mass << endl;
 	cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
 
-	bool with_plots = true;
-	if (with_plots) {
+	if (plot_graphs) {
 		/**/
 
 		// Plot

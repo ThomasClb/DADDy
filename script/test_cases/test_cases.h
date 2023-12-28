@@ -24,12 +24,15 @@
 #include "pn_solver.h"
 #include "visualisation.h"
 
-void tbp_SUN_low_thrust_earth_to_mars();
-void cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1();
+// Test cases
+void tbp_SUN_low_thrust_earth_to_mars(bool const& plot_graphs);
+void cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1(bool const& plot_graphs);
 
-
+// Verification function
 double real_constraints(
 	DACE::vectordb const& x_goal,
 	PNSolver const& PNsolver);
+
+void run_test_cases(int argc, char** argv);
 
 #endif

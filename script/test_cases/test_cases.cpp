@@ -93,3 +93,50 @@ double real_constraints(
 
 	return max_norm;
 }
+
+void run_test_cases(int argc, char** argv) {
+	// Parameters
+	int test_case = 1;
+	bool plot_graphs = false;
+
+	// Excute correct test case
+
+	// Double integrator
+	if (test_case == 0) {}
+
+	// TBP
+	
+	// SUN centered
+
+	// Earth-mars transfer
+	else if (test_case == 1)
+		tbp_SUN_low_thrust_earth_to_mars(plot_graphs);
+
+	// Earth centered
+
+	// GTO to GEO
+	else if (test_case == 2) {}
+
+	// Any orbit to any orbit
+	else if (test_case == 3) {}
+
+	// CR3BP
+
+	// Earth-Moon
+
+	// Halo L2 to Halo L1
+	else if (test_case == 4)
+		cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1(plot_graphs);
+
+	// Halo L2 (Gateway) to DRO
+	else if (test_case == 5) {}
+
+	// Lyapunov L2 to Lyapunov L1
+	else if (test_case == 6) {}
+
+	// Manyrev DRO to DRO
+	else if (test_case == 7) {}
+
+	// Manyrev GSO to NRHO
+	else if (test_case == 8) {}
+}

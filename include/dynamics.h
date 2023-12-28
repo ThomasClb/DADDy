@@ -232,7 +232,7 @@ public:
 // It takes at input [3*LU, 3*VU, MASSU, TU], [3*N], TU, SpacecraftParameters.
 // It returns [3*VU, 3*VU/TU, MASSU/TU, 1].
 template<typename T>
-DACE::AlgebraicVector<T> acceleration_2bp_SUN(
+DACE::AlgebraicVector<T> acceleration_tbp_SUN_low_thrust(
 	DACE::AlgebraicVector<T> const& x,
 	DACE::AlgebraicVector<T> const& u, double const& t,
 	SpacecraftParameters const& spacecraft_parameters,
@@ -278,7 +278,7 @@ DACE::AlgebraicVector<T> acceleration_2bp_SUN(
 // It takes at input [3*LU, 3*VU, MASSU, TU], [3*N], TU, SpacecraftParameters.
 // It returns [3*VU, 3*VU/TU, MASSU/TU, 1].
 template<typename T>
-DACE::AlgebraicVector<T>  acceleration_cr3bp(
+DACE::AlgebraicVector<T>  acceleration_cr3bp_low_thrust(
 	DACE::AlgebraicVector<T>  const& state_vector,
 	DACE::AlgebraicVector<T> const& u, double const& t,
 	SpacecraftParameters const& spacecraft_parameters,
@@ -326,12 +326,12 @@ DACE::AlgebraicVector<T>  acceleration_cr3bp(
 // the current state, the control and the parameters.
 // With acceleration acceleration_2b_SUN.
 template<typename T>
-DACE::AlgebraicVector<T> dynamic_2bp_SUN(
+DACE::AlgebraicVector<T> dynamic_tbp_SUN_low_thrust(
 	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T>const& u,
 	SpacecraftParameters const& spacecraft_parameters,
 	Constants const& constants,
 	SolverParameters const& solver_parameters) {
-	return RK78(acceleration_2bp_SUN, x, u, 0, 1.0,
+	return RK78(acceleration_tbp_SUN_low_thrust, x, u, 0, 1.0,
 		spacecraft_parameters, constants);
 }
 
@@ -339,12 +339,12 @@ DACE::AlgebraicVector<T> dynamic_2bp_SUN(
 // the current state, the control and the parameters.
 // With acceleration acceleration_cr3bp.
 template<typename T>
-DACE::AlgebraicVector<T> dynamic_cr3bp(
+DACE::AlgebraicVector<T> dynamic_cr3bp_low_thrust(
 	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T>const& u,
 	SpacecraftParameters const& spacecraft_parameters,
 	Constants const& constants,
 	SolverParameters const& solver_parameters) {
-	return RK78(acceleration_cr3bp, x, u, 0, 1.0,
+	return RK78(acceleration_cr3bp_low_thrust, x, u, 0, 1.0,
 		spacecraft_parameters, constants);
 }
 
@@ -402,10 +402,10 @@ DACE::AlgebraicVector<T> equality_constraints(
 // Returns the path inequality contraints given
 // the current state, the control and the parameters.
 // Boarder constraints, and thrust constraints.
-// For 2 body problem.
-// Nineq = 9
+// For low-thrust
+// Nineq = 3
 template<typename T>
-DACE::AlgebraicVector<T> inequality_constraints_2bp_SUN(
+DACE::AlgebraicVector<T> inequality_constraints_low_thrust(
 	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T> const& u,
 	SpacecraftParameters const& spacecraft_parameters,
 	Constants const& constants,
@@ -428,64 +428,11 @@ DACE::AlgebraicVector<T> inequality_constraints_2bp_SUN(
 	return output;
 }
 
-// Returns the path inequality contraints given
-// the current state, the control and the parameters.
-// Boarder constraints, and thrust constraints.
-// For circular restricted 3 body problem.
-// Nineq = 2
-template<typename T>
-DACE::AlgebraicVector<T> inequality_constraints_cr3bp(
-	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T> const& u,
-	SpacecraftParameters const& spacecraft_parameters,
-	Constants const& constants,
-	SolverParameters const& solver_parameters) {
-	// Unpack parameters
-	double T_max = spacecraft_parameters.thrust(); // [THRUSTU]
-	double dry_mass = spacecraft_parameters.dry_mass(); // [MASSU]
-	double initial_mass = spacecraft_parameters.initial_mass(); // [MASSU]
-
-	// Init
-	DACE::AlgebraicVector<T> output; output.reserve(2 + 1);
-
-	// Thrust (1)
-	T T_const = u.dot(u) - T_max * T_max; // THRUSTU^2
-	output.push_back(T_const);
-
-	// Mass (2)
-	output.push_back(dry_mass - x[SIZE_VECTOR]);  
-	output.push_back(x[SIZE_VECTOR] - initial_mass); 
-	
-	return output;
-}
-
 // Returns the terminal cost given
 // the current state, the target state and the parameters.
 // Final difference.
 template<typename T>
-T terminal_cost_2bp_SUN(
-	DACE::AlgebraicVector<T> const& x, DACE::vectordb const& x_goal,
-	SpacecraftParameters const& spacecraft_parameters,
-	Constants const& constants,
-	SolverParameters const& solver_parameters) {
-	// Unpack
-	double gain = solver_parameters.terminal_cost_gain(); // [-]
-
-	// Get vectors
-	DACE::AlgebraicVector<T> x_(x.extract(0, SIZE_VECTOR - 1));
-	DACE::vectordb x_goal_(x_goal.extract(0, SIZE_VECTOR - 1));
-
-	// Compute error
-	DACE::AlgebraicVector<T> loss = x_ - x_goal_;
-	T output = (0.5 * gain) * loss.dot(loss);
-
-	return output;
-}
-
-// Returns the terminal cost given
-// the current state, the target state and the parameters.
-// Final difference.
-template<typename T>
-T terminal_cost_cr3bp(
+T terminal_cost(
 	DACE::AlgebraicVector<T> const& x, DACE::vectordb const& x_goal,
 	SpacecraftParameters const& spacecraft_parameters,
 	Constants const& constants,
@@ -537,8 +484,8 @@ DACE::AlgebraicVector<T> terminal_inequality_constraints(
 
 // Returns dynamics with acceleration_2b_SUN as accelerations.
 // Terminal constraints and thrust constraints.
-Dynamics get_low_trust_2bp_SUN_dynamics();
-Dynamics get_low_trust_cr3bp_dynamics();
+Dynamics get_tbp_SUN_low_thrust_dynamics();
+Dynamics get_cr3bp_EARTH_MOON_low_thrust_dynamics();
 
 
 #endif
