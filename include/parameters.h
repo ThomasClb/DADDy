@@ -72,6 +72,11 @@ public:
 	const double Isp() const;
 	const double ejection_velocity() const;
 	const double mass_flow() const;
+
+
+	// IO operator
+	friend std::ostream& operator<<(std::ostream& os, const SpacecraftParameters& param);
+	friend std::istream& operator>>(std::istream& is, SpacecraftParameters& constants);
 };
 
 

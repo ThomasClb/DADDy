@@ -13,7 +13,9 @@
 
 #pragma once
 
-
+#include <fstream>
+#include <iostream>
+#include <string>
 #include <vector>
 #include <dace/dace_s.h>
 
@@ -66,6 +68,10 @@ public:
 	const double tu() const;
 	const double vu() const;
 	const double thrustu() const;
+
+	// IO operator
+	friend std::ostream& operator<<(std::ostream& os, const Constants& constants);
+	friend std::istream& operator>>(std::istream& is, Constants& constants);
 };
 
 #endif

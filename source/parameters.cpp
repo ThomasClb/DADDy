@@ -79,6 +79,40 @@ const double SpacecraftParameters::mass_flow() const {
 	return thrust_/ejection_velocity();
 }
 
+// IO operator
+ostream& operator<<(ostream& os, const SpacecraftParameters& param) {
+	// Set double precision
+	typedef std::numeric_limits<double> dbl;
+	os.precision(dbl::max_digits10);
+
+	// Write attributes
+	os << param.constants();
+	os << param.initial_mass() << endl;
+	os << param.dry_mass() << endl;
+	os << param.thrust() << endl;
+	os << param.Isp() << endl;
+
+	return os;
+}
+istream& operator>>(istream& is, SpacecraftParameters& param) {
+
+	// Get constants
+	is >> param.constants_;
+
+	// Reading simple property from a line
+	string initial_mass_str, dry_mass_str, thrust_str, Isp_str;
+	getline(is, initial_mass_str);
+	getline(is, dry_mass_str);
+	getline(is, thrust_str);
+	getline(is, Isp_str);
+	istringstream(initial_mass_str) >> param.initial_mass_;
+	istringstream(dry_mass_str) >> param.dry_mass_;
+	istringstream(thrust_str) >> param.thrust_;
+	istringstream(Isp_str) >> param.Isp_;
+
+	return is;
+}
+
 
 /*
 

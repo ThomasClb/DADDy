@@ -67,3 +67,38 @@ const double Constants::massu() const { return massu_; }
 const double Constants::tu() const { return tu_; }
 const double Constants::vu() const { return vu_; }
 const double Constants::thrustu() const { return thrustu_; }
+
+// IO operator
+ostream& operator<<(ostream& os, const Constants& constants) {
+	// Set double precision
+	typedef std::numeric_limits<double> dbl;
+	os.precision(dbl::max_digits10);
+
+	// Write attributs
+	os << constants.mu() << endl;
+	os << constants.lu() << endl;
+	os << constants.wu() << endl;
+	os << constants.massu() << endl;
+
+	return os;
+}
+istream& operator>>(istream& is, Constants& constants) {
+
+	// Reading simple property from a line
+	string mu_str, lu_str, wu_str, massu_str;
+	getline(is, mu_str);
+	getline(is, lu_str);
+	getline(is, wu_str);
+	getline(is, massu_str);
+	istringstream(mu_str) >> constants.mu_;
+	istringstream(lu_str) >> constants.lu_;
+	istringstream(wu_str) >> constants.wu_;
+	istringstream(massu_str) >> constants.massu_;
+
+	// Compute others 
+	constants.tu_ = 1 / constants.wu_;
+	constants.vu_ = constants.lu_ * constants.wu_;
+	constants.thrustu_ = 1000 * constants.vu_ * constants.massu_ * constants.wu_;
+
+	return is;
+}
