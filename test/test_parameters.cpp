@@ -111,6 +111,54 @@ TEST(TestSpacecraftParameters, CopyConstructor) {
 	EXPECT_EQ(spacecraft_parameters_copy.ejection_velocity(), ejection_velocity);
 	EXPECT_EQ(spacecraft_parameters_copy.mass_flow(), mass_flow);
 }
+TEST(TestSpacecraftParameters, IOFunctions) {
+	// Init
+	double mu = MU_MOON / (MU_EARTH + MU_MOON); // [-]
+	double lu = EARTH_MOON_DISTANCE; // [km]
+	double wu = sqrt((MU_EARTH + MU_MOON) / pow(EARTH_MOON_DISTANCE, 3)); // [s^-1]
+	double tu = 1 / wu; // [s]
+	double vu = lu * wu; // [m.s^-1]
+	double massu = 1000; // [kg]
+	double thrustu = 1000 * vu * massu * wu; // [N]
+	Constants constants(mu, lu, wu, massu);
+	double initial_mass = 1000 / constants.massu(); // [MASSU]
+	double dry_mass = 500 / constants.massu(); // [MASSU]
+	double thrust = 0.5 / constants.thrustu(); // [THRUSTU]
+	double Isp = 2000 / constants.tu(); // [TU]
+	double initial_wet_mass = initial_mass - dry_mass; // [MASSU]
+	double ejection_velocity = G_0 / (1000 * constants.vu() / constants.tu()) * Isp; // [VU]
+	double mass_flow = thrust / ejection_velocity; // [MASSU/TU]
+	SpacecraftParameters spacecraft_parameters(
+		constants,
+		initial_mass, dry_mass, thrust, Isp);
+	SpacecraftParameters spacecraft_parameters_copy;
+
+	// Open file
+	string file_name_("../../DADDy/data/spacecraft_parameters/test_spacecraft_parameters.dat");
+	ofstream ofs(file_name_);
+
+	// Store the object to file
+	ofs << spacecraft_parameters;
+
+	ofs.close();
+
+	// Open file
+	ifstream ifs(file_name_);
+
+	// Load data
+	ifs >> spacecraft_parameters_copy;
+
+	ifs.close();
+
+	// Tests
+	EXPECT_EQ(spacecraft_parameters_copy.initial_mass(), initial_mass);
+	EXPECT_EQ(spacecraft_parameters_copy.thrust(), thrust);
+	EXPECT_EQ(spacecraft_parameters_copy.Isp(), Isp);
+	EXPECT_EQ(spacecraft_parameters_copy.dry_mass(), dry_mass);
+	EXPECT_EQ(spacecraft_parameters_copy.initial_wet_mass(), initial_wet_mass);
+	EXPECT_EQ(spacecraft_parameters_copy.ejection_velocity(), ejection_velocity);
+	EXPECT_EQ(spacecraft_parameters_copy.mass_flow(), mass_flow);
+}
 
 /*
 

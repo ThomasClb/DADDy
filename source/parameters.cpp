@@ -85,8 +85,12 @@ ostream& operator<<(ostream& os, const SpacecraftParameters& param) {
 	typedef std::numeric_limits<double> dbl;
 	os.precision(dbl::max_digits10);
 
+	string legend(
+		"SPACECRAFT PARAMETERS : INITIAL MASS [MASSU], DRY MASS [MASSU], THRUST [THRUSTU], ISP [TU].");
+
 	// Write attributes
 	os << param.constants();
+	os << legend << endl;
 	os << param.initial_mass() << endl;
 	os << param.dry_mass() << endl;
 	os << param.thrust() << endl;
@@ -101,6 +105,7 @@ istream& operator>>(istream& is, SpacecraftParameters& param) {
 
 	// Reading simple property from a line
 	string initial_mass_str, dry_mass_str, thrust_str, Isp_str;
+	getline(is, initial_mass_str); // Skip the legend
 	getline(is, initial_mass_str);
 	getline(is, dry_mass_str);
 	getline(is, thrust_str);

@@ -74,7 +74,12 @@ ostream& operator<<(ostream& os, const Constants& constants) {
 	typedef std::numeric_limits<double> dbl;
 	os.precision(dbl::max_digits10);
 
+	// Make legend
+	string legend = string("CONSTANTS : MU [km^3.s^-2], LU [km], WU [s^-1], MASSU [kg]. ")
+		+ string("WU [s], VU = LU * WU [km.s^-1], THRUSTU = 1000 * VU * MASSU * WU [N].");
+
 	// Write attributs
+	os << legend << endl;
 	os << constants.mu() << endl;
 	os << constants.lu() << endl;
 	os << constants.wu() << endl;
@@ -86,6 +91,7 @@ istream& operator>>(istream& is, Constants& constants) {
 
 	// Reading simple property from a line
 	string mu_str, lu_str, wu_str, massu_str;
+	getline(is, mu_str); // Skip the legend
 	getline(is, mu_str);
 	getline(is, lu_str);
 	getline(is, wu_str);
