@@ -22,6 +22,7 @@
 #include "ddp_solver.h"
 #include "aul_solver.h"
 #include "pn_solver.h"
+#include "IO.h"
 #include "visualisation.h"
 
 // Test cases

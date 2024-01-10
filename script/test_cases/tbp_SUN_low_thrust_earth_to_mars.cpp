@@ -87,7 +87,7 @@ void tbp_SUN_low_thrust_earth_to_mars(bool const& plot_graphs) {
 	double T = 0.5 / thrustu; // [THRUSTU]
 	double Isp = 2000.0 / tu; // [TU]
 	SpacecraftParameters spacecraft_parameters(
-		constants,
+		dynamics.constants(),
 		m_0, dry_mass, T, Isp);
 
 	// Init solver parameters
@@ -131,11 +131,12 @@ void tbp_SUN_low_thrust_earth_to_mars(bool const& plot_graphs) {
 	solver.set_homotopy_coefficient(0.0);
 	solver.solve(x0, list_u_init, x_goal);
 	vectordb homotopy_sequence{0.95, 1.0 - 1e-2};
+	/*
 	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
 		solver.set_homotopy_coefficient(homotopy_sequence[i]);
 		solver.solve(x0, solver.list_u(), x_goal);
 	}
-
+	*/
 	// Set DACE at order 1 (No Hessian needed)
 	DA::setTO(1);
 
@@ -166,6 +167,27 @@ void tbp_SUN_low_thrust_earth_to_mars(bool const& plot_graphs) {
 	cout << "	PN solver runtime : " + to_string(static_cast<int>(duration_PN.count()) / 1e6) + "s" << endl;
 	cout << "	FINAL MASS [kg] : " << massu * final_mass << endl;
 	cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
+
+	// Print datasets
+	string file_name = "./data/datasets/test.dat";
+	string system_name = "TBP LT";
+
+	// Make lists
+	vector<string> title_1{
+		"State",
+		"x [LU]", "y [LU]", "z [LU]",
+		"vx [VU]", "vy [VU]", "vz [VU]",
+		"mass [MASSU]", "dt [TU]"};
+	vector<string> title_2{
+	"Control",
+	"ux [THRUSTU]", "uy [THRUSTU]", "uz [THRUSTU]"};
+	vector<vector<string>> list_title{ title_1 , title_2 };
+	vector<vector<vectordb>> list_data{ list_x, list_u };
+
+	print_dataset(
+		file_name, system_name,
+		spacecraft_parameters,
+		list_title, list_data);
 
 	if (plot_graphs) {
 		/**/

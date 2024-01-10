@@ -88,7 +88,7 @@ void cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1(bool const& plot_graphs) {
 	double T = 0.5 / thrustu; // [N]
 	double Isp = 2000.0 / tu; // [s]
 	SpacecraftParameters spacecraft_parameters(
-		constants,
+		dynamics.constants(),
 		m_0, dry_mass, T, Isp);
 
 	// Init solver parameters

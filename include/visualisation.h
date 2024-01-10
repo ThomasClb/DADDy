@@ -17,6 +17,7 @@
 #include <string>
 
 #include <dace/dace_s.h>
+#include "parameters.h"
 
 // Axis label constants
 const std::vector<std::string> axis_label{"x [LU]", "y [LU]", "z [LU]" };
