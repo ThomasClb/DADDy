@@ -23,6 +23,8 @@ def plot_system_points(dataset, ax):
     ax.scatter(data_state[0, -1], data_state[1, -1], data_state[2, -1],
                label="Arrival")
     
+    # TO DO : add Lagrange points
+    
 def plot_thrust_vector(dataset, ax, thrust_scale, thrust_color):
     # Retreive data
     nb_dataets = len(dataset.list_dataset_names)
@@ -42,7 +44,30 @@ def plot_thrust_vector(dataset, ax, thrust_scale, thrust_color):
     ax.quiver(x[:-1], y[:-1], z[:-1], 
               thrust_scale*ux, thrust_scale*uy, thrust_scale*uz,
               color=thrust_color, label='Thrust')
-       
+    
+def plot_reference_orbits(dataset, ax, list_color):
+    # Retreive data
+    nb_dataets = len(dataset.list_dataset_names)
+    for i in range(nb_dataets):
+        if (dataset.list_dataset_names[i][0] == "Departure orbit"):
+            data_departure = dataset.list_datasets[i]
+        elif (dataset.list_dataset_names[i][0] == "Arrival orbit"):
+            data_arrival = dataset.list_datasets[i]
+    x_dep = data_departure[0,:]
+    y_dep = data_departure[1,:]
+    z_dep = data_departure[2,:]
+    x_arr = data_arrival[0,:]
+    y_arr = data_arrival[1,:]
+    z_arr = data_arrival[2,:]
+    
+    # PLot arrows
+    departure_color = list_color[0]
+    ax.plot(x_dep, y_dep, z_dep, 
+              color=departure_color, label='Departure orbit')
+    arrival_color = list_color[1]
+    ax.plot(x_arr, y_arr, z_arr, 
+            color=arrival_color, label='Arrival orbit')
+    
 
 def plot_3d(dataset):
 
@@ -81,11 +106,15 @@ def plot_3d(dataset):
     thrust_color = "red" # TO DO move
     plot_thrust_vector(dataset, ax, thrust_scale, thrust_color)
     
+    # Plot reference orbits
+    list_colors_reference = ["blue", "orange"]
+    plot_reference_orbits(dataset, ax, list_colors_reference)
+    
     # Plot system points
     plot_system_points(dataset, ax)
     
     # Plot trajectory
-    ax.plot(x, y, z, label='Trajectory')
+    ax.plot(x, y, z, color="green", label='Trajectory')
     
     # Show the plot
     plt.show()

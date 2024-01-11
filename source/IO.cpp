@@ -63,3 +63,82 @@ void print_dataset(
 	ofs.close();
 	return;
 }
+
+// Function to propagate a vector without control
+vector<vectordb> get_reference_trajectory(
+	vectordb const& x_0,
+	Dynamics const& dynamics,
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
+	SolverParameters const& solver_parameters,
+	int const& nb_point) {
+	// Unpack
+	int Nu = solver_parameters.Nu();
+	int Nx = solver_parameters.Nx();
+	double period = x_0[Nx - 1];
+
+	// Init
+	vector<vectordb> output;
+	vectordb x_i = x_0;
+	double dt = period / (nb_point - 1.0);
+	x_i[Nx - 1] = dt;
+	vectordb null_control(Nu, 0.0);
+	
+	// Loop
+	for (size_t i = 0; i < nb_point; i++) {
+		output.push_back(x_i);
+		x_i = dynamics.dynamic_db()(
+			x_i, null_control,
+			spacecraft_parameters, constants, solver_parameters);
+	}
+
+	return output;
+}
+
+//
+void print_transfer_dataset(
+	string const& file_name,
+	string const& system_name,
+	vector<vectordb> const& list_x, vector<vectordb> const& list_u,
+	vectordb const& x_0, vectordb const& x_f,
+	Dynamics const& dynamics,
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
+	SolverParameters const& solver_parameters) {
+	// Unpack
+	int Nu = solver_parameters.Nu();
+	int Nx = solver_parameters.Nx();
+	int N = solver_parameters.N();
+
+	// Get reference trajectories
+	vector<vectordb> list_departure = get_reference_trajectory(
+		x_0, dynamics,
+		spacecraft_parameters, constants, solver_parameters,
+		2*N);
+	vector<vectordb> list_arrival = get_reference_trajectory(
+		x_f, dynamics,
+		spacecraft_parameters, constants, solver_parameters,
+		2*N);
+
+	// Make lists
+	vector<string> title_state{
+		"State",
+		"x [LU]", "y [LU]", "z [LU]",
+		"vx [VU]", "vy [VU]", "vz [VU]",
+		"mass [MASSU]", "dt [TU]" };
+	vector<string> title_control{
+		"Control",
+		"ux [THRUSTU]", "uy [THRUSTU]", "uz [THRUSTU]"};
+	vector<string> title_departure(title_state), title_arrival(title_state);
+	title_departure[0] = "Departure orbit";
+	title_arrival[0] = "Arrival orbit";
+	vector<vector<string>> list_title{
+		title_state , title_control, title_departure, title_arrival };
+	vector<vector<vectordb>> list_data{
+		list_x, list_u,  list_departure, list_arrival };
+
+	print_dataset(
+		file_name, system_name,
+		spacecraft_parameters,
+		list_title, list_data);
+}

@@ -18,6 +18,7 @@
 
 #include <dace/dace_s.h>
 #include "parameters.h"
+#include "dynamics.h"
 
 // Function to print a dataset at a given name in order to
 // produce python visuals
@@ -27,5 +28,24 @@ void print_dataset(
 	SpacecraftParameters const& spacecraft_parameters,
 	std::vector<std::vector<std::string>> const& list_title,
 	std::vector<std::vector<DACE::vectordb>> const& list_data);
+
+std::vector<DACE::vectordb> get_reference_trajectory(
+	DACE::vectordb const& x_0,
+	Dynamics const& dynamics,
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
+	SolverParameters const& solver_parameters,
+	int const& nb_point);
+
+void print_transfer_dataset(
+	std::string const& file_name,
+	std::string const& system_name,
+	std::vector<DACE::vectordb> const& list_x,
+	std::vector<DACE::vectordb> const& list_u,
+	DACE::vectordb const& x_0, DACE::vectordb const& x_f,
+	Dynamics const& dynamics,
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
+	SolverParameters const& solver_parameters);
 
 #endif

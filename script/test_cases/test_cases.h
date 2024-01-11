@@ -23,7 +23,6 @@
 #include "aul_solver.h"
 #include "pn_solver.h"
 #include "IO.h"
-#include "visualisation.h"
 
 // Test cases
 void tbp_SUN_low_thrust_earth_to_mars(bool const& plot_graphs);

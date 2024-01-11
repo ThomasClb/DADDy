@@ -105,14 +105,16 @@ void tbp_SUN_low_thrust_earth_to_mars(bool const& plot_graphs) {
 	// Initial conditions [3*LU, 3*VU, MASSU, TU]
 	double ToF = 348.79 / SEC2DAYS / tu; // [TU]
 	double dt = ToF / N; // [TU]
-	vectordb x0{
+	vectordb x_departure{
 		-140699693 / lu, -51614428 / lu, 980 / lu,
 		9.774596 / vu, -28.07828 / vu, 4.337725e-4 / vu,
-		m_0, dt };
-	vectordb x_goal{
+		m_0, 365.25/SEC2DAYS/tu };
+	vectordb x_arrival{
 		-172682023 / lu, 176959469 / lu, 7948912 / lu,
 		-16.427384 / vu, -14.860506 / vu, 9.21486e-2 / vu,
-		dry_mass, ToF };
+		dry_mass, 700 / SEC2DAYS / tu };
+	vectordb x0 = x_departure; x0[Nx - 1] = dt; // Time step
+	vectordb x_goal = x_arrival; x_goal[Nx - 1] = ToF; // ToF
 
 	// First guess command
 	vectordb u_init(Nu, 1e-6 / thrustu); // [VU]
@@ -171,67 +173,9 @@ void tbp_SUN_low_thrust_earth_to_mars(bool const& plot_graphs) {
 	// Print datasets
 	string file_name = "./data/datasets/test.dat";
 	string system_name = "TBP LT";
-
-	// Make lists
-	vector<string> title_1{
-		"State",
-		"x [LU]", "y [LU]", "z [LU]",
-		"vx [VU]", "vy [VU]", "vz [VU]",
-		"mass [MASSU]", "dt [TU]"};
-	vector<string> title_2{
-	"Control",
-	"ux [THRUSTU]", "uy [THRUSTU]", "uz [THRUSTU]"};
-	vector<vector<string>> list_title{ title_1 , title_2 };
-	vector<vector<vectordb>> list_data{ list_x, list_u };
-
-	print_dataset(
+	print_transfer_dataset(
 		file_name, system_name,
-		spacecraft_parameters,
-		list_title, list_data);
-
-	if (plot_graphs) {
-		/**/
-
-		// Plot
-		vectordb list_0(N + 1), list_1(N + 1), list_2(N + 1), list_m(N + 1), list_N(N + 1);
-		for (size_t i = 0; i < N + 1; i++) {
-			list_N[i] = i;
-			list_0[i] = list_x[i][0];
-			list_1[i] = list_x[i][1];
-			list_2[i] = list_x[i][2];
-			list_m[i] = list_x[i][6];
-		}
-
-		// Transfer x,y
-		figure();
-		plot(list_0, list_1);
-		xlabel("X [AU]"); ylabel("Y [AU]");
-
-		figure();
-		plot(list_N * dt * SEC2DAYS * tu, massu * list_m);
-		xlabel("Time [days]"); ylabel("Remaining mass [kg]");
-
-		// Thrust
-		list_0 = vectordb(N); list_1 = vectordb(N); list_2 = vectordb(N); list_N = vectordb(N); vectordb list_T(N);
-		for (size_t i = 0; i < N; i++) {
-			list_N[i] = i;
-			list_0[i] = list_u[i][0];
-			list_1[i] = list_u[i][1];
-			list_2[i] = list_u[i][2];
-			list_T[i] = list_u[i].vnorm();
-		}
-		figure();
-		/*
-		plot(list_N* dt* SEC2DAYS* tu, list_0);
-		plot(list_N * dt * SEC2DAYS * tu, list_1);
-		plot(list_N* dt* SEC2DAYS* tu, list_2);
-		*/
-		plot(list_N * dt * SEC2DAYS * tu, list_T* thrustu);
-		plot(list_N * dt * SEC2DAYS * tu, list_T * 0 + T * thrustu);
-		ylabel("T [N]"); xlabel("Time [days]");
-
-		show();
-
-	}
-
+		list_x, list_u,
+		x_departure, x_arrival,
+		dynamics, spacecraft_parameters, constants, solver_parameters);
 }

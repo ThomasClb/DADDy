@@ -8,10 +8,12 @@ from plot_thrust_profile import plot_thrust_profile
 
 if __name__ == "__main__":
     file_name = '../../data/datasets/cr3bp_halo_to_halo.dat'
+    #file_name = '../../data/datasets/test.dat'
+
     dataset = get_dataset(file_name)
     
     # Plot
-    #plot_3d(dataset)
-    plot_2d(dataset, 1, 2)
+    plot_3d(dataset)
+    plot_2d(dataset, 0, 2)
     
-    #plot_thrust_profile(dataset)
+    plot_thrust_profile(dataset)
