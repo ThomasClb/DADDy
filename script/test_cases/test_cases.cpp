@@ -96,7 +96,7 @@ double real_constraints(
 
 void run_test_cases(int argc, char** argv) {
 	// Parameters
-	int test_case = 1;
+	int test_case = 4;
 	bool plot_graphs = false;
 
 	// Excute correct test case

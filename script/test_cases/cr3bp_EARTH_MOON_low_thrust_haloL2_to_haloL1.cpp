@@ -170,6 +170,28 @@ void cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1(bool const& plot_graphs) {
 	cout << "	FINAL MASS [kg] : " << massu * final_mass << endl;
 	cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
 
+	// Print datasets
+	string file_name = "./data/datasets/cr3bp_halo_to_halo.dat";
+	string system_name = "CR3BP LT";
+
+	// Make lists
+	vector<string> title_1{
+		"State",
+		"x [LU]", "y [LU]", "z [LU]",
+		"vx [VU]", "vy [VU]", "vz [VU]",
+		"mass [MASSU]", "dt [TU]" };
+	vector<string> title_2{
+	"Control",
+	"ux [THRUSTU]", "uy [THRUSTU]", "uz [THRUSTU]" };
+	vector<vector<string>> list_title{ title_1 , title_2 };
+	vector<vector<vectordb>> list_data{ list_x, list_u };
+
+	print_dataset(
+		file_name, system_name,
+		spacecraft_parameters,
+		list_title, list_data);
+
+
 	if (plot_graphs) {
 		/**/
 
