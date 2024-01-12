@@ -3,8 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrowPatch
 
-def plot_system_points(dataset, axis_0, axis_1, ax):
-    # TO DO gerer couleurs, taille, etc
+def plot_system_points(dataset, axis_0, axis_1, ax,
+                       list_colors, list_markers,
+                       list_plots):
+    # TO DO gerer couleurs, marker, quel marker plot
+    # TO DO point de lagrange
+    
+    # Discriminate dynamical system
     if dataset.dynamical_system.startswith("TBP"):
         ax.scatter(0, 0, label="Central body")
     elif dataset.dynamical_system.startswith("CR3BP"):
@@ -13,11 +18,17 @@ def plot_system_points(dataset, axis_0, axis_1, ax):
         #ax.scatter(coord_P1[axis_0], coord_P1[axis_1], label="$P_1$")
         ax.scatter(coord_P2[axis_0], coord_P2[axis_1], label="$P_2$")
         
-    # Departure and Arrival
+def plot_plot_departure_arrival(dataset, axis_0, axis_1, ax,
+                                list_colors, list_markers):
+    # TO DO gerer couleurs, taille, etc
+    
+    # Retrieve data
     nb_dataets = len(dataset.list_dataset_names)
     for i in range(nb_dataets):
         if (dataset.list_dataset_names[i][0] == "State"):
             data_state = dataset.list_datasets[i]
+            
+    # Plot departure and arrival
     ax.scatter(data_state[axis_0, 0], data_state[axis_1, 0],
                label="Departure")
     ax.scatter(data_state[axis_0, -1], data_state[axis_1, -1],
@@ -42,7 +53,11 @@ def plot_thrust_vector(dataset, axis_0, axis_1, ax,
               thrust_scale*ucoord_0, thrust_scale*ucoord_1,
               color=thrust_color, label='Thrust')
     
-def plot_reference_orbits(dataset, axis_0, axis_1, ax, list_color):
+def plot_reference_orbits(dataset, axis_0, axis_1, ax,
+                          list_colors, list_linestyles):
+    # TO DO gerer couleurs, linestyle,faire un template ?
+
+    
     # Retreive data
     nb_dataets = len(dataset.list_dataset_names)
     for i in range(nb_dataets):
@@ -54,12 +69,12 @@ def plot_reference_orbits(dataset, axis_0, axis_1, ax, list_color):
     y_dep_1 = data_departure[axis_1,:]
     x_arr_0 = data_arrival[axis_0,:]
     y_arr_1 = data_arrival[axis_1,:]
+    departure_color = list_colors[0]
+    arrival_color = list_colors[1]
     
-    # PLot arrows
-    departure_color = list_color[0]
+    # Plot orbits
     ax.plot(x_dep_0, y_dep_1,
               color=departure_color, label='Departure orbit')
-    arrival_color = list_color[1]
     ax.plot(x_arr_0, y_arr_1, 
             color=arrival_color, label='Arrival orbit')
        
@@ -79,6 +94,7 @@ def plot_2d(dataset, axis_0, axis_1):
     fig = plt.figure()
     ax = fig.add_subplot()
     plt.grid()
+    ax.set_aspect("equal")
 
     
     # Set labels
@@ -93,18 +109,31 @@ def plot_2d(dataset, axis_0, axis_1):
     
     # Plot reference orbits
     list_colors_reference = ["blue", "orange"]
-    plot_reference_orbits(dataset, axis_0, axis_1,
-                          ax, list_colors_reference)
+    list_linestyles_references = ["dotted", "dotted"]
+    plot_reference_orbits(dataset, axis_0, axis_1, ax,
+                          list_colors_reference,
+                          list_linestyles_references)
     
     # Plot system points
-    plot_system_points(dataset, axis_0, axis_1, ax)
+    list_colors_system_points = ["black"]
+    list_markers_system_points = ["o"]
+    list_plots_system_points = "Center"
+    plot_system_points(dataset, axis_0, axis_1, ax,
+                       list_colors_system_points,
+                       list_markers_system_points,
+                       list_plots_system_points)
     
     # Plot trajectory
-    ax.plot(coord_0, coord_1, label='Trajectory')
+    color_trajectory = "green"
+    ax.plot(coord_0, coord_1,
+            color=color_trajectory,
+            label='Trajectory')
     
-    ax.set_aspect("equal")
     
-    plt.legend()
+    
+    plt.legend() # TO DO : Make option
+    
+    # TO DO save
     
     # Show the plot
     plt.show()

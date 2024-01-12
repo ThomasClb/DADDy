@@ -5,27 +5,41 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
-def plot_system_points(dataset, ax):
-    # TO DO gerer couleurs, taille, etc
+def plot_system_points(dataset, ax,
+                       list_colors, list_markers,
+                       list_plots):
+    # TO DO gerer couleurs, marker, quel marker plot
+    # TO DO point de lagrange
+    
+    # Discriminate dynamical system
     if dataset.dynamical_system.startswith("TBP"):
-        ax.scatter(0, 0, 0, label="Central body")
+        ax.scatter(0, 0, 0,
+                   label="Central body")
     elif dataset.dynamical_system.startswith("CR3BP"):
-        #ax.scatter(-dataset.spacecraft_parameters.constants.MU, 0, 0, label="$P_1$")
-        ax.scatter(1-dataset.spacecraft_parameters.constants.MU, 0, 0, label="$P_2$")
-        
-    # Departure and Arrival
+        #ax.scatter(-dataset.spacecraft_parameters.constants.MU, 0, 0,
+        #           label="$P_1$")
+        ax.scatter(1-dataset.spacecraft_parameters.constants.MU, 0, 0,
+                   label="$P_2$")
+
+def plot_plot_departure_arrival(dataset, ax,
+                                list_colors, list_markers):
+    # TO DO gerer couleurs, taille, etc
+    
+    # Retrieve data
     nb_dataets = len(dataset.list_dataset_names)
     for i in range(nb_dataets):
         if (dataset.list_dataset_names[i][0] == "State"):
             data_state = dataset.list_datasets[i]
+            
+    # Plot departure and arrival
     ax.scatter(data_state[0, 0], data_state[1, 0], data_state[2, 0],
                label="Departure")
     ax.scatter(data_state[0, -1], data_state[1, -1], data_state[2, -1],
                label="Arrival")
     
-    # TO DO : add Lagrange points
     
-def plot_thrust_vector(dataset, ax, thrust_scale, thrust_color):
+def plot_thrust_vector(dataset, ax,
+                       thrust_scale, thrust_color):
     # Retreive data
     nb_dataets = len(dataset.list_dataset_names)
     for i in range(nb_dataets):
@@ -40,12 +54,15 @@ def plot_thrust_vector(dataset, ax, thrust_scale, thrust_color):
     uy = data_control[1,:]
     uz = data_control[2,:]
     
-    # PLot arrows
+    # Plot arrows
     ax.quiver(x[:-1], y[:-1], z[:-1], 
               thrust_scale*ux, thrust_scale*uy, thrust_scale*uz,
               color=thrust_color, label='Thrust')
     
-def plot_reference_orbits(dataset, ax, list_color):
+def plot_reference_orbits(dataset, ax,
+                          list_colors, list_linestyles):
+    # TO DO gerer couleurs, linestyle,faire un template ?
+
     # Retreive data
     nb_dataets = len(dataset.list_dataset_names)
     for i in range(nb_dataets):
@@ -59,12 +76,12 @@ def plot_reference_orbits(dataset, ax, list_color):
     x_arr = data_arrival[0,:]
     y_arr = data_arrival[1,:]
     z_arr = data_arrival[2,:]
+    departure_color = list_colors[0]
+    arrival_color = list_colors[1]
     
-    # PLot arrows
-    departure_color = list_color[0]
+    # Plot orbits
     ax.plot(x_dep, y_dep, z_dep, 
               color=departure_color, label='Departure orbit')
-    arrival_color = list_color[1]
     ax.plot(x_arr, y_arr, z_arr, 
             color=arrival_color, label='Arrival orbit')
     
@@ -104,17 +121,31 @@ def plot_3d(dataset):
     # Plot Thrust 
     thrust_scale = 0.3 # TO DO move
     thrust_color = "red" # TO DO move
-    plot_thrust_vector(dataset, ax, thrust_scale, thrust_color)
+    plot_thrust_vector(dataset, ax,
+                       thrust_scale, thrust_color)
     
     # Plot reference orbits
     list_colors_reference = ["blue", "orange"]
-    plot_reference_orbits(dataset, ax, list_colors_reference)
+    list_linestyles_references = ["dotted", "dotted"]
+    plot_reference_orbits(dataset, ax,
+                          list_colors_reference,
+                          list_linestyles_references)
     
     # Plot system points
-    plot_system_points(dataset, ax)
+    list_colors_system_points = ["black"]
+    list_markers_system_points = ["o"]
+    list_plots_system_points = ["Center"]
+    plot_system_points(dataset, ax,
+                       list_colors_system_points,
+                       list_markers_system_points,
+                       list_plots_system_points)
     
     # Plot trajectory
-    ax.plot(x, y, z, color="green", label='Trajectory')
+    color_trajectory = "green"
+    ax.plot(x, y, z, color=color_trajectory, label='Trajectory')
+    
+    # Save
+    # TO DO
     
     # Show the plot
     plt.show()
