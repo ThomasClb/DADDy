@@ -42,10 +42,12 @@ class SpacecraftParameters:
 class Dataset:
     
     def __init__(self,
+                 file_name="",
                  dynamical_system="",
                  spacecraft_parameters=SpacecraftParameters(),
                  list_dataset_names=[],
                  list_datasets=[]):
+        self.file_name = file_name
         self.dynamical_system = dynamical_system
         self.spacecraft_parameters = spacecraft_parameters
         self.list_dataset_names = list_dataset_names
@@ -55,6 +57,7 @@ class Dataset:
         with open(file_name, 'r') as file:
         
             # Read header
+            self.file_name = file.readline().strip()
             self.dynamical_system = file.readline().strip()
             self.spacecraft_parameters.read(file)
             

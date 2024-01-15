@@ -1,8 +1,7 @@
 /**
-	cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1.cpp
+	tbp_SUN_low_thrust_earth_to_mars.cpp
 
-	Purpose: Low-thrust Halo L2 to Halo L1 transfer execution script.
-	In the Earth-Moon system.
+	Purpose: Low-thrust Earth-Mars transfer execution script.
 
 	@author Thomas Caleb
 
@@ -15,7 +14,7 @@ using namespace DACE;
 using namespace std::chrono;
 using namespace std;
 
-SolverParameters get_SolverParameters_cr3bp() {
+SolverParameters get_SolverParameters_tbp_SUN() {
 	// Solver parameters
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
@@ -23,14 +22,14 @@ SolverParameters get_SolverParameters_cr3bp() {
 	unsigned int Nineq = 3;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
-	unsigned int N = 110;
-	double cost_to_go_gain = 1e-5;
-	double terminal_cost_gain = 1e5;
+	unsigned int N = 40;
 	double homotopy_coefficient = 0.0;
-	double huber_loss_coefficient = 5e-4;
+	double cost_to_go_gain = 1e-2;
+	double terminal_cost_gain = 1e4;
+	double huber_loss_coefficient = 1e-3;
 	unsigned int DDP_type = 3 + 0*4;
 	double DDP_tol = 1e-4;
-	double AUL_tol = 1e-6;
+	double AUL_tol = 1e-4;
 	double PN_tol = 1e-12;
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int max_iter = 10000;
@@ -65,16 +64,16 @@ SolverParameters get_SolverParameters_cr3bp() {
 		verbosity);
 }
 
-void cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1(bool const& plot_graphs) {
+void tbp_SUN_low_thrust_earth_to_mars(bool const& plot_graphs) {
 
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
-	cout.precision(7);
+	cout.precision(5);
 
-	// Get dynamics
-	Dynamics dynamics = get_cr3bp_EARTH_MOON_low_thrust_dynamics();
-
-	// Normalisation cosntants
+	// Set dynamics
+	Dynamics dynamics = get_tbp_SUN_low_thrust_dynamics();
+	
+	// Normalisation constants
 	Constants constants(dynamics.constants());
 	double lu = constants.lu();
 	double massu = constants.massu();
@@ -82,17 +81,17 @@ void cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1(bool const& plot_graphs) {
 	double thrustu = constants.thrustu();
 	double vu = constants.vu();
 
-	// Spacecraft parameters (GTOC 12)
-	double m_0 = 1000 / massu; // [MASSU]
+	// Spacecraft parameters
+	double m_0 = 1000.0 / massu; // [MASSU]
 	double dry_mass = 500.0 / massu; // [MASSU]
-	double T = 0.5 / thrustu; // [N]
-	double Isp = 2000.0 / tu; // [s]
+	double T = 0.5 / thrustu; // [THRUSTU]
+	double Isp = 2000.0 / tu; // [TU]
 	SpacecraftParameters spacecraft_parameters(
 		dynamics.constants(),
 		m_0, dry_mass, T, Isp);
 
 	// Init solver parameters
-	SolverParameters solver_parameters = get_SolverParameters_cr3bp();
+	SolverParameters solver_parameters = get_SolverParameters_tbp_SUN();
 
 	// Solver parameters
 	unsigned int Nx = solver_parameters.Nx();
@@ -104,19 +103,16 @@ void cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1(bool const& plot_graphs) {
 	DA::setEps(1e-90);
 
 	// Initial conditions [3*LU, 3*VU, MASSU, TU]
-	// From NoDy paper
-	double ToF = 20 / SEC2DAYS / tu; // [TU]
+	double ToF = 348.79 / SEC2DAYS / tu; // [TU]
 	double dt = ToF / N; // [TU]
 	vectordb x_departure{
-		1.1607973110000016, 0,
-		-0.12269696820337475, 0,
-		-0.20768326513738075, 0,
-		m_0, 3.2746644337639852 };
+		-140699693 / lu, -51614428 / lu, 980 / lu,
+		9.774596 / vu, -28.07828 / vu, 4.337725e-4 / vu,
+		m_0, 365.25/SEC2DAYS/tu };
 	vectordb x_arrival{
-		0.84871015300008812, 0,
-		0.17388998538319206, 0,
-		0.26350093896218163, 0,
-		dry_mass, 2.5748200748171399 };
+		-172682023 / lu, 176959469 / lu, 7948912 / lu,
+		-16.427384 / vu, -14.860506 / vu, 9.21486e-2 / vu,
+		dry_mass, 700 / SEC2DAYS / tu };
 	vectordb x0 = x_departure; x0[Nx - 1] = dt; // Time step
 	vectordb x_goal = x_arrival; x_goal[Nx - 1] = ToF; // ToF
 
@@ -133,9 +129,10 @@ void cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1(bool const& plot_graphs) {
 
 	// Run DDP
 	auto start = high_resolution_clock::now();
+
 	solver.set_homotopy_coefficient(0.0);
 	solver.solve(x0, list_u_init, x_goal);
-	vectordb homotopy_sequence{0.5, 0.99};
+	vectordb homotopy_sequence{0.95, 1.0 - 1e-2};
 	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
 		solver.set_homotopy_coefficient(homotopy_sequence[i]);
 		solver.solve(x0, solver.list_u(), x_goal);
@@ -173,8 +170,8 @@ void cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1(bool const& plot_graphs) {
 	cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
 
 	// Print datasets
-	string file_name = "./data/datasets/cr3bp_EARTH_MOON_lt_haloL2_to_haloL1.dat";
-	string system_name = "CR3BP LT";
+	string file_name = "./data/datasets/tbp_SUN_lt_earth_to_mars.dat";
+	string system_name = "TBP LT";
 	print_transfer_dataset(
 		file_name, system_name,
 		list_x, list_u,

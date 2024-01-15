@@ -26,6 +26,7 @@ void print_dataset(
 	ofstream ofs(file_name);
 
 	// Print header
+	ofs << file_name << endl;
 	ofs << system_name << endl;
 	ofs << spacecraft_parameters;
 
