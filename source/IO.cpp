@@ -96,7 +96,8 @@ vector<vectordb> get_reference_trajectory(
 	return output;
 }
 
-//
+// Prints a transfer dataset on a standardised format
+// with reference orbits
 void print_transfer_dataset(
 	string const& file_name,
 	string const& system_name,

@@ -29,6 +29,7 @@ void print_dataset(
 	std::vector<std::vector<std::string>> const& list_title,
 	std::vector<std::vector<DACE::vectordb>> const& list_data);
 
+// Function to propagate a vector without control
 std::vector<DACE::vectordb> get_reference_trajectory(
 	DACE::vectordb const& x_0,
 	Dynamics const& dynamics,
@@ -37,6 +38,8 @@ std::vector<DACE::vectordb> get_reference_trajectory(
 	SolverParameters const& solver_parameters,
 	int const& nb_point);
 
+// Prints a transfer dataset on a standardised format
+// with reference orbits
 void print_transfer_dataset(
 	std::string const& file_name,
 	std::string const& system_name,
