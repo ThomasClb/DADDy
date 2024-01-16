@@ -1,20 +1,26 @@
-from classes import Dataset
+"""
+	plot_3d.py
+
+	Purpose: Implements the functions to produce 3D plots of tranfers.
+
+	@author Thomas Caleb
+
+	@version 1.0 16/01/2024
+    
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 
+from misc import get_Lagrange_point
+from classes import Dataset
 
-def get_Lagrange_point(dataset, point):
-    q = dataset.spacecraft_parameters.constants.MU
-    eps = (q/3.0)**(1/3.0)
-    
-    if point == 1:  
-        x = 1.0-q - eps + eps**2/3 + eps**3/9
 
-    elif point == 2:  
-        x = 1.0 - q + eps + eps**2/3 - eps**3/9
-    
-    return np.array([x, 0.0, 0.0])
+"""
+    Plots the specific points for a given dynamical system (two-body and 
+    circular-restricted three-body problem).
 
+"""
 def plot_system_points(dataset, ax,
                        list_colors, list_markers,
                        list_plots, denormalise):    
@@ -27,12 +33,13 @@ def plot_system_points(dataset, ax,
         if denormalise:
             LU = dataset.spacecraft_parameters.constants.LU
             coord_center *= LU
-            
-        if list_plots[0]:
+        
+        # Plot
+        if list_plots[0]: # Central body
             ax.scatter(coord_center[0], coord_center[1], coord_center[2],
                        label="Central body",
                        color=list_colors[0], marker=list_markers[0])
-
+    
     elif dataset.dynamical_system.startswith("CR3BP"):
         # Primary coordinates
         coord_P1 = np.array([-dataset.spacecraft_parameters.constants.MU, 0, 0])
@@ -49,31 +56,33 @@ def plot_system_points(dataset, ax,
             coord_L2 *= LU
         
         # Plots
-        if list_plots[0]:
+        if list_plots[0]: # First primary
             ax.scatter(coord_P1[0], coord_P1[1], coord_P1[2],
                        label="$P_1$",
                        color=list_colors[0], marker=list_markers[0])
             
-        if list_plots[1]:
+        if list_plots[1]: # Second primary
             ax.scatter(coord_P2[0], coord_P2[1], coord_P2[2],
                        label="$P_2$",
                        color=list_colors[1], marker=list_markers[1])
             
-            if list_plots[2]:
-                ax.scatter(coord_L1[0], coord_L1[1], coord_L1[2],
-                           label="$L_1$",
-                           color=list_colors[2], marker=list_markers[2])
-                
-            if list_plots[3]:
-                ax.scatter(coord_L2[0], coord_L2[1], coord_L2[2],
-                           label="$L_2$",
-                           color=list_colors[3], marker=list_markers[3])
+        if list_plots[2]: # Lagrange point 1
+            ax.scatter(coord_L1[0], coord_L1[1], coord_L1[2],
+                       label="$L_1$",
+                       color=list_colors[2], marker=list_markers[2])
+            
+        if list_plots[3]: # Lagrange point 2
+            ax.scatter(coord_L2[0], coord_L2[1], coord_L2[2],
+                       label="$L_2$",
+                       color=list_colors[3], marker=list_markers[3])
 
+"""
+    Plots the departure and arrival points of a transfer.
+
+"""
 def plot_departure_arrival(dataset, ax,
                            list_colors, list_markers,
-                           denormalise):
-    # TO DO gerer couleurs, taille, etc
-    
+                           denormalise):   
     # Retrieve data
     nb_datasets = len(dataset.list_dataset_names)
     for i in range(nb_datasets):
@@ -92,7 +101,11 @@ def plot_departure_arrival(dataset, ax,
     ax.scatter(data_state[0, -1], data_state[1, -1], data_state[2, -1],
                label="Arrival",
                color=list_colors[1], marker=list_markers[1])
-    
+   
+"""
+    Plots the thrust vectors along the trajectory.
+
+"""
 def plot_thrust_vector(dataset, ax,
                        thrust_scale, thrust_color,
                        denormalise):
@@ -126,6 +139,10 @@ def plot_thrust_vector(dataset, ax,
               thrust_scale*ux, thrust_scale*uy, thrust_scale*uz,
               color=thrust_color, label='Thrust')
     
+"""
+    Plots the departure and arrival orbits of a transfer.
+
+"""
 def plot_reference_orbits(dataset, ax,
                           list_colors, list_linestyles,
                           denormalise):
@@ -160,7 +177,11 @@ def plot_reference_orbits(dataset, ax,
     ax.plot(x_arr, y_arr, z_arr, 
             label='Arrival orbit',
             color=list_colors[1], linestyle=list_linestyles[1])
-    
+
+"""
+    Plots a 3D plot from a given dataset.
+
+"""
 def plot_3d(dataset):
     
     # Settings
@@ -206,7 +227,7 @@ def plot_3d(dataset):
     show_grid = True
     save_figure = True
     saving_format = "pdf"
-    show_plot = True
+    show_plot = False
 
     # Get data
     nb_dataets = len(dataset.list_dataset_names)
@@ -218,6 +239,7 @@ def plot_3d(dataset):
     y = data_state[1,:]
     z = data_state[2,:]
     
+    # Normalsation
     if denormalise:
         LU = dataset.spacecraft_parameters.constants.LU
         x *= LU

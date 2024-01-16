@@ -1,7 +1,23 @@
-from classes import Dataset
+"""
+	plot_thrust_profile.py
+
+	Purpose: Implements the functions to produce thrust profiles of tranfers.
+
+	@author Thomas Caleb
+
+	@version 1.0 16/01/2024
+    
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 
+from classes import Dataset
+
+"""
+    Plots a thrust profile with a stairs shape.
+
+"""
 def plot_stairs_profile(dt, u, ax, label, color,
                         linestyle="solid"):
     nb_point_stair = 50
@@ -19,7 +35,11 @@ def plot_stairs_profile(dt, u, ax, label, color,
             
     ax.plot(t, u_stairs, label=label,
             color=color, linestyle=linestyle)
-    
+
+"""
+    Plots a thrust pofile for a given transfer dataset.
+
+"""
 def plot_thrust_profile(dataset):
     # Settings
     
@@ -29,9 +49,9 @@ def plot_thrust_profile(dataset):
     
     # Thrust components
     plot_components = False
-    color_thrust_0 = "green" # TO DO move
-    color_thrust_1 = "cyan" # TO DO move
-    color_thrust_2 = "grey" # TO DO move
+    color_thrust_0 = "green"
+    color_thrust_1 = "cyan"
+    color_thrust_2 = "grey"
      
     # Thrust norm
     color_thrust_max = "red"
@@ -67,6 +87,7 @@ def plot_thrust_profile(dataset):
     x_label = "Time [TU]"
     y_label = "Thrust norm [THRUSTU]"
     
+    # Normalisation
     if denormalise:
         THRUSTU = dataset.spacecraft_parameters.constants.THRUSTU
         TU = dataset.spacecraft_parameters.constants.TU
@@ -82,7 +103,7 @@ def plot_thrust_profile(dataset):
         y_label = y_label.replace("THRUSTU", "N")
 
 
-    # Create 3D plot
+    # Create plot
     fig = plt.figure()
     ax = fig.add_subplot()
 

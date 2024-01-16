@@ -1,7 +1,30 @@
+"""
+	classes.py
+
+	Purpose: Implements the equivalent of the C++ classes Constants, and
+    SpacecraftParameters in python. As well as the Dataset class.
+
+	@author Thomas Caleb
+
+	@version 1.0 16/01/2024
+    
+"""
+
 import numpy as np
 
+
+
+"""
+    Implementation of the C++ class Constants.
+    Defined in constants.cpp.
+
+"""
 class Constants:
+    
+    """
+        Constructor of the Constants class.
         
+    """
     def __init__(self, mu=1, lu=1, wu=1, massu=1000):
         self.MU = float(mu)
         self.LU = float(lu)
@@ -11,6 +34,11 @@ class Constants:
         self.VU = self.LU*self.WU
         self.THRUSTU = 1000 * self.VU * self.MASSU * self.WU;
         
+        
+    """
+        Read from a C++ Constants file (.dat).
+        
+    """
     def read(self , file):
         file.readline() # skip first
         self.MU = float(file.readline().strip())
@@ -21,8 +49,18 @@ class Constants:
         self.VU = self.LU*self.WU
         self.THRUSTU = 1000 * self.VU * self.MASSU * self.WU;
 
+
+"""
+    Implementation of the C++ class SpacecraftParameters.
+    Defined in spacecraft_parameters.cpp.
+
+"""
 class SpacecraftParameters:
     
+    """
+        Constructor of the SpacecraftParameters class.
+        
+    """
     def __init__(self, constants=Constants(),
                  initial_mass=1, dry_mass=0.5, thrust=1, Isp=1):
         self.constants = constants
@@ -30,7 +68,11 @@ class SpacecraftParameters:
         self.dry_mass = float(dry_mass)
         self.thrust = float(thrust)
         self.Isp = float(Isp)
-
+        
+    """
+        Read from a C++ SpacecraftParameters file (.dat).
+        
+    """
     def read(self , file):
         self.constants.read(file)
         file.readline() # skip first
@@ -38,9 +80,21 @@ class SpacecraftParameters:
         self.dry_mass = float(file.readline().strip())
         self.thrust = float(file.readline().strip())
         self.Isp = float(file.readline().strip())
-        
+       
+
+"""
+    Implementation of the class Dataset.
+    It stores the file name, the dynamical system name, a SpacecraftParameters
+    The list of names of the datasets and the datasets themselves.
+
+"""
 class Dataset:
     
+    
+    """
+        Constructor of the Dataset class.
+        
+    """
     def __init__(self,
                  file_name="",
                  dynamical_system="",
@@ -53,7 +107,13 @@ class Dataset:
         self.list_dataset_names = list_dataset_names
         self.list_datasets = list_datasets
 
+    """
+        Read from a C++-generated Dataset file (.dat).
+        
+    """
     def read(self , file_name):
+        
+        # Open file
         with open(file_name, 'r') as file:
         
             # Read header
@@ -64,6 +124,7 @@ class Dataset:
             # Get number of datasets
             nb_datasets = int(file.readline().strip())
             
+            # Loop on all datasets
             list_dataset_names = []
             list_datasets = []
             for i in range(nb_datasets):
@@ -78,7 +139,8 @@ class Dataset:
                 dataset = np.zeros((nb_rows, nb_cols))
                 
                 # Get names
-                list_dataset_names_i = list_dataset_names_i + file.readline().strip().split(",")
+                list_dataset_names_i = (list_dataset_names_i 
+                                        + file.readline().strip().split(","))
                 list_dataset_names_i.pop(nb_rows + 1)
                 list_dataset_names.append(list_dataset_names_i)
                 
@@ -89,6 +151,7 @@ class Dataset:
                     for l in range(nb_rows):
                         dataset[l, k] = float(list_data[l])
                 list_datasets.append(dataset)
+                
+            # Assign
             self.list_dataset_names = list_dataset_names;
             self.list_datasets = list_datasets;
-                        
