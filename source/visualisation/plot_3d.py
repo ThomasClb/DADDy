@@ -135,8 +135,9 @@ def plot_thrust_vector(dataset, ax,
         uz *= THRUSTU
     
     # Plot arrows
+    scale = 1/thrust_scale
     ax.quiver(x[:-1], y[:-1], z[:-1], 
-              thrust_scale*ux, thrust_scale*uy, thrust_scale*uz,
+              scale*ux, scale*uy, scale*uz,
               color=thrust_color, label='Thrust')
     
 """
@@ -186,12 +187,14 @@ def plot_3d(dataset):
     
     # Settings
     
+    dpi = 200
+    
     # View 
     azim = 78
     elev = 15
    
     # Thrust
-    thrust_scale = 0.2
+    thrust_scale = 5
     thrust_color = "red"
     
     # System points
@@ -227,7 +230,7 @@ def plot_3d(dataset):
     show_grid = True
     save_figure = True
     saving_format = "pdf"
-    show_plot = False
+    show_plot = True
 
     # Get data
     nb_dataets = len(dataset.list_dataset_names)

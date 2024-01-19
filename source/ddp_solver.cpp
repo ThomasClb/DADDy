@@ -368,7 +368,8 @@ bool DDPSolver::evaluate_convergence_(double const& d_cost) {
 	unsigned int max_iter = solver_parameters_.DDP_max_iter();
 
 	// Converged
-	if ((d_cost < tol && d_cost >= 0.0) || n_iter_ >= max_iter)
+	if ((d_cost < tol && d_cost >= 0.0 && (n_iter_ >= 0.05*max_iter || d_cost==0))
+		|| n_iter_ >= max_iter)
 		return true;
 
 	return false;
@@ -1608,7 +1609,7 @@ void DDPSolver::solve(
 		ctg = (cost_ - tc_eval_.cons());
 
 		// Evaluate convergence 
-		double d_cost = cost_last - cost_;
+		double d_cost = (cost_last - cost_)/max(abs(cost_last), abs(cost_));
 		loop = !evaluate_convergence_(d_cost);
 
 		// Update states and control

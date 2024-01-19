@@ -168,7 +168,7 @@ const tineqFunction_db Dynamics::terminal_inequality_constraints_db() const {
 
 // Returns dynamics with acceleration_2bp_SUN as accelerations.
 // Terminal constraints and thrust constraints.
-Dynamics get_tbp_SUN_low_thrust_dynamics() {
+Dynamics get_tbp_SUN_lt_dynamics() {
 	Constants constants(MU_SUN, SUN_EARTH_DISTANCE,
 		sqrt((MU_SUN) / pow(SUN_EARTH_DISTANCE, 3)), 1000);
 	dynFunction dyn([](
@@ -264,7 +264,7 @@ Dynamics get_tbp_SUN_low_thrust_dynamics() {
 
 // Returns dynamics with acceleration_cr3bp as accelerations.
 // Terminal constraints and thrust constraints.
-Dynamics get_cr3bp_EARTH_MOON_low_thrust_dynamics() {
+Dynamics get_cr3bp_EARTH_MOON_lt_dynamics() {
 	Constants constants(MU_MOON / (MU_MOON + MU_EARTH), EARTH_MOON_DISTANCE,
 		sqrt((MU_MOON + MU_EARTH) / pow(EARTH_MOON_DISTANCE, 3)), 1000);
 	dynFunction dyn([](

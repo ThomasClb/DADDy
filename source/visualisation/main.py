@@ -38,9 +38,16 @@ if __name__ == "__main__":
     
     
     # TO DO : have file name as an input
-    file_name = './data/datasets/cr3bp_EARTH_MOON_lt_haloL2_to_haloL1.dat'
+    
     #file_name = './data/datasets/tbp_SUN_lt_earth_to_mars.dat'
+    
+    
+    #file_name = './data/datasets/cr3bp_EARTH_MOON_lt_haloL2_to_haloL1.dat'
+    #file_name = './data/datasets/cr3bp_EARTH_MOON_lt_nrho_to_dro.dat'
+    #file_name = './data/datasets/cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2.dat'
+    file_name = './data/datasets/cr3bp_EARTH_MOON_lt_dro_to_dro.dat'
 
+    
     # Load dataset
     dataset = get_dataset(file_name)
     

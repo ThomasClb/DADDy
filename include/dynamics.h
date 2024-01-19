@@ -371,19 +371,21 @@ T cost_to_go(
 	T dt = x[SIZE_VECTOR + 1];
 
 	// NRJ cost to go
-	DACE::AlgebraicVector<T>  u_norm = u * (dt * (1 / (delta * dt_avg * T_max))); // [THRUSTU]
+	DACE::AlgebraicVector<T>  u_norm = u * (dt * (1 / (dt_avg * T_max))); // [THRUSTU]
 	T NRJ_ctg = u_norm.dot(u_norm); // [THRUSTU^2]
 
 	// Return cost
 	if (homotopy_coefficient == 0.0)
-		return (0.5 * gain * delta ) * NRJ_ctg;
+		return (0.5 * gain) * NRJ_ctg;
 
 	// Pseudo-Huber loss
-	T fuel_ctg = sqrt(1.0 + NRJ_ctg) - 1.0;
+	NRJ_ctg = NRJ_ctg / pow(delta, 2.0); // Normalise NRJ optimal term
+	double mass_leak = tol * tol / pow(delta, 2.0);
+	T fuel_ctg = sqrt(1.0 + NRJ_ctg + mass_leak) - 1.0;
 
 	// Homotopy
 	double c_1 = 0.5 * gain * delta * delta * (1.0 - homotopy_coefficient);
-	double c_2 = gain * delta * homotopy_coefficient;
+	double c_2 = delta *  gain * homotopy_coefficient;
 	return(c_1 * NRJ_ctg + c_2 * fuel_ctg);
 }
 
@@ -484,8 +486,8 @@ DACE::AlgebraicVector<T> terminal_inequality_constraints(
 
 // Returns dynamics with acceleration_2b_SUN as accelerations.
 // Terminal constraints and thrust constraints.
-Dynamics get_tbp_SUN_low_thrust_dynamics();
-Dynamics get_cr3bp_EARTH_MOON_low_thrust_dynamics();
+Dynamics get_tbp_SUN_lt_dynamics();
+Dynamics get_cr3bp_EARTH_MOON_lt_dynamics();
 
 
 #endif

@@ -1,7 +1,8 @@
 /**
-	tbp_SUN_lt_earth_to_mars.cpp
+	cr3bp_EARTH_MOON_lt_dro_to_dro.cpp
 
-	Purpose: Low-thrust Earth-Mars transfer execution script.
+	Purpose: Low-thrust DRO to DRO transfer execution script.
+	In the Earth-Moon system.
 
 	@author Thomas Caleb
 
@@ -14,7 +15,7 @@ using namespace DACE;
 using namespace std::chrono;
 using namespace std;
 
-SolverParameters get_SolverParameters_tbp_SUN_lt_earth_to_mars() {
+SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro() {
 	// Solver parameters
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
@@ -22,14 +23,14 @@ SolverParameters get_SolverParameters_tbp_SUN_lt_earth_to_mars() {
 	unsigned int Nineq = 3;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
-	unsigned int N = 40;
+	unsigned int N = 300;
+	double cost_to_go_gain = 1e-3;
+	double terminal_cost_gain = 1e7;
 	double homotopy_coefficient = 0.0;
-	double cost_to_go_gain = 1e-2;
-	double terminal_cost_gain = 1e4;
-	double huber_loss_coefficient = 5e-3;
+	double huber_loss_coefficient = 1e-4;
 	unsigned int DDP_type = 3 + 0*4;
 	double DDP_tol = 1e-4;
-	double AUL_tol = 1e-4; 
+	double AUL_tol = 5e-6;
 	double PN_tol = 1e-12;
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int max_iter = 10000;
@@ -64,16 +65,47 @@ SolverParameters get_SolverParameters_tbp_SUN_lt_earth_to_mars() {
 		verbosity);
 }
 
-void tbp_SUN_lt_earth_to_mars(bool const& plot_graphs) {
+vector<vectordb> make_first_guess(
+	double const& thrust,
+	vectordb const& x_0,
+	Dynamics const& dynamics,
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
+	SolverParameters const& solver_parameters) {
+
+	// Unpack
+	int Nu = solver_parameters.Nu();
+	int Nx = solver_parameters.Nx();
+	int N = solver_parameters.N();
+	double period = x_0[Nx - 1];
+
+	// Init
+	vector<vectordb> output;
+	vectordb x_i = x_0;
+	double dt = period / (N - 1.0);
+	x_i[Nx - 1] = dt;
+	vectordb null_control(Nu, 0.0);
+
+	// Loop
+	for (size_t i = 0; i < N; i++) {
+		output.push_back(x_i.extract(3, 5).normalize()* thrust);
+		x_i = dynamics.dynamic_db()(
+			x_i, null_control,
+			spacecraft_parameters, constants, solver_parameters);
+	}
+	return output;
+}
+
+void cr3bp_EARTH_MOON_lt_dro_to_dro(bool const& plot_graphs) {
 
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
-	cout.precision(5);
+	cout.precision(7);
 
-	// Set dynamics
-	Dynamics dynamics = get_tbp_SUN_lt_dynamics();
-	
-	// Normalisation constants
+	// Get dynamics
+	Dynamics dynamics = get_cr3bp_EARTH_MOON_lt_dynamics();
+
+	// Normalisation cosntants
 	Constants constants(dynamics.constants());
 	double lu = constants.lu();
 	double massu = constants.massu();
@@ -81,17 +113,17 @@ void tbp_SUN_lt_earth_to_mars(bool const& plot_graphs) {
 	double thrustu = constants.thrustu();
 	double vu = constants.vu();
 
-	// Spacecraft parameters
-	double m_0 = 1000.0 / massu; // [MASSU]
-	double dry_mass = 500.0 / massu; // [MASSU]
-	double T = 0.5 / thrustu; // [THRUSTU]
-	double Isp = 2000.0 / tu; // [TU]
+	// Spacecraft parameters (GTOC 12)
+	double m_0 = 1000 / massu; // [MASSU]
+	double dry_mass = 500 / massu; // [MASSU]
+	double T = 0.5 / thrustu; // [N]
+	double Isp = 2000.0 / tu; // [s]
 	SpacecraftParameters spacecraft_parameters(
 		dynamics.constants(),
 		m_0, dry_mass, T, Isp);
 
 	// Init solver parameters
-	SolverParameters solver_parameters = get_SolverParameters_tbp_SUN_lt_earth_to_mars();
+	SolverParameters solver_parameters = get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro();
 
 	// Solver parameters
 	unsigned int Nx = solver_parameters.Nx();
@@ -103,22 +135,28 @@ void tbp_SUN_lt_earth_to_mars(bool const& plot_graphs) {
 	DA::setEps(1e-90);
 
 	// Initial conditions [3*LU, 3*VU, MASSU, TU]
-	double ToF = 348.79 / SEC2DAYS / tu; // [TU]
+	// From [Boone MacMahon 2024]
+	int nb_revs = 2;
+	double ToF = nb_revs *17.5 / SEC2DAYS / tu; // [TU]
 	double dt = ToF / N; // [TU]
-	vectordb x_departure{
-		-140699693 / lu, -51614428 / lu, 980 / lu,
-		9.774596 / vu, -28.07828 / vu, 4.337725e-4 / vu,
-		m_0, 365.25/SEC2DAYS/tu };
+	vectordb x_departure{ 
+		1.171359, 0, 0.0,
+		0, -0.489458, 0.0,
+		m_0, 13.4 /SEC2DAYS / tu };
 	vectordb x_arrival{
-		-172682023 / lu, 176959469 / lu, 7948912 / lu,
-		-16.427384 / vu, -14.860506 / vu, 9.21486e-2 / vu,
-		dry_mass, 700 / SEC2DAYS / tu };
+		1.301844, 0, 0.0,
+		0, -0.642177, 0.0,
+		dry_mass, 21.6 / SEC2DAYS / tu };
 	vectordb x0 = x_departure; x0[Nx - 1] = dt; // Time step
 	vectordb x_goal = x_arrival; x_goal[Nx - 1] = ToF; // ToF
 
 	// First guess command
-	vectordb u_init(Nu, 1e-6 / thrustu); // [VU]
+	vectordb u_init(Nu, 1e-1 / thrustu); // [VU]
 	vector<vectordb> list_u_init(N, u_init);
+	list_u_init = make_first_guess(
+		0.1 * T, x_departure,
+		dynamics, spacecraft_parameters,
+		constants, solver_parameters);
 
 	// Output
 	cout << "DEPARTURE : " << endl << x0.extract(0, Nx - 1 - 1) << endl;
@@ -129,24 +167,31 @@ void tbp_SUN_lt_earth_to_mars(bool const& plot_graphs) {
 
 	// Run DDP
 	auto start = high_resolution_clock::now();
-
 	solver.set_homotopy_coefficient(0.0);
 	solver.solve(x0, list_u_init, x_goal);
-	vectordb homotopy_sequence{1, 1.0};
-	vectordb huber_loss_coefficient_sequence{1e-2, 1e-3};
-	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
-		solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
-		solver.set_homotopy_coefficient(homotopy_sequence[i]);
-		solver.solve(x0, solver.list_u(), x_goal);
-	}
 
+
+	vectordb homotopy_sequence, huber_loss_coefficient_sequence;
+	if (nb_revs == 1) {
+		homotopy_sequence = vectordb{0.95, 0.95, 1};
+		huber_loss_coefficient_sequence = vectordb{1e-2, 1e-3, 1e-3};
+	}
+	if (nb_revs == 2) {
+		homotopy_sequence = vectordb{ 0.95, 0.99, 1-1e-3 };
+		huber_loss_coefficient_sequence = vectordb{ 1e-2, 5e-3, 1e-3 };
+	}
+	if (nb_revs == 3) {
+		homotopy_sequence = vectordb{ 0.95, 0.99, 1 - 1e-3 };
+		huber_loss_coefficient_sequence = vectordb{ 1e-2, 5e-3, 1e-3 };
+	}
+	/**/
 	// Set DACE at order 1 (No Hessian needed)
 	DA::setTO(1);
 
 	// PN test
 	auto start_inter = high_resolution_clock::now();
 	PNSolver pn_solver(solver);
-	pn_solver.solve(x_goal);
+	//pn_solver.solve(x_goal);
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
 	auto duration_AUL = duration_cast<microseconds>(start_inter - start);
@@ -172,8 +217,8 @@ void tbp_SUN_lt_earth_to_mars(bool const& plot_graphs) {
 	cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
 
 	// Print datasets
-	string file_name = "./data/datasets/tbp_SUN_lt_earth_to_mars.dat";
-	string system_name = "TBP LT";
+	string file_name = "./data/datasets/cr3bp_EARTH_MOON_lt_dro_to_dro.dat";
+	string system_name = "CR3BP LT";
 	print_transfer_dataset(
 		file_name, system_name,
 		list_x, list_u,

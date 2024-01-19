@@ -96,7 +96,7 @@ double real_constraints(
 
 void run_test_cases(int argc, char** argv) {
 	// Parameters
-	int test_case = 1;
+	int test_case = 7;
 	bool plot_graphs = false;
 
 	// Excute correct test case
@@ -110,7 +110,7 @@ void run_test_cases(int argc, char** argv) {
 
 	// Earth-mars transfer
 	else if (test_case == 1)
-		tbp_SUN_low_thrust_earth_to_mars(plot_graphs);
+		tbp_SUN_lt_earth_to_mars(plot_graphs);
 
 	// Earth centered
 
@@ -126,16 +126,22 @@ void run_test_cases(int argc, char** argv) {
 
 	// Halo L2 to Halo L1
 	else if (test_case == 4)
-		cr3bp_EARTH_MOON_low_thrust_haloL2_to_haloL1(plot_graphs);
+		cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(plot_graphs);
 
 	// Halo L2 (Gateway) to DRO
-	else if (test_case == 5) {}
+	else if (test_case == 5) {
+		cr3bp_EARTH_MOON_lt_nrho_to_dro(plot_graphs);
+	}
 
 	// Lyapunov L2 to Lyapunov L1
-	else if (test_case == 6) {}
+	else if (test_case == 6) {
+		cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2(plot_graphs);
+	}
 
 	// Manyrev DRO to DRO
-	else if (test_case == 7) {}
+	else if (test_case == 7) {
+		cr3bp_EARTH_MOON_lt_dro_to_dro(plot_graphs);
+	}
 
 	// Manyrev GSO to NRHO
 	else if (test_case == 8) {}

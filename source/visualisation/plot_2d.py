@@ -132,7 +132,8 @@ def plot_thrust_vector(dataset, axis_0, axis_1, ax,
     
     # Plot arrows
     ax.quiver(coord_0[:-1], coord_1[:-1],
-              thrust_scale*ucoord_0, thrust_scale*ucoord_1,
+              ucoord_0, ucoord_1,
+              scale=thrust_scale,
               color=thrust_color, label='Thrust')
     
 """
@@ -178,12 +179,14 @@ def plot_2d(dataset):
     
     # Settings
     
+    dpi = 200
+    
     # Axes
     axis_0 = 0
     axis_1 = 1
     
     # Thrust
-    thrust_scale = 0.3
+    thrust_scale = 0.5
     thrust_color = "red"
     
     # System points
@@ -219,7 +222,7 @@ def plot_2d(dataset):
     show_grid = True
     save_figure = True
     saving_format = "pdf"
-    show_plot = False
+    show_plot = True
 
     # Get data
     nb_dataets = len(dataset.list_dataset_names)
@@ -243,18 +246,13 @@ def plot_2d(dataset):
             "LU", "km")
 
     # Create plot
-    fig = plt.figure()
+    fig = plt.figure(dpi=dpi)
     ax = fig.add_subplot()
     ax.set_aspect("equal")
 
     # Set labels
     ax.set_xlabel(list_names_state[axis_0 + 1])
     ax.set_ylabel(list_names_state[axis_1 + 1])
-    
-    # Plot Thrust 
-    plot_thrust_vector(dataset, axis_0, axis_1,
-                       ax, thrust_scale, thrust_color,
-                       denormalise)
     
     # Plot reference orbits
     plot_reference_orbits(dataset, axis_0, axis_1, ax,
@@ -273,6 +271,11 @@ def plot_2d(dataset):
                        list_colors_system_points,
                        list_markers_system_points,
                        list_plots_system_points,
+                       denormalise)
+    
+    # Plot Thrust 
+    plot_thrust_vector(dataset, axis_0, axis_1,
+                       ax, thrust_scale, thrust_color,
                        denormalise)
     
     # Plot trajectory
