@@ -15,6 +15,7 @@
 
 // Define useful constants
 #define PI (4.0*atan(1.0)) // Definiton of pi [rad]
+#define DEG_2_RAD (PI/180.0) // Definiton of pi [rad]
 #define SIZE_VECTOR 6 // Size of a state vector (3 positions, 3 velocities)
 #define SEC2DAYS (1.0/(24.*3600)) // Conversion from seconds to days [days.s^-1]
 

@@ -186,7 +186,7 @@ def plot_2d(dataset):
     axis_1 = 1
     
     # Thrust
-    thrust_scale = 0.5
+    thrust_scale = 0.01
     thrust_color = "red"
     
     # System points

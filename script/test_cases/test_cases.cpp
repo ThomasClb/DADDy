@@ -96,7 +96,7 @@ double real_constraints(
 
 void run_test_cases(int argc, char** argv) {
 	// Parameters
-	int test_case = 7;
+	int test_case = 2;
 	bool plot_graphs = false;
 
 	// Excute correct test case
@@ -115,7 +115,9 @@ void run_test_cases(int argc, char** argv) {
 	// Earth centered
 
 	// GTO to GEO
-	else if (test_case == 2) {}
+	else if (test_case == 2) {
+		tbp_EARTH_lt_leo_to_geo(plot_graphs);
+	}
 
 	// Any orbit to any orbit
 	else if (test_case == 3) {}

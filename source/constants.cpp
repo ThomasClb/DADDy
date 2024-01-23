@@ -76,7 +76,7 @@ ostream& operator<<(ostream& os, const Constants& constants) {
 
 	// Make legend
 	string legend = string("CONSTANTS : MU [km^3.s^-2], LU [km], WU [s^-1], MASSU [kg]. ")
-		+ string("WU [s], VU = LU * WU [km.s^-1], THRUSTU = 1000 * VU * MASSU * WU [N].");
+		+ string("TU [s], VU = LU * WU [km.s^-1], THRUSTU = 1000 * VU * MASSU * WU [N].");
 
 	// Write attributs
 	os << legend << endl;

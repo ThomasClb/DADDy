@@ -180,18 +180,20 @@ void cr3bp_EARTH_MOON_lt_dro_to_dro(bool const& plot_graphs) {
 		homotopy_sequence = vectordb{ 0.95, 0.99, 1-1e-3 };
 		huber_loss_coefficient_sequence = vectordb{ 1e-2, 5e-3, 1e-3 };
 	}
-	if (nb_revs == 3) {
-		homotopy_sequence = vectordb{ 0.95, 0.99, 1 - 1e-3 };
-		huber_loss_coefficient_sequence = vectordb{ 1e-2, 5e-3, 1e-3 };
-	}
 	/**/
+	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
+		solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
+		solver.set_homotopy_coefficient(homotopy_sequence[i]);
+		solver.solve(x0, solver.list_u(), x_goal);
+	}
+	
 	// Set DACE at order 1 (No Hessian needed)
 	DA::setTO(1);
 
 	// PN test
 	auto start_inter = high_resolution_clock::now();
 	PNSolver pn_solver(solver);
-	//pn_solver.solve(x_goal);
+	pn_solver.solve(x_goal);
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
 	auto duration_AUL = duration_cast<microseconds>(start_inter - start);
