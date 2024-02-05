@@ -37,8 +37,12 @@ def plot_system_points(dataset, ax,
         # Plot
         if list_plots[0]: # Central body
             ax.scatter(coord_center[0], coord_center[1], coord_center[2],
-                       label="Central body",
                        color=list_colors[0], marker=list_markers[0])
+            
+            # Print name
+            central_body_name = dataset.dynamical_system.split(" ")[1]
+            ax.text(coord_center[0], coord_center[1], coord_center[2],
+                    " " + central_body_name)
     
     elif dataset.dynamical_system.startswith("CR3BP"):
         # Primary coordinates
@@ -46,6 +50,9 @@ def plot_system_points(dataset, ax,
         coord_P2 = np.array([1-dataset.spacecraft_parameters.constants.MU, 0, 0])
         coord_L1 = get_Lagrange_point(dataset, 1)
         coord_L2 = get_Lagrange_point(dataset, 2)
+        
+        # Get names
+        primary_names = dataset.dynamical_system.split(" ")[1].split("-")
         
         # Denormalise
         if denormalise:
@@ -58,23 +65,28 @@ def plot_system_points(dataset, ax,
         # Plots
         if list_plots[0]: # First primary
             ax.scatter(coord_P1[0], coord_P1[1], coord_P1[2],
-                       label="$P_1$",
                        color=list_colors[0], marker=list_markers[0])
+            ax.text(coord_P1[0], coord_P1[1], coord_P1[2],
+                    " " + primary_names[0])
             
         if list_plots[1]: # Second primary
             ax.scatter(coord_P2[0], coord_P2[1], coord_P2[2],
-                       label="$P_2$",
                        color=list_colors[1], marker=list_markers[1])
+            ax.text(coord_P2[0], coord_P2[1], coord_P2[2],
+                    " " + primary_names[1])
             
         if list_plots[2]: # Lagrange point 1
             ax.scatter(coord_L1[0], coord_L1[1], coord_L1[2],
-                       label="$L_1$",
                        color=list_colors[2], marker=list_markers[2])
+            ax.text(coord_L1[0], coord_L1[1], coord_L1[2],
+                    " $L_1$")
             
         if list_plots[3]: # Lagrange point 2
             ax.scatter(coord_L2[0], coord_L2[1], coord_L2[2],
-                       label="$L_2$",
                        color=list_colors[3], marker=list_markers[3])
+            ax.text(coord_L2[0], coord_L2[1], coord_L2[2],
+                    " $L_2$")
+
 
 """
     Plots the departure and arrival points of a transfer.
@@ -96,18 +108,20 @@ def plot_departure_arrival(dataset, ax,
             
     # Plot departure and arrival
     ax.scatter(data_state[0, 0], data_state[1, 0], data_state[2, 0],
-               label="Departure",
-               color=list_colors[0], marker=list_markers[0])
+               color=list_colors[0], marker=list_markers[0],)
+    ax.text(data_state[0, 0], data_state[1, 0], data_state[2, 0],
+            " $x_0$")
     ax.scatter(data_state[0, -1], data_state[1, -1], data_state[2, -1],
-               label="Arrival",
                color=list_colors[1], marker=list_markers[1])
+    ax.text(data_state[0, -1], data_state[1, -1], data_state[2, -1],
+            " $x_f$")
    
 """
     Plots the thrust vectors along the trajectory.
 
 """
 def plot_thrust_vector(dataset, ax,
-                       thrust_scale, thrust_color,
+                       thrust_color,
                        denormalise):
     # Retreive data
     nb_dataets = len(dataset.list_dataset_names)
@@ -135,10 +149,10 @@ def plot_thrust_vector(dataset, ax,
         uz *= THRUSTU
     
     # Plot arrows
-    scale = 1/thrust_scale
     ax.quiver(x[:-1], y[:-1], z[:-1], 
-              scale*ux, scale*uy, scale*uz,
-              color=thrust_color, label='Thrust')
+              ux, uy, uz,
+              label='Thrust',
+              color=thrust_color)
     
 """
     Plots the departure and arrival orbits of a transfer.
@@ -194,7 +208,6 @@ def plot_3d(dataset):
     elev = 15
    
     # Thrust
-    thrust_scale = 5
     thrust_color = "red"
     
     # System points
@@ -276,7 +289,7 @@ def plot_3d(dataset):
     
     # Plot Thrust 
     plot_thrust_vector(dataset, ax,
-                       thrust_scale, thrust_color,
+                       thrust_color,
                        denormalise)
     
     # Plot reference orbits

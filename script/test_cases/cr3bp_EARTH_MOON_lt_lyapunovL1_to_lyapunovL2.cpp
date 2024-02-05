@@ -24,14 +24,14 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunov
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
 	unsigned int N = 600;
-	double cost_to_go_gain = 1e-5;
-	double terminal_cost_gain = 1e11;
+	double cost_to_go_gain = 1e-3;
+	double terminal_cost_gain = 1e10;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-4;
 	unsigned int DDP_type = 3 + 0*4;
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6;
-	double PN_tol = 1e-12;
+	double PN_tol = 1e-10;
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int max_iter = 10000;
 	unsigned int DDP_max_iter = 100;
@@ -46,6 +46,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunov
 	double PN_cv_rate_threshold(1.1);
 	double PN_alpha(1.0); double PN_gamma(0.5);
 	unsigned int verbosity = 0;
+	unsigned int saving_iterations = 0;
 
 	return SolverParameters(
 		N, Nx, Nu,
@@ -62,10 +63,21 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunov
 		lambda_parameters, mu_parameters,
 		PN_regularisation, PN_active_constraint_tol,
 		PN_cv_rate_threshold, PN_alpha, PN_gamma,
-		verbosity);
+		verbosity, saving_iterations);
 }
 
-void cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2(bool const& plot_graphs) {
+void cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2(int argc, char** argv) {
+	// Input check
+	if (argc < 3) {
+		cout << "Wrong number of arguments." << endl;
+		cout << "Requested number : 2" << endl;
+		cout << "0 - Test case number." << endl;
+		cout << "1 - SpacecraftParameter adress." << endl;
+		return;
+	}
+
+	// Unpack inputs
+	string spacecraft_parameters_file = argv[2];
 
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
@@ -82,14 +94,8 @@ void cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2(bool const& plot_graphs) {
 	double thrustu = constants.thrustu();
 	double vu = constants.vu();
 
-	// Spacecraft parameters (GTOC 12)
-	double m_0 = 1000 / massu; // [MASSU]
-	double dry_mass = 500 / massu; // [MASSU]
-	double T = 0.5 / thrustu; // [N]
-	double Isp = 2000.0 / tu; // [s]
-	SpacecraftParameters spacecraft_parameters(
-		dynamics.constants(),
-		m_0, dry_mass, T, Isp);
+	// Spacecraft parameters
+	SpacecraftParameters spacecraft_parameters(spacecraft_parameters_file);
 
 	// Init solver parameters
 	SolverParameters solver_parameters = get_SolverParameters_cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2();
@@ -110,11 +116,13 @@ void cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2(bool const& plot_graphs) {
 	vectordb x_departure{ 
 		0.85599012364703531, 0.12436459999999999, 0,
 		0.094844873498005022, 0.044107030349277508, 0,
-		m_0, 2.9750964922007723 };
+		spacecraft_parameters.initial_mass(),
+		2.9750964922007723 };
 	vectordb x_arrival{
 		1.0959752057722425, 0.11525999999999831, 0,
 		0.037470505824053729,0.12673805721118889, 0,
-		m_0, 3.49306635929003 };
+		spacecraft_parameters.dry_mass(),
+		3.49306635929003 };
 	vectordb x0 = x_departure; x0[Nx - 1] = dt; // Time step
 	vectordb x_goal = x_arrival; x_goal[Nx - 1] = ToF; // ToF
 
@@ -133,8 +141,8 @@ void cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2(bool const& plot_graphs) {
 	auto start = high_resolution_clock::now();
 	solver.set_homotopy_coefficient(0.0);
 	solver.solve(x0, list_u_init, x_goal);
-	vectordb huber_loss_coefficient_sequence{ 5e-2, 5e-2, 5e-3, 1e-3};
-	vectordb homotopy_sequence{0.5, 0.8, 0.9, 0.99};
+	vectordb huber_loss_coefficient_sequence{ 5e-2, 5e-2, 5e-3, 1e-4};
+	vectordb homotopy_sequence{0.5, 0.8, 0.9, 0.999};
 	
 	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
 		solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
@@ -149,7 +157,7 @@ void cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2(bool const& plot_graphs) {
 	// PN test
 	auto start_inter = high_resolution_clock::now();
 	PNSolver pn_solver(solver);
-	// pn_solver.solve(x_goal);
+	pn_solver.solve(x_goal);
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
 	auto duration_AUL = duration_cast<microseconds>(start_inter - start);
@@ -176,7 +184,7 @@ void cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2(bool const& plot_graphs) {
 
 	// Print datasets
 	string file_name = "./data/datasets/cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2.dat";
-	string system_name = "CR3BP LT";
+	string system_name = "CR3BP EARTH-MOON CARTESIAN LT";
 	print_transfer_dataset(
 		file_name, system_name,
 		list_x, list_u,

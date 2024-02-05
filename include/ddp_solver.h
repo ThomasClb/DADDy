@@ -53,6 +53,10 @@ protected:
 	std::vector<DACE::matrixdb> list_k_;
 	std::vector<DACE::matrixdb> list_K_;
 
+	// Iteration saving
+	std::vector<std::vector<DACE::vectordb>> list_x_mem_; // Iterations on the states
+	std::vector<std::vector<DACE::vectordb>> list_u_mem_; // Iterations on the controls
+
 // Methods
 public:
 	// Empty constructor
@@ -82,6 +86,9 @@ public:
 	const DACE::vectordb tineq() const;
 	const double cost() const;
 	const DACE::DA tc_eval() const;
+	const unsigned int n_iter() const;
+	const std::vector < std::vector<DACE::vectordb>> list_x_mem() const;
+	const std::vector < std::vector<DACE::vectordb>> list_u_mem() const;
 
 	// Setters
 	void set_list_lambda(std::vector<DACE::vectordb> const& list_lambda);

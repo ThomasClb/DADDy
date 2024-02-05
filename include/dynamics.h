@@ -232,11 +232,12 @@ DACE::DA wrap_mod(DACE::DA const& value, double const& mod); // DA version
 // Acceleration functions
 
 // Computes the derivaties in an Sun-centered 2-body problem.
+// Cartesian coordinates.
 // With 3D continuous thrust.
 // It takes at input [3*LU, 3*VU, MASSU, TU], [3*N], TU, SpacecraftParameters.
 // It returns [3*VU, 3*VU/TU, MASSU/TU, 1].
 template<typename T>
-DACE::AlgebraicVector<T> acceleration_tbp_SUN_low_thrust(
+DACE::AlgebraicVector<T> acceleration_tbp_SUN_lt(
 	DACE::AlgebraicVector<T> const& x,
 	DACE::AlgebraicVector<T> const& u, double const& t,
 	SpacecraftParameters const& spacecraft_parameters,
@@ -278,11 +279,12 @@ DACE::AlgebraicVector<T> acceleration_tbp_SUN_low_thrust(
 }
 
 // Computes the derivaties in an Earth-centered 2-body problem.
+// Equinoctial coordinates.
 // With 3D continuous thrust using Gauss planetary equations.
 // It takes at input [3*LU, 3*VU, MASSU, TU], [3*N], TU, SpacecraftParameters.
 // It returns [3*VU, 3*VU/TU, MASSU/TU, 1].
 template<typename T>
-DACE::AlgebraicVector<T> acceleration_tbp_EARTH_low_thrust(
+DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 	DACE::AlgebraicVector<T> const& x,
 	DACE::AlgebraicVector<T> const& u, double const& t,
 	SpacecraftParameters const& spacecraft_parameters,
@@ -290,7 +292,7 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_low_thrust(
 	// Unpack
 	double v_e = spacecraft_parameters.ejection_velocity(); // [VU]
 	double mu = MU_EARTH / constants.mu();
-	T a = x[0]; // Equinoctial elements
+	T sma = x[0]; // Equinoctial elements
 	T P_1 = x[1];
 	T P_2 = x[2];
 	T Q_1 = x[3];
@@ -307,32 +309,30 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_low_thrust(
 	// Compute useful data
 	T cos_L = cos(L);
 	T sin_L = sin(L);
-	T p = a * (1 - P_1*P_1 + P_2 * P_2); // Ellipse parameter
-	T r = p/(1+ P_1*cos_L + P_2*sin_L); // Distance
-	T h = sqrt(mu * a * p); // Angular momentum
-	T n = sqrt(mu * pow(a, -3.0)); // Mean motion
-	T inv_cos_sqr_inc = (1 + Q_1 * Q_1 + Q_2 * Q_2);
-	T r_over_h = (r / h);
-	T p_over_r = (p / r);
-	T d_Q = 0.5 * r_over_h * inv_cos_sqr_inc * u_N;
+	T B = sqrt(1.0 - P_1 * P_1 - P_2 * P_2);
+	T Phi_L = 1 + P_1 * cos_L + P_2 * sin_L;
+	T inv_Phi_L = 1.0 / Phi_L;
+	T sqrt_a_mu = sqrt(sma / mu);
 	T Q_1_cos_L = Q_1 * cos_L;
 	T Q_2_sin_L = Q_2 * sin_L;
+	T d_Q = 0.5 * B * sqrt_a_mu * (1.0 + Q_1 * Q_1 + Q_2 * Q_2) * inv_Phi_L * u_N;
 
 	// Acceleration Gauss
-	T d_a = 2 * (a * a / h) * (
+	T d_sma = 2 * sma * sqrt_a_mu / B * (
 		(P_2 * sin_L - P_1 * cos_L) * u_R
-		+ p_over_r * u_T);
-	T d_P_1 = r_over_h * (
-		-p_over_r * cos_L * u_R
-		+ (P_1 + (1 + p_over_r)*sin_L) * u_T
-		- P_2 * (Q_1_cos_L - Q_2_sin_L) * u_N);
-	T d_P_2 = r_over_h * (
-		-p_over_r * cos_L * u_R
-		+ (P_2 + (1 + p_over_r) * sin_L) * u_T
-		- P_1 * (Q_1_cos_L - Q_2_sin_L) * u_N);
+		+ Phi_L * u_T);
+	T d_P_1 = B * sqrt_a_mu * (
+		- cos_L * u_R
+		+ ((P_1 + sin_L) * inv_Phi_L + sin_L) * u_T
+		- P_2 * ((Q_1_cos_L - Q_2_sin_L)) * inv_Phi_L * u_N);
+	T d_P_2 = B * sqrt_a_mu * (
+		- sin_L * u_R
+		+ ((P_2 + cos_L) * inv_Phi_L + cos_L) * u_T
+		- P_1 * ((Q_1_cos_L - Q_2_sin_L)) * inv_Phi_L * u_N);
 	T d_Q_1 = d_Q * sin_L;
 	T d_Q_2 = d_Q * cos_L;
-	T d_L = n - r_over_h * (Q_1_cos_L - Q_2_sin_L) * u_N;
+	T d_L = Phi_L * Phi_L * pow(B, -3.0) / sqrt_a_mu  // Mean motion
+		- sma * sqrt_a_mu * B / Phi_L * (Q_1_cos_L - Q_2_sin_L) * u_N;
 
 	// Thrust
 	T inv_mass = 1 / x[6];
@@ -343,7 +343,7 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_low_thrust(
 	T m_p = thrust_norm * pow(-1.0 * v_e, -1);
 
 	// Assign to output
-	output[0] = d_a;
+	output[0] = d_sma;
 	output[1] = d_P_1;
 	output[2] = d_P_2;
 	output[3] = d_Q_1;
@@ -359,7 +359,7 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_low_thrust(
 // It takes at input [3*LU, 3*VU, MASSU, TU], [3*N], TU, SpacecraftParameters.
 // It returns [3*VU, 3*VU/TU, MASSU/TU, 1].
 template<typename T>
-DACE::AlgebraicVector<T>  acceleration_cr3bp_low_thrust(
+DACE::AlgebraicVector<T>  acceleration_cr3bp_lt(
 	DACE::AlgebraicVector<T>  const& state_vector,
 	DACE::AlgebraicVector<T> const& u, double const& t,
 	SpacecraftParameters const& spacecraft_parameters,
@@ -405,44 +405,41 @@ DACE::AlgebraicVector<T>  acceleration_cr3bp_low_thrust(
 
 // Returns the next state given
 // the current state, the control and the parameters.
-// With acceleration acceleration_2b_SUN.
+// With acceleration acceleration_tbp_SUN_lt.
 template<typename T>
-DACE::AlgebraicVector<T> dynamic_tbp_SUN_low_thrust(
+DACE::AlgebraicVector<T> dynamic_tbp_SUN_lt(
 	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T>const& u,
 	SpacecraftParameters const& spacecraft_parameters,
 	Constants const& constants,
 	SolverParameters const& solver_parameters) {
-	return RK78(acceleration_tbp_SUN_low_thrust, x, u, 0, 1.0,
+	return RK78(acceleration_tbp_SUN_lt, x, u, 0, 1.0,
 		spacecraft_parameters, constants);
 }
 
 // Returns the next state given
 // the current state, the control and the parameters.
-// With acceleration acceleration_2b_EARTH.
+// With acceleration acceleration_tbp_EARTH_lt.
 template<typename T>
-DACE::AlgebraicVector<T> dynamic_tbp_EARTH_low_thrust(
+DACE::AlgebraicVector<T> dynamic_tbp_EARTH_lt(
 	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T>const& u,
 	SpacecraftParameters const& spacecraft_parameters,
 	Constants const& constants,
 	SolverParameters const& solver_parameters) {
-	DACE::AlgebraicVector<T> output = RK78(
-		acceleration_tbp_EARTH_low_thrust, x, u, 0, 1.0,
+	return RK78(
+		acceleration_tbp_EARTH_lt, x, u, 0, 1.0,
 		spacecraft_parameters, constants);
-
-	// std::cout << output << std::endl;
-	return output;
 }
 
 // Returns the next state given
 // the current state, the control and the parameters.
-// With acceleration acceleration_cr3bp.
+// With acceleration acceleration_cr3bp_lt.
 template<typename T>
-DACE::AlgebraicVector<T> dynamic_cr3bp_low_thrust(
+DACE::AlgebraicVector<T> dynamic_cr3bp_lt(
 	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T>const& u,
 	SpacecraftParameters const& spacecraft_parameters,
 	Constants const& constants,
 	SolverParameters const& solver_parameters) {
-	return RK78(acceleration_cr3bp_low_thrust, x, u, 0, 1.0,
+	return RK78(acceleration_cr3bp_lt, x, u, 0, 1.0,
 		spacecraft_parameters, constants);
 }
 
@@ -501,7 +498,7 @@ DACE::AlgebraicVector<T> equality_constraints(
 
 // Returns the path inequality contraints given
 // the current state, the control and the parameters.
-// Boarder constraints, and thrust constraints.
+// Mass constraints, and thrust constraints.
 // For low-thrust
 // Nineq = 3
 template<typename T>
@@ -519,7 +516,7 @@ DACE::AlgebraicVector<T> inequality_constraints_low_thrust(
 	DACE::AlgebraicVector<T> output; output.reserve(2 + 1);
 
 	// Thrust (1)
-	T T_const = u.dot(u) / (T_max * T_max) - 1.0; // [-]
+	T T_const = (u.dot(u) - (T_max* T_max) )/ (T_max); // [-]
 	output.push_back(T_const);
 
 	// Mass (2)
@@ -587,10 +584,8 @@ DACE::AlgebraicVector<T> terminal_equality_constraints(
 	DACE::AlgebraicVector<T> x_(x.extract(0, SIZE_VECTOR - 1));
 	DACE::vectordb x_goal_(x_goal.extract(0, SIZE_VECTOR - 1));
 
-	// Compute error
-	DACE::AlgebraicVector<T> loss = (x_ - x_goal_);
-
-	return loss;
+	// Return error
+	return (x_ - x_goal_);
 }
 
 // Returns the terminal equality constraints given
@@ -606,10 +601,8 @@ DACE::AlgebraicVector<T> terminal_equality_constraints_equinoctial(
 	DACE::AlgebraicVector<T> x_(x.extract(0, SIZE_VECTOR - 2));
 	DACE::vectordb x_goal_(x_goal.extract(0, SIZE_VECTOR - 2));
 
-	// Compute error
-	DACE::AlgebraicVector<T> loss = (x_ - x_goal_);
-
-	return loss;
+	// Return error
+	return (x_ - x_goal_);
 }
 
 // Returns the terminal inequality constraints given
@@ -637,7 +630,7 @@ DACE::vectordb equi_2_kep(DACE::vectordb const& equi_state_vector);
 // Transforms a keplerian state vector into an equinoctial one 
 DACE::vectordb kep_2_equi(DACE::vectordb const& kep_state_vector);
 
-// Transforms RTN reference frame into cartesian coordinates
+// Transforms coordinates in the RTN reference frame into cartesian coordinates
 DACE::vectordb RTN_2_cart(
 	DACE::vectordb const& RTN_vector,
 	DACE::vectordb const& cart_state_vector);
@@ -647,6 +640,5 @@ DACE::vectordb RTN_2_cart(
 Dynamics get_tbp_SUN_lt_dynamics();
 Dynamics get_tbp_EARTH_lt_dynamics();
 Dynamics get_cr3bp_EARTH_MOON_lt_dynamics();
-
 
 #endif

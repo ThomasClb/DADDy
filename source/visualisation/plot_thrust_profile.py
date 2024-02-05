@@ -46,7 +46,7 @@ def plot_thrust_profile(dataset):
     dpi = 200
     
     # Thrust norm
-    color_thrust_norm = "blue"
+    color_thrust_norm = "black"
     label_thrust_norm  = "Thrust"
     
     # Thrust components
@@ -64,7 +64,7 @@ def plot_thrust_profile(dataset):
     denormalise = True
     
     # Legend
-    show_legend = True
+    show_legend = False
     legend_loc = "lower right"
 
     # Output
@@ -112,6 +112,9 @@ def plot_thrust_profile(dataset):
     # Set labels
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
+    
+    # Axies limites
+    plt.ylim((0 - 0.05*max_trust, 1.05*max_trust))
     
     # Plot Thrust 
     plot_stairs_profile(dt, u, ax, label_thrust_norm, color_thrust_norm)

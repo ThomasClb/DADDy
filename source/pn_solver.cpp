@@ -409,13 +409,13 @@ void PNSolver::update_constraints_(
 		vectorDA x_DA = id_vector(list_x_[i], 0, 0, Nx - 1);
 		vectorDA u_DA = id_vector(list_u_[i], 0, Nx, Nu + Nx);
 
-		// Constraints evaluations
+		// Constraints evaluations TO DO DA
 		vectorDA eq_eval = dynamics.equality_constraints()(
 			x_DA, u_DA, spacecraft_parameters, dynamics.constants(), solver_parameters);
 		vectorDA ineq_eval = dynamics.inequality_constraints()(
 			x_DA, u_DA, spacecraft_parameters, dynamics.constants(), solver_parameters);
 
-		// Continuity constraints
+		// Continuity constraints TO DO DA
 		vectorDA x_kp1_eval = dynamics.dynamic()(
 			x_DA, u_DA,
 			spacecraft_parameters, dynamics.constants(), solver_parameters); // TO DO : test radius + evaluate 
@@ -451,7 +451,7 @@ void PNSolver::update_constraints_(
 	// Get DA x, u
 	vectorDA x_DA = id_vector(list_x_[N], 0, 0, Nx - 1);
 
-	// Constraints evaluations
+	// Constraints evaluations TO DO DA
 	vectorDA teq_eval = dynamics.terminal_equality_constraints()(
 		x_DA, x_goal, spacecraft_parameters, dynamics.constants(), solver_parameters);
 	vectorDA tineq_eval = dynamics.terminal_inequality_constraints()(
@@ -505,14 +505,14 @@ pair<
 		vectordb x = list_x[i];
 		vectordb u = list_u[i];
 
-		// Constraints evaluations
+		// Constraints evaluations TO DO DA
 		vectordb eq_eval = dynamics.equality_constraints_db()(
 			x, u, spacecraft_parameters, dynamics.constants(), solver_parameters);
 		vectordb ineq_eval = dynamics.inequality_constraints_db()(
 			x, u, spacecraft_parameters, dynamics.constants(), solver_parameters);
 		eq_eval.reserve(Nx);
 
-		// Continuity constraints
+		// Continuity constraints TO DO DA
 		vectordb x_kp1_eval = (dynamics.dynamic_db()(
 			x, u, spacecraft_parameters, dynamics.constants(), solver_parameters) - list_x[i + 1]); // TO DO : use DA, test
 
@@ -531,7 +531,7 @@ pair<
 	// Get x
 	vectordb x = list_x[N];
 
-	// Constraints evaluations
+	// Constraints evaluations TO DO DA
 	vectordb teq_eval = dynamics.terminal_equality_constraints_db()(
 		x, x_goal, spacecraft_parameters, dynamics.constants(), solver_parameters);
 	vectordb tineq_eval = dynamics.terminal_inequality_constraints_db()(

@@ -37,8 +37,12 @@ def plot_system_points(dataset, axis_0, axis_1, ax,
         # Plot
         if list_plots[0]: # Central body
             ax.scatter(coord_center[axis_0], coord_center[axis_1],
-                       label="Central body",
                        color=list_colors[0], marker=list_markers[0])
+            
+            # Print name
+            central_body_name = dataset.dynamical_system.split(" ")[1]
+            ax.text(coord_center[axis_0], coord_center[axis_1],
+                    " " + central_body_name)
 
     elif dataset.dynamical_system.startswith("CR3BP"):
         # Make points
@@ -55,26 +59,34 @@ def plot_system_points(dataset, axis_0, axis_1, ax,
             coord_L1 *= LU
             coord_L2 *= LU
             
+        # Get names
+        primary_names = dataset.dynamical_system.split(" ")[1].split("-")
+
         # Plots
         if list_plots[0]: # First primary
             ax.scatter(coord_P1[axis_0], coord_P1[axis_1],
-                       label="$P_1$",
                        color=list_colors[0], marker=list_markers[0])
+            ax.text(coord_P1[axis_0], coord_P1[axis_1],
+                    " " + primary_names[0])
+            
         
         if list_plots[1]: # Second primary
             ax.scatter(coord_P2[axis_0], coord_P2[axis_1],
-                       label="$P_2$",
                        color=list_colors[1], marker=list_markers[1])
+            ax.text(coord_P2[axis_0], coord_P2[axis_1],
+                    " " + primary_names[1])
             
         if list_plots[2]: # Lagrange point 1
             ax.scatter(coord_L1[axis_0], coord_L1[axis_1],
-                       label="$L_1$",
                        color=list_colors[2], marker=list_markers[2])
+            ax.text(coord_L1[axis_0], coord_L1[axis_1],
+                    " $L_1$")
         
         if list_plots[3]: # Lagrange point 2
             ax.scatter(coord_L2[axis_0], coord_L2[axis_1],
-                       label="$L_2$",
-                       color=list_colors[3], marker=list_markers[3])    
+                       color=list_colors[3], marker=list_markers[3])  
+            ax.text(coord_L2[axis_0], coord_L2[axis_1],
+                    " $L_2$")
         
 """
     Plots the departure and arrival points of a transfer.
@@ -96,18 +108,20 @@ def plot_departure_arrival(dataset, axis_0, axis_1, ax,
             
     # Plot departure and arrival
     ax.scatter(data_state[axis_0, 0], data_state[axis_1, 0],
-               label="Departure",
                color=list_colors[0], marker=list_markers[0])
+    ax.text(data_state[axis_0, 0], data_state[axis_1, 0],
+            " $x_0$")
     ax.scatter(data_state[axis_0, -1], data_state[axis_1, -1],
-               label="Arrival",
                color=list_colors[1], marker=list_markers[1])
+    ax.text(data_state[axis_0, -1], data_state[axis_1, -1],
+            " $x_f$")
     
 """
     Plots the thrust vectors along the trajectory.
 
 """
 def plot_thrust_vector(dataset, axis_0, axis_1, ax,
-                       thrust_scale, thrust_color,
+                       thrust_color,
                        denormalise):
     # Retreive data
     nb_dataets = len(dataset.list_dataset_names)
@@ -133,7 +147,6 @@ def plot_thrust_vector(dataset, axis_0, axis_1, ax,
     # Plot arrows
     ax.quiver(coord_0[:-1], coord_1[:-1],
               ucoord_0, ucoord_1,
-              scale=thrust_scale,
               color=thrust_color, label='Thrust')
     
 """
@@ -186,7 +199,6 @@ def plot_2d(dataset):
     axis_1 = 1
     
     # Thrust
-    thrust_scale = 0.01
     thrust_color = "red"
     
     # System points
@@ -275,7 +287,7 @@ def plot_2d(dataset):
     
     # Plot Thrust 
     plot_thrust_vector(dataset, axis_0, axis_1,
-                       ax, thrust_scale, thrust_color,
+                       ax, thrust_color,
                        denormalise)
     
     # Plot trajectory

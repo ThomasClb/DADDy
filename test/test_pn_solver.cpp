@@ -24,7 +24,7 @@ TEST(TestPNSolver, Setters) {
 	vectorDA u(3, 1.0);
 	SpacecraftParameters spacecraft_p;
 	SolverParameters solver_p;
-	Dynamics dynamics = get_tbp_SUN_low_thrust_dynamics();
+	Dynamics dynamics = get_tbp_SUN_lt_dynamics();
 	AULSolver aul_solver(solver_p, spacecraft_p, dynamics);
 	PNSolver pn_solver(aul_solver);
 	vector<vectordb> list_x(solver_p.N() + 1, vectordb(3));

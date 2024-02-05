@@ -60,6 +60,18 @@ SpacecraftParameters::SpacecraftParameters(SpacecraftParameters const& param) :
 	initial_mass_(param.initial_mass_), dry_mass_(param.dry_mass_),
 	thrust_(param.thrust_), Isp_(param.Isp_) {}
 
+// Loader constructor
+SpacecraftParameters::SpacecraftParameters(string const& file_name) {
+	// Open file
+	string file_name_(file_name);
+	ifstream ifs(file_name_);
+
+	// Load data
+	ifs >> *this;
+	ifs.close();
+	return;
+}
+
 // Destructor
 SpacecraftParameters::~SpacecraftParameters() {}
 
@@ -117,7 +129,27 @@ istream& operator>>(istream& is, SpacecraftParameters& param) {
 
 	return is;
 }
+void SpacecraftParameters::save(string const& file_name) const {
+	// Open file
+	string file_name_(file_name);
+	ofstream ofs(file_name_);
 
+	// Store the object to file
+	ofs << *this;
+
+	ofs.close();
+}
+void SpacecraftParameters::load(string const& file_name) {
+	// Open file
+	string file_name_(file_name);
+	ifstream ifs(file_name_);
+
+	// Load data
+	ifs >> *this;
+
+	ifs.close();
+	return;
+}
 
 /*
 
@@ -145,7 +177,7 @@ SolverParameters::SolverParameters() :
 	mu_parameters_(vectordb{ 1.0,  1e8, 10 }),
 	PN_regularisation_(1e-8), PN_active_constraint_tol_(1e-13),
 	PN_cv_rate_threshold_(1.1), PN_alpha_(1.0), PN_gamma_(0.5),
-	list_lambda_(), list_mu_(), verbosity_(0) {
+	list_lambda_(), list_mu_(), verbosity_(0), saving_iterations_(0) {
 	// Unpack
 	double lambda(lambda_parameters_[0]);
 	double mu(mu_parameters_[0]);
@@ -184,7 +216,8 @@ SolverParameters::SolverParameters(
 	vectordb const& lambda_parameters, vectordb const& mu_parameters,
 	double const& PN_regularisation, double const& PN_active_constraint_tol,
 	double const& PN_cv_rate_threshold, double const& PN_alpha,
-	double const& PN_gamma, unsigned int const& verbosity) :
+	double const& PN_gamma, unsigned int const& verbosity,
+	unsigned int const& saving_iterations) :
 	N_(N), Nx_(Nx), Nu_(Nu),
 	Neq_(Neq), Nineq_(Nineq),
 	Nteq_(Nteq), Ntineq_(Ntineq), ToF_(0.0),
@@ -201,7 +234,7 @@ SolverParameters::SolverParameters(
 	PN_regularisation_(PN_regularisation), PN_active_constraint_tol_(PN_active_constraint_tol),
 	PN_cv_rate_threshold_(PN_cv_rate_threshold), PN_alpha_(PN_alpha),
 	PN_gamma_(PN_gamma), list_lambda_(), list_mu_(),
-	verbosity_(verbosity) {
+	verbosity_(verbosity), saving_iterations_(saving_iterations) {
 	vector<vectordb> list_lambda(N + 1, vectordb(Neq + Nineq, lambda_parameters[0]));
 	vector<vectordb> list_mu(N + 1, vectordb(Neq + Nineq, mu_parameters[0]));
 	// Unpack
@@ -248,7 +281,7 @@ SolverParameters::SolverParameters(SolverParameters const& param) :
 	PN_active_constraint_tol_(param.PN_active_constraint_tol_),
 	PN_cv_rate_threshold_(param.PN_cv_rate_threshold_),
 	PN_alpha_(param.PN_alpha_), PN_gamma_(param.PN_gamma_),
-	verbosity_(param.verbosity_) {}
+	verbosity_(param.verbosity_), saving_iterations_(param.saving_iterations_) {}
 
 // Destructor
 SolverParameters::~SolverParameters() {}
@@ -294,6 +327,7 @@ const double SolverParameters::PN_cv_rate_threshold() const { return PN_cv_rate_
 const double SolverParameters::PN_alpha() const { return PN_alpha_; }
 const double SolverParameters::PN_gamma() const { return PN_gamma_; }
 const unsigned int SolverParameters::verbosity() const { return verbosity_; }
+const unsigned int SolverParameters::saving_iterations() const { return saving_iterations_; }
 
 // Setters
 void SolverParameters::set_homotopy_coefficient(double const& homotopy_coefficient) {

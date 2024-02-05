@@ -159,6 +159,39 @@ TEST(TestSpacecraftParameters, IOFunctions) {
 	EXPECT_EQ(spacecraft_parameters_copy.ejection_velocity(), ejection_velocity);
 	EXPECT_EQ(spacecraft_parameters_copy.mass_flow(), mass_flow);
 }
+TEST(TestSpacecraftParameters, LoaderConstructor) {
+	// Init
+	double mu = MU_MOON / (MU_EARTH + MU_MOON); // [-]
+	double lu = EARTH_MOON_DISTANCE; // [km]
+	double wu = sqrt((MU_EARTH + MU_MOON) / pow(EARTH_MOON_DISTANCE, 3)); // [s^-1]
+	double tu = 1 / wu; // [s]
+	double vu = lu * wu; // [m.s^-1]
+	double massu = 1000; // [kg]
+	double thrustu = 1000 * vu * massu * wu; // [N]
+	Constants constants(mu, lu, wu, massu);
+	double initial_mass = 1000 / constants.massu(); // [MASSU]
+	double dry_mass = 500 / constants.massu(); // [MASSU]
+	double thrust = 0.5 / constants.thrustu(); // [THRUSTU]
+	double Isp = 2000 / constants.tu(); // [TU]
+	double initial_wet_mass = initial_mass - dry_mass; // [MASSU]
+	double ejection_velocity = G_0 / (1000 * constants.vu() / constants.tu()) * Isp; // [VU]
+	double mass_flow = thrust / ejection_velocity; // [MASSU/TU]
+	SpacecraftParameters spacecraft_parameters(
+		constants,
+		initial_mass, dry_mass, thrust, Isp);
+	string file_name_("../../DADDy/data/spacecraft_parameters/test_spacecraft_parameters.dat");
+	spacecraft_parameters.save(file_name_);
+	SpacecraftParameters spacecraft_parameters_copy(file_name_);
+
+	// Tests
+	EXPECT_EQ(spacecraft_parameters_copy.initial_mass(), initial_mass);
+	EXPECT_EQ(spacecraft_parameters_copy.thrust(), thrust);
+	EXPECT_EQ(spacecraft_parameters_copy.Isp(), Isp);
+	EXPECT_EQ(spacecraft_parameters_copy.dry_mass(), dry_mass);
+	EXPECT_EQ(spacecraft_parameters_copy.initial_wet_mass(), initial_wet_mass);
+	EXPECT_EQ(spacecraft_parameters_copy.ejection_velocity(), ejection_velocity);
+	EXPECT_EQ(spacecraft_parameters_copy.mass_flow(), mass_flow);
+}
 
 /*
 
@@ -202,6 +235,7 @@ TEST(TestSolverParameters, EmptyConstructor) {
 	double PN_alpha(1.0); double PN_gamma(0.5);
 	double ToF = 0.0;
 	unsigned int verbosity = 0;
+	unsigned int saving_iterations = 0;
 
 	// Tests
 	EXPECT_EQ(solver_parameters.N(), N);
@@ -234,6 +268,7 @@ TEST(TestSolverParameters, EmptyConstructor) {
 	EXPECT_EQ(solver_parameters.PN_alpha(), PN_alpha);
 	EXPECT_EQ(solver_parameters.PN_gamma(), PN_gamma);
 	EXPECT_EQ(solver_parameters.verbosity(), verbosity);
+	EXPECT_EQ(solver_parameters.saving_iterations(), saving_iterations);
 	for (size_t i = 0; i < N; i++) {
 		vectordb lambda_i = solver_parameters.list_lambda()[i];
 		vectordb mu_i = solver_parameters.list_mu()[i];
@@ -281,6 +316,7 @@ TEST(TestSolverParameters, FilledConstructor) {
 	double PN_alpha(1.0); double PN_gamma(0.5);
 	double ToF = 0.0;
 	unsigned int verbosity = 1;
+	unsigned int saving_iterations = 1;
 	SolverParameters solver_parameters(
 		N, Nx, Nu,
 		Neq, Nineq,
@@ -295,7 +331,8 @@ TEST(TestSolverParameters, FilledConstructor) {
 		backward_sweep_regulation_parameters,
 		lambda_parameters, mu_parameters,
 		PN_regularisation, PN_active_constraint_tol,
-		PN_cv_rate_threshold, PN_alpha, PN_gamma, verbosity);
+		PN_cv_rate_threshold, PN_alpha, PN_gamma, verbosity,
+		saving_iterations);
 
 	// Tests
 	EXPECT_EQ(solver_parameters.N(), N);
@@ -328,6 +365,7 @@ TEST(TestSolverParameters, FilledConstructor) {
 	EXPECT_EQ(solver_parameters.PN_alpha(), PN_alpha);
 	EXPECT_EQ(solver_parameters.PN_gamma(), PN_gamma);
 	EXPECT_EQ(solver_parameters.verbosity(), verbosity);
+	EXPECT_EQ(solver_parameters.saving_iterations(), saving_iterations);
 	for (size_t i = 0; i < N; i++) {
 		vectordb lambda_i = solver_parameters.list_lambda()[i];
 		vectordb mu_i = solver_parameters.list_mu()[i];
@@ -375,6 +413,7 @@ TEST(TestSolverParameters, CopyConstructor) {
 	double PN_alpha(1.0); double PN_gamma(0.5);
 	double ToF = 0.0;
 	unsigned int verbosity = 1;
+	unsigned int saving_iterations = 1;
 	SolverParameters solver_parameters(
 		N, Nx, Nu,
 		Neq, Nineq,
@@ -389,7 +428,8 @@ TEST(TestSolverParameters, CopyConstructor) {
 		backward_sweep_regulation_parameters,
 		lambda_parameters, mu_parameters,
 		PN_regularisation, PN_active_constraint_tol,
-		PN_cv_rate_threshold, PN_alpha, PN_gamma, verbosity);
+		PN_cv_rate_threshold, PN_alpha, PN_gamma, verbosity,
+		saving_iterations);
 	SolverParameters solver_parameters_copy = solver_parameters;
 
 	// Tests
@@ -423,6 +463,7 @@ TEST(TestSolverParameters, CopyConstructor) {
 	EXPECT_EQ(solver_parameters_copy.PN_alpha(), PN_alpha);
 	EXPECT_EQ(solver_parameters_copy.PN_gamma(), PN_gamma);
 	EXPECT_EQ(solver_parameters_copy.verbosity(), verbosity);
+	EXPECT_EQ(solver_parameters_copy.saving_iterations(), saving_iterations);
 	for (size_t i = 0; i < N; i++) {
 		vectordb lambda_i = solver_parameters_copy.list_lambda()[i];
 		vectordb mu_i = solver_parameters_copy.list_mu()[i];

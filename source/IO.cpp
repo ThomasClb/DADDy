@@ -122,6 +122,36 @@ void print_transfer_dataset(
 		spacecraft_parameters, constants, solver_parameters,
 		2*N);
 
+	// Convert to cartesian if needed
+	if (system_name.find("EQUINOCTIAL") != std::string::npos) {
+		
+		// Get mu
+		double mu(1);
+		if (system_name.find("EARTH") != std::string::npos) {
+			mu = MU_EARTH;
+		}
+		else if (system_name.find("SUN") != std::string::npos) {
+			mu = MU_SUN;
+		}
+		mu /= constants.mu(); // Normalise
+			
+		for (size_t i = 0; i < list_departure.size(); i++) {
+			// Unpack
+			vectordb x_d_i = list_departure[i];
+			vectordb x_a_i = list_arrival[i];
+
+			// Convert to cartesian
+			x_d_i = equi_2_kep(x_d_i); // Convert to Keplerian
+			x_d_i = kep_2_cart(x_d_i, mu); // Convert to Cartesian
+			x_a_i = equi_2_kep(x_a_i); // Convert to Keplerian
+			x_a_i = kep_2_cart(x_a_i, mu); // Convert to Cartesian
+
+			// Assign
+			list_departure[i] = x_d_i;
+			list_arrival[i] = x_a_i;
+		}
+	}
+
 	// Make lists
 	vector<string> title_state{
 		"State",

@@ -16,10 +16,11 @@ using namespace std;
 
 // Empty constructor
 DDPSolver::DDPSolver() : solver_parameters_(SolverParameters()),
-spacecraft_parameters_(SpacecraftParameters(Constants())), dynamics_(Dynamics()),
-list_x_(vector<vectordb>(0)), list_u_(vector<vectordb>(0)), cost_(0),
-list_eq_(vector<vectordb>(0)), list_ineq_(vector<vectordb>(0)),
-rho_(0.0), d_rho_(0.0) {}
+	spacecraft_parameters_(SpacecraftParameters(Constants())), dynamics_(Dynamics()),
+	list_x_(vector<vectordb>(0)), list_u_(vector<vectordb>(0)), cost_(0),
+	list_eq_(vector<vectordb>(0)), list_ineq_(vector<vectordb>(0)),
+	rho_(0.0), d_rho_(0.0),
+	list_x_mem_(vector<vector<vectordb>>(0)), list_u_mem_(vector<vector<vectordb>>(0)) {}
 
 // Constructor
 DDPSolver::DDPSolver(
@@ -29,7 +30,8 @@ DDPSolver::DDPSolver(
 	spacecraft_parameters_(spacecraft_parameters), dynamics_(dynamics),
 	list_x_(vector<vectordb>(0)), list_u_(vector<vectordb>(0)), cost_(0),
 	list_eq_(vector<vectordb>(0)), list_ineq_(vector<vectordb>(0)),
-	rho_(0.0), d_rho_(0.0), alpha_(1.0) {}
+	rho_(0.0), d_rho_(0.0), alpha_(1.0),
+	list_x_mem_(vector<vector<vectordb>>(0)), list_u_mem_(vector<vector<vectordb>>(0)) {}
 
 // Copy constructor
 DDPSolver::DDPSolver(
@@ -37,7 +39,8 @@ DDPSolver::DDPSolver(
 	spacecraft_parameters_(solver.spacecraft_parameters()), dynamics_(solver.dynamics()),
 	list_x_(solver.list_x_), list_u_(solver.list_u_), cost_(solver.cost_),
 	list_eq_(solver.list_eq_), list_ineq_(solver.list_ineq_),
-	rho_(0.0), d_rho_(0.0), alpha_(1.0) {}
+	rho_(0.0), d_rho_(0.0), alpha_(1.0),
+	list_x_mem_(solver.list_x_mem_), list_u_mem_(solver.list_u_mem_) {}
 
 // Destructors
 DDPSolver::~DDPSolver() {}
@@ -56,6 +59,9 @@ const vectordb DDPSolver::teq() const { return teq_; }
 const vectordb DDPSolver::tineq() const { return tineq_; }
 const double DDPSolver::cost() const { return cost_; }
 const DA DDPSolver::tc_eval() const { return tc_eval_; }
+const unsigned int DDPSolver::n_iter() const { return n_iter_; }
+const vector<vector<vectordb>> DDPSolver::list_x_mem() const { return list_x_mem_; }
+const vector<vector<vectordb>> DDPSolver::list_u_mem() const { return list_u_mem_; }
 
 // Setters
 void DDPSolver::set_list_lambda(vector<vectordb> const& list_lambda) {
@@ -1207,7 +1213,7 @@ void DDPSolver::forward_pass_convRadius_ls_(
 // of the new states and control after correction using the DA mapping
 // The linesearch is tweaked to implement a memory from one iteration to the other.
 // The linesearch computation are done with floats (in DA vectors), the DA mappings are computed
-// only when the linesearch is ended
+// only when the linesearch is ended.
 // Inspired from ALTRO (Julia).
 // See: https://github.com/RoboticExplorationLab/Altro.jl
 void DDPSolver::forward_pass_convRadius_ls_Spencer_(
@@ -1481,6 +1487,7 @@ void DDPSolver::solve(
 	unsigned int DDP_type = solver_parameters_.DDP_type();
 	bool bs_reg = solver_parameters_.backward_sweep_regulation();
 	unsigned int verbosity = solver_parameters_.verbosity();
+	unsigned int saving_iterations = solver_parameters_.saving_iterations();
 
 	// Init regularisation
 	rho_ = solver_parameters_.backward_sweep_regulation_parameters()[0];
@@ -1611,6 +1618,12 @@ void DDPSolver::solve(
 		// Evaluate convergence 
 		double d_cost = (cost_last - cost_)/max(abs(cost_last), abs(cost_));
 		loop = !evaluate_convergence_(d_cost);
+
+		// Save iterations
+		if (saving_iterations > 2) {
+			list_x_mem_.push_back(list_x_);
+			list_u_mem_.push_back(list_u_);
+		}
 
 		// Update states and control
 		list_x = list_x_; list_u = list_u_;

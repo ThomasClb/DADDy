@@ -60,6 +60,9 @@ public:
 	SpacecraftParameters(
 		SpacecraftParameters const& param);
 
+	// Loader constructor
+	SpacecraftParameters(std::string const& file_name);
+
 	// Destructors
 	~SpacecraftParameters();
 
@@ -77,6 +80,8 @@ public:
 	// IO operator
 	friend std::ostream& operator<<(std::ostream& os, const SpacecraftParameters& param);
 	friend std::istream& operator>>(std::istream& is, SpacecraftParameters& constants);
+	void save(std::string const& file_name) const;
+	void load(std::string const& file_name);
 };
 
 
@@ -121,6 +126,7 @@ protected:
 	double PN_alpha_; // PN intial line search parameter
 	double PN_gamma_; // PN line search reduction factor
 	unsigned int verbosity_; // Quantity of display data, 0=full, 1=no DDP.
+	unsigned int saving_iterations_; // Quantity of iterations saved, 0=final solution, 1=final AUL and final PN, 2=AUL and final PN, 3=DDP + AUL and final PN.
 
 // Methods
 public:
@@ -147,7 +153,8 @@ public:
 		DACE::vectordb const& lambda_parameters, DACE::vectordb const& mu_parameters,
 		double const& PN_regularisation, double const& PN_active_constraint_tol,
 		double const& PN_cv_rate_threshold, double const& PN_alpha,
-		double const& PN_gamma, unsigned int const& verbosity);
+		double const& PN_gamma, unsigned int const& verbosity,
+		unsigned int const& saving_iterations);
 
 	// Copy constructor
 	SolverParameters(SolverParameters const& param);
@@ -188,6 +195,7 @@ public:
 	const double PN_alpha() const;
 	const double PN_gamma() const;
 	const unsigned int verbosity() const;
+	const unsigned int saving_iterations() const;
 
 	// Setters
 	void set_homotopy_coefficient(double const& homotopy_coefficient);

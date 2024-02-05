@@ -95,9 +95,17 @@ double real_constraints(
 }
 
 void run_test_cases(int argc, char** argv) {
-	// Parameters
-	int test_case = 2;
-	bool plot_graphs = false;
+
+	// Input check
+	if (argc < 2) {
+		cout << "Wrong number of arguments." << endl;
+		cout << "Requested number : 1" << endl;
+		cout << "0 - Test case number from 0 to 8." << endl;
+		return;
+	}
+
+	// Unpack inputs
+	unsigned int test_case = atoi(argv[1]);
 
 	// Excute correct test case
 
@@ -110,13 +118,13 @@ void run_test_cases(int argc, char** argv) {
 
 	// Earth-mars transfer
 	else if (test_case == 1)
-		tbp_SUN_lt_earth_to_mars(plot_graphs);
+		tbp_SUN_lt_earth_to_mars(argc, argv);
 
 	// Earth centered
 
 	// GTO to GEO
 	else if (test_case == 2) {
-		tbp_EARTH_lt_leo_to_geo(plot_graphs);
+		tbp_EARTH_lt_leo_to_geo(argc, argv);
 	}
 
 	// Any orbit to any orbit
@@ -128,21 +136,21 @@ void run_test_cases(int argc, char** argv) {
 
 	// Halo L2 to Halo L1
 	else if (test_case == 4)
-		cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(plot_graphs);
+		cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(argc, argv);
 
 	// Halo L2 (Gateway) to DRO
 	else if (test_case == 5) {
-		cr3bp_EARTH_MOON_lt_nrho_to_dro(plot_graphs);
+		cr3bp_EARTH_MOON_lt_nrho_to_dro(argc, argv);
 	}
 
 	// Lyapunov L2 to Lyapunov L1
 	else if (test_case == 6) {
-		cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2(plot_graphs);
+		cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2(argc, argv);
 	}
 
 	// Manyrev DRO to DRO
 	else if (test_case == 7) {
-		cr3bp_EARTH_MOON_lt_dro_to_dro(plot_graphs);
+		cr3bp_EARTH_MOON_lt_dro_to_dro(argc, argv);
 	}
 
 	// Manyrev GSO to NRHO

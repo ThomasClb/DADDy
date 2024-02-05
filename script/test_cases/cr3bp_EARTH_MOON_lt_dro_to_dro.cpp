@@ -23,7 +23,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro() {
 	unsigned int Nineq = 3;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
-	unsigned int N = 300;
+	unsigned int N = 500;
 	double cost_to_go_gain = 1e-3;
 	double terminal_cost_gain = 1e7;
 	double homotopy_coefficient = 0.0;
@@ -31,7 +31,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro() {
 	unsigned int DDP_type = 3 + 0*4;
 	double DDP_tol = 1e-4;
 	double AUL_tol = 5e-6;
-	double PN_tol = 1e-12;
+	double PN_tol = 1e-10;
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int max_iter = 10000;
 	unsigned int DDP_max_iter = 100;
@@ -46,6 +46,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro() {
 	double PN_cv_rate_threshold(1.1);
 	double PN_alpha(1.0); double PN_gamma(0.5);
 	unsigned int verbosity = 0;
+	unsigned int saving_iterations = 0;
 
 	return SolverParameters(
 		N, Nx, Nu,
@@ -62,7 +63,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro() {
 		lambda_parameters, mu_parameters,
 		PN_regularisation, PN_active_constraint_tol,
 		PN_cv_rate_threshold, PN_alpha, PN_gamma,
-		verbosity);
+		verbosity, saving_iterations);
 }
 
 vector<vectordb> make_first_guess(
@@ -96,7 +97,20 @@ vector<vectordb> make_first_guess(
 	return output;
 }
 
-void cr3bp_EARTH_MOON_lt_dro_to_dro(bool const& plot_graphs) {
+void cr3bp_EARTH_MOON_lt_dro_to_dro(int argc, char** argv) {
+	// Input check
+	if (argc < 4) {
+		cout << "Wrong number of arguments." << endl;
+		cout << "Requested number : 3" << endl;
+		cout << "0 - Test case number." << endl;
+		cout << "1 - SpacecraftParameter adress." << endl;
+		cout << "2 - Number of revolutions." << endl;
+		return;
+	}
+
+	// Unpack inputs
+	string spacecraft_parameters_file = argv[2];
+	unsigned int nb_revs = atoi(argv[3]);
 
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
@@ -113,14 +127,8 @@ void cr3bp_EARTH_MOON_lt_dro_to_dro(bool const& plot_graphs) {
 	double thrustu = constants.thrustu();
 	double vu = constants.vu();
 
-	// Spacecraft parameters (GTOC 12)
-	double m_0 = 1000 / massu; // [MASSU]
-	double dry_mass = 500 / massu; // [MASSU]
-	double T = 0.5 / thrustu; // [N]
-	double Isp = 2000.0 / tu; // [s]
-	SpacecraftParameters spacecraft_parameters(
-		dynamics.constants(),
-		m_0, dry_mass, T, Isp);
+	// Spacecraft parameters
+	SpacecraftParameters spacecraft_parameters(spacecraft_parameters_file);
 
 	// Init solver parameters
 	SolverParameters solver_parameters = get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro();
@@ -136,25 +144,24 @@ void cr3bp_EARTH_MOON_lt_dro_to_dro(bool const& plot_graphs) {
 
 	// Initial conditions [3*LU, 3*VU, MASSU, TU]
 	// From [Boone MacMahon 2024]
-	int nb_revs = 2;
-	double ToF = nb_revs *17.5 / SEC2DAYS / tu; // [TU]
+	double ToF = nb_revs * 17.5 / SEC2DAYS / tu; // [TU]
 	double dt = ToF / N; // [TU]
 	vectordb x_departure{ 
 		1.171359, 0, 0.0,
 		0, -0.489458, 0.0,
-		m_0, 13.4 /SEC2DAYS / tu };
+		spacecraft_parameters.initial_mass(),
+		13.4 / SEC2DAYS / tu };
 	vectordb x_arrival{
 		1.301844, 0, 0.0,
 		0, -0.642177, 0.0,
-		dry_mass, 21.6 / SEC2DAYS / tu };
+		spacecraft_parameters.dry_mass(),
+		21.6 / SEC2DAYS / tu };
 	vectordb x0 = x_departure; x0[Nx - 1] = dt; // Time step
 	vectordb x_goal = x_arrival; x_goal[Nx - 1] = ToF; // ToF
 
 	// First guess command
-	vectordb u_init(Nu, 1e-1 / thrustu); // [VU]
-	vector<vectordb> list_u_init(N, u_init);
-	list_u_init = make_first_guess(
-		0.1 * T, x_departure,
+	vector<vectordb> list_u_init = make_first_guess(
+		0.1 * spacecraft_parameters.thrust() / nb_revs, x_departure,
 		dynamics, spacecraft_parameters,
 		constants, solver_parameters);
 
@@ -174,17 +181,19 @@ void cr3bp_EARTH_MOON_lt_dro_to_dro(bool const& plot_graphs) {
 	vectordb homotopy_sequence, huber_loss_coefficient_sequence;
 	if (nb_revs == 1) {
 		homotopy_sequence = vectordb{0.95, 0.95, 1};
-		huber_loss_coefficient_sequence = vectordb{1e-2, 1e-3, 1e-3};
+		huber_loss_coefficient_sequence = vectordb{ 1e-3, 1e-3, 1e-3};
 	}
 	if (nb_revs == 2) {
-		homotopy_sequence = vectordb{ 0.95, 0.99, 1-1e-3 };
-		huber_loss_coefficient_sequence = vectordb{ 1e-2, 5e-3, 1e-3 };
+		homotopy_sequence = vectordb{ 0, 0.9, 0.99, 1-1e-3 };
+		huber_loss_coefficient_sequence = vectordb{ 5e-2, 5e-3, 5e-3, 1e-3 };
 	}
 	/**/
 	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
+		break;
 		solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
 		solver.set_homotopy_coefficient(homotopy_sequence[i]);
 		solver.solve(x0, solver.list_u(), x_goal);
+		
 	}
 	
 	// Set DACE at order 1 (No Hessian needed)
@@ -193,7 +202,7 @@ void cr3bp_EARTH_MOON_lt_dro_to_dro(bool const& plot_graphs) {
 	// PN test
 	auto start_inter = high_resolution_clock::now();
 	PNSolver pn_solver(solver);
-	pn_solver.solve(x_goal);
+	// pn_solver.solve(x_goal);
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
 	auto duration_AUL = duration_cast<microseconds>(start_inter - start);
@@ -220,7 +229,7 @@ void cr3bp_EARTH_MOON_lt_dro_to_dro(bool const& plot_graphs) {
 
 	// Print datasets
 	string file_name = "./data/datasets/cr3bp_EARTH_MOON_lt_dro_to_dro.dat";
-	string system_name = "CR3BP LT";
+	string system_name = "CR3BP EARTH-MOON CARTESIAN LT";
 	print_transfer_dataset(
 		file_name, system_name,
 		list_x, list_u,
