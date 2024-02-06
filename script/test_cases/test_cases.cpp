@@ -127,32 +127,39 @@ void run_test_cases(int argc, char** argv) {
 		tbp_EARTH_lt_leo_to_geo(argc, argv);
 	}
 
-	// Any orbit to any orbit
-	else if (test_case == 3) {}
+	// LEO to LEO
+	else if (test_case == 3) {
+		tbp_EARTH_lt_leo_to_leo(argc, argv);
+	}
+
+	// MEO to MEO
+	else if (test_case == 4) {
+		tbp_EARTH_lt_meo_to_meo(argc, argv);
+	}
 
 	// CR3BP
 
 	// Earth-Moon
 
 	// Halo L2 to Halo L1
-	else if (test_case == 4)
+	else if (test_case == 5)
 		cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(argc, argv);
 
 	// Halo L2 (Gateway) to DRO
-	else if (test_case == 5) {
+	else if (test_case == 6) {
 		cr3bp_EARTH_MOON_lt_nrho_to_dro(argc, argv);
 	}
 
 	// Lyapunov L2 to Lyapunov L1
-	else if (test_case == 6) {
+	else if (test_case == 7) {
 		cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2(argc, argv);
 	}
 
 	// Manyrev DRO to DRO
-	else if (test_case == 7) {
+	else if (test_case == 8) {
 		cr3bp_EARTH_MOON_lt_dro_to_dro(argc, argv);
 	}
 
 	// Manyrev GSO to NRHO
-	else if (test_case == 8) {}
+	else if (test_case == 9) {}
 }

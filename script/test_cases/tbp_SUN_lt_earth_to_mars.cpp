@@ -71,16 +71,16 @@ void tbp_SUN_lt_earth_to_mars(int argc, char** argv) {
 		cout << "Requested number : 4" << endl;
 		cout << "0 - Test case number." << endl;
 		cout << "1 - SpacecraftParameter adress." << endl;
-		cout << "2 - Time of flight [days]." << endl;
-		cout << "3 - Number of nodes [-]." << endl;
+		cout << "2 - Number of nodes [-]." << endl;
+		cout << "3 - Time of flight [days]." << endl;
 		return;
 	}
 
 	// Unpack inputs
 	string spacecraft_parameters_file = argv[2];
-	double ToF = atof(argv[3]);
-	int N = atoi(argv[4]);
-
+	int N = atoi(argv[3]);
+	double ToF = atof(argv[4]);
+	
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
 	cout.precision(5);

@@ -15,7 +15,7 @@ using namespace DACE;
 using namespace std::chrono;
 using namespace std;
 
-SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro() {
+SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro(unsigned int const& N) {
 	// Solver parameters
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
@@ -23,14 +23,13 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro() {
 	unsigned int Nineq = 3;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
-	unsigned int N = 500;
-	double cost_to_go_gain = 1e-3;
-	double terminal_cost_gain = 1e7;
+	double cost_to_go_gain = 1e-1;
+	double terminal_cost_gain = 1e3;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 1e-4;
 	unsigned int DDP_type = 3 + 0*4;
 	double DDP_tol = 1e-4;
-	double AUL_tol = 5e-6;
+	double AUL_tol = 1e-4;
 	double PN_tol = 1e-10;
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int max_iter = 10000;
@@ -99,18 +98,21 @@ vector<vectordb> make_first_guess(
 
 void cr3bp_EARTH_MOON_lt_dro_to_dro(int argc, char** argv) {
 	// Input check
-	if (argc < 4) {
+	if (argc < 5) {
 		cout << "Wrong number of arguments." << endl;
-		cout << "Requested number : 3" << endl;
+		cout << "Requested number : 4" << endl;
 		cout << "0 - Test case number." << endl;
 		cout << "1 - SpacecraftParameter adress." << endl;
-		cout << "2 - Number of revolutions." << endl;
+		cout << "2 - Number of nodes." << endl;
+		cout << "3 - Number of revolutions." << endl;
 		return;
 	}
 
 	// Unpack inputs
 	string spacecraft_parameters_file = argv[2];
-	unsigned int nb_revs = atoi(argv[3]);
+	unsigned int N = atoi(argv[3]);
+	unsigned int nb_revs = atoi(argv[4]);
+	bool fuel_optimal = false;
 
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
@@ -131,12 +133,11 @@ void cr3bp_EARTH_MOON_lt_dro_to_dro(int argc, char** argv) {
 	SpacecraftParameters spacecraft_parameters(spacecraft_parameters_file);
 
 	// Init solver parameters
-	SolverParameters solver_parameters = get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro();
+	SolverParameters solver_parameters = get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro(N);
 
 	// Solver parameters
 	unsigned int Nx = solver_parameters.Nx();
 	unsigned int Nu = solver_parameters.Nu();
-	unsigned int N = solver_parameters.N();
 
 	// Init DACE
 	DA::init(2, Nx + Nu);
@@ -160,10 +161,12 @@ void cr3bp_EARTH_MOON_lt_dro_to_dro(int argc, char** argv) {
 	vectordb x_goal = x_arrival; x_goal[Nx - 1] = ToF; // ToF
 
 	// First guess command
+	/*
 	vector<vectordb> list_u_init = make_first_guess(
-		0.1 * spacecraft_parameters.thrust() / nb_revs, x_departure,
+		0.0 * spacecraft_parameters.thrust()/ nb_revs, x_departure,
 		dynamics, spacecraft_parameters,
-		constants, solver_parameters);
+		constants, solver_parameters);*/
+	vector<vectordb> list_u_init(N, vectordb(Nu, 1e-6));
 
 	// Output
 	cout << "DEPARTURE : " << endl << x0.extract(0, Nx - 1 - 1) << endl;
@@ -187,13 +190,15 @@ void cr3bp_EARTH_MOON_lt_dro_to_dro(int argc, char** argv) {
 		homotopy_sequence = vectordb{ 0, 0.9, 0.99, 1-1e-3 };
 		huber_loss_coefficient_sequence = vectordb{ 5e-2, 5e-3, 5e-3, 1e-3 };
 	}
-	/**/
-	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
-		break;
-		solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
-		solver.set_homotopy_coefficient(homotopy_sequence[i]);
-		solver.solve(x0, solver.list_u(), x_goal);
+	
+	if (fuel_optimal) {
+		for (size_t i = 0; i < homotopy_sequence.size(); i++) {
+			break;
+			solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
+			solver.set_homotopy_coefficient(homotopy_sequence[i]);
+			solver.solve(x0, solver.list_u(), x_goal);
 		
+		}
 	}
 	
 	// Set DACE at order 1 (No Hessian needed)
@@ -202,7 +207,7 @@ void cr3bp_EARTH_MOON_lt_dro_to_dro(int argc, char** argv) {
 	// PN test
 	auto start_inter = high_resolution_clock::now();
 	PNSolver pn_solver(solver);
-	// pn_solver.solve(x_goal);
+	pn_solver.solve(x_goal);
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
 	auto duration_AUL = duration_cast<microseconds>(start_inter - start);

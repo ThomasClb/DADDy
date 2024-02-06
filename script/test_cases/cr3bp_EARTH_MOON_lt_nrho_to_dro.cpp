@@ -15,7 +15,7 @@ using namespace DACE;
 using namespace std::chrono;
 using namespace std;
 
-SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro() {
+SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro(unsigned int const& N) {
 	// Solver parameters
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
@@ -23,9 +23,8 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro() {
 	unsigned int Nineq = 3;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
-	unsigned int N = 150;
-	double cost_to_go_gain = 1e-3;
-	double terminal_cost_gain = 1e12;
+	double cost_to_go_gain = 5e-4;
+	double terminal_cost_gain = 1e9;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-4;
 	unsigned int DDP_type = 3 + 0*4;
@@ -68,16 +67,21 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro() {
 
 void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv) {
 	// Input check
-	if (argc < 3) {
+	if (argc < 5) {
 		cout << "Wrong number of arguments." << endl;
-		cout << "Requested number : 2" << endl;
+		cout << "Requested number : 4" << endl;
 		cout << "0 - Test case number." << endl;
 		cout << "1 - SpacecraftParameter adress." << endl;
+		cout << "2 - Number of nodes [-]." << endl;
+		cout << "3 - Time of flight [days]." << endl;
 		return;
 	}
 
 	// Unpack inputs
 	string spacecraft_parameters_file = argv[2];
+	int N = atoi(argv[3]);
+	double ToF = atof(argv[4]);
+	bool fuel_optimal = true;
 
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
@@ -98,12 +102,11 @@ void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv) {
 	SpacecraftParameters spacecraft_parameters(spacecraft_parameters_file);
 
 	// Init solver parameters
-	SolverParameters solver_parameters = get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro();
+	SolverParameters solver_parameters = get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro(N);
 
 	// Solver parameters
 	unsigned int Nx = solver_parameters.Nx();
 	unsigned int Nu = solver_parameters.Nu();
-	unsigned int N = solver_parameters.N();
 
 	// Init DACE
 	DA::init(2, Nx + Nu);
@@ -111,7 +114,7 @@ void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv) {
 
 	// Initial conditions [3*LU, 3*VU, MASSU, TU]
 	// From [Boone MacMahon 2024]
-	double ToF = 2*10.6 / SEC2DAYS / tu; // [TU]
+	ToF = ToF / SEC2DAYS / tu; // [TU]
 	double dt = ToF / N; // [TU]
 	vectordb x_departure{ 
 		1.021968177, 0,
@@ -145,12 +148,14 @@ void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv) {
 	/*	*/
 	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 5e-3, 5e-3, 1e-4};
 	vectordb homotopy_sequence{0.3, 0.66, 0.9, 0.99, 0.99};
-	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
-		solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
-		solver.set_homotopy_coefficient(homotopy_sequence[i]);
-		solver.solve(x0, solver.list_u(), x_goal);
+	if (fuel_optimal) {
+		for (size_t i = 0; i < homotopy_sequence.size(); i++) {
+			solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
+			solver.set_homotopy_coefficient(homotopy_sequence[i]);
+			solver.solve(x0, solver.list_u(), x_goal);
+		}
 	}
-	
+
 	// Set DACE at order 1 (No Hessian needed)
 	DA::setTO(1);
 

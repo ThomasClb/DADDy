@@ -516,7 +516,7 @@ DACE::AlgebraicVector<T> inequality_constraints_low_thrust(
 	DACE::AlgebraicVector<T> output; output.reserve(2 + 1);
 
 	// Thrust (1)
-	T T_const = (u.dot(u) - (T_max* T_max) )/ (T_max); // [-]
+	T T_const = u.dot(u)/ (T_max * T_max) - 1.0; // [-]
 	output.push_back(T_const);
 
 	// Mass (2)

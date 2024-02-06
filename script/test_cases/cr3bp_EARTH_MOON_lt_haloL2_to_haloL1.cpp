@@ -15,7 +15,7 @@ using namespace DACE;
 using namespace std::chrono;
 using namespace std;
 
-SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_haloL2_to_haloL1() {
+SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(unsigned int const& N) {
 	// Solver parameters
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
@@ -23,7 +23,6 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_haloL2_to_haloL1() {
 	unsigned int Nineq = 3;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
-	unsigned int N = 110;
 	double cost_to_go_gain = 1e-3;
 	double terminal_cost_gain = 1e6;
 	double homotopy_coefficient = 0.0;
@@ -68,16 +67,21 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_haloL2_to_haloL1() {
 
 void cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(int argc, char** argv) {
 	// Input check
-	if (argc < 3) {
+	if (argc < 5) {
 		cout << "Wrong number of arguments." << endl;
-		cout << "Requested number : 2" << endl;
+		cout << "Requested number : 4" << endl;
 		cout << "0 - Test case number." << endl;
 		cout << "1 - SpacecraftParameter adress." << endl;
+		cout << "2 - Number of nodes [-]." << endl;
+		cout << "3 - Time of flight [days]." << endl;
 		return;
 	}
 
 	// Unpack inputs
 	string spacecraft_parameters_file = argv[2];
+	int N = atoi(argv[3]);
+	double ToF = atof(argv[4]);
+	bool fuel_optimal = false;
 
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
@@ -98,20 +102,18 @@ void cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(int argc, char** argv) {
 	SpacecraftParameters spacecraft_parameters(spacecraft_parameters_file);
 
 	// Init solver parameters
-	SolverParameters solver_parameters = get_SolverParameters_cr3bp_EARTH_MOON_lt_haloL2_to_haloL1();
+	SolverParameters solver_parameters = get_SolverParameters_cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(N);
 
 	// Solver parameters
 	unsigned int Nx = solver_parameters.Nx();
 	unsigned int Nu = solver_parameters.Nu();
-	unsigned int N = solver_parameters.N();
 
 	// Init DACE
 	DA::init(2, Nx + Nu);
 	DA::setEps(1e-90);
 
 	// Initial conditions [3*LU, 3*VU, MASSU, TU]
-	// From NoDy paper
-	double ToF = 20 / SEC2DAYS / tu; // [TU]
+	ToF = ToF / SEC2DAYS / tu; // [TU]
 	double dt = ToF / N; // [TU]
 	vectordb x_departure{
 		1.1607973110000016, 0,
@@ -145,11 +147,12 @@ void cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(int argc, char** argv) {
 	solver.solve(x0, list_u_init, x_goal);
 	vectordb huber_loss_coefficient_sequence{1e-2, 1e-3};
 	vectordb homotopy_sequence{0.9, 0.999};
-	/**/
-	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
-		solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
-		solver.set_homotopy_coefficient(homotopy_sequence[i]);
-		solver.solve(x0, solver.list_u(), x_goal);
+	if (fuel_optimal) {
+		for (size_t i = 0; i < homotopy_sequence.size(); i++) {
+			solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
+			solver.set_homotopy_coefficient(homotopy_sequence[i]);
+			solver.solve(x0, solver.list_u(), x_goal);
+		}
 	}
 	
 	// Set DACE at order 1 (No Hessian needed)
