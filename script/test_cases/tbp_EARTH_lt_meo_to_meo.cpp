@@ -14,7 +14,8 @@ using namespace DACE;
 using namespace std::chrono;
 using namespace std;
 
-SolverParameters get_SolverParameters_tbp_EARTH_lt_meo_to_meo() {
+SolverParameters get_SolverParameters_tbp_EARTH_lt_meo_to_meo(
+	unsigned int const& N, unsigned int const& DDP_type) {
 	// Solver parameters
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
@@ -22,12 +23,10 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_meo_to_meo() {
 	unsigned int Nineq = 3;
 	unsigned int Nteq = 5;
 	unsigned int Ntineq = 0;
-	unsigned int N = 600;
 	double homotopy_coefficient = 0.0;
 	double cost_to_go_gain = 1e-5;
 	double terminal_cost_gain = 1e8;
 	double huber_loss_coefficient = 5e-3;
-	unsigned int DDP_type = 3 + 0*4;
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6; 
 	double PN_tol = 1e-12;
@@ -35,7 +34,7 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_meo_to_meo() {
 	unsigned int max_iter = 10000;
 	unsigned int DDP_max_iter = 100;
 	unsigned int AUL_max_iter = max_iter / DDP_max_iter;
-	unsigned int PN_max_iter = 100;
+	unsigned int PN_max_iter = 50;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
 	vectordb line_search_parameters{1e-8, 10.0, 0.5, 20};
@@ -67,16 +66,25 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_meo_to_meo() {
 
 void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 	// Input check
-	if (argc < 3) {
+	if (argc < 7) {
 		cout << "Wrong number of arguments." << endl;
-		cout << "Requested number : 2" << endl;
+		cout << "Requested number : 6" << endl;
 		cout << "0 - Test case number." << endl;
 		cout << "1 - SpacecraftParameter adress." << endl;
+		cout << "2 - DDP type [0-7]." << endl;
+		cout << "3 - Number of nodes [-]." << endl;
+		cout << "4 - Time of flight [days]." << endl;
+		cout << "5 - Perform fuel optimal optimisation [0/1]." << endl;
 		return;
 	}
 
 	// Unpack inputs
 	string spacecraft_parameters_file = argv[2];
+	unsigned int DDP_type = atoi(argv[3]);
+	unsigned int N = atoi(argv[4]);
+	double ToF = atof(argv[5]);
+	bool fuel_optimal = false;
+	if (atoi(argv[6]) == 1) { fuel_optimal = true; }
 
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
@@ -104,19 +112,19 @@ void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 		m_0, dry_mass, T, Isp);
 
 	// Init solver parameters
-	SolverParameters solver_parameters = get_SolverParameters_tbp_EARTH_lt_meo_to_meo();
+	SolverParameters solver_parameters = get_SolverParameters_tbp_EARTH_lt_meo_to_meo(
+		N, DDP_type);
 
 	// Solver parameters
 	unsigned int Nx = solver_parameters.Nx();
 	unsigned int Nu = solver_parameters.Nu();
-	unsigned int N = solver_parameters.N();
 
 	// Init DACE
 	DA::init(2, Nx + Nu);
 	DA::setEps(1e-90);
 
 	// Initial conditions [Equinoctial elements, MASSU, TU]
-	double ToF = 20 / SEC2DAYS / tu; // [TU]
+	ToF = ToF / SEC2DAYS / tu; // [TU]
 	double dt = ToF / N; // [TU]
 	vectordb x_departure{ // Kep coordinates
 		10000 / lu, 0,
@@ -147,15 +155,16 @@ void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 
 	// Run DDP
 	auto start = high_resolution_clock::now();
-
 	solver.set_homotopy_coefficient(0.0);
 	solver.solve(x0, list_u_init, x_goal);
 	vectordb homotopy_sequence{1, 1.0};
 	vectordb huber_loss_coefficient_sequence{1e-2, 1e-3};
-	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
-		solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
-		solver.set_homotopy_coefficient(homotopy_sequence[i]);
-		//solver.solve(x0, solver.list_u(), x_goal);
+	if (fuel_optimal) {
+		for (size_t i = 0; i < homotopy_sequence.size(); i++) {
+			solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
+			solver.set_homotopy_coefficient(homotopy_sequence[i]);
+			solver.solve(x0, solver.list_u(), x_goal);
+		}
 	}
 
 	// Set DACE at order 1 (No Hessian needed)
@@ -164,7 +173,7 @@ void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 	// PN test
 	auto start_inter = high_resolution_clock::now();
 	PNSolver pn_solver(solver);
-	//pn_solver.solve(x_goal);
+	pn_solver.solve(x_goal);
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
 	auto duration_AUL = duration_cast<microseconds>(start_inter - start);
@@ -183,9 +192,9 @@ void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 	// Output
 	cout << endl;
 	cout << "Optimised" << endl;
-	cout << "	Total runtime : " + to_string(static_cast<int>(duration.count()) / 1e6) + "s" << endl;
-	cout << "	AUL solver runtime : " + to_string(static_cast<int>(duration_AUL.count()) / 1e6) + "s" << endl;
-	cout << "	PN solver runtime : " + to_string(static_cast<int>(duration_PN.count()) / 1e6) + "s" << endl;
+	cout << "	Total runtime : " + to_string(static_cast<double>(duration.count()) / 1e6) + "s" << endl;
+	cout << "	AUL solver runtime : " + to_string(static_cast<double>(duration_AUL.count()) / 1e6) + "s" << endl;
+	cout << "	PN solver runtime : " + to_string(static_cast<double>(duration_PN.count()) / 1e6) + "s" << endl;
 	cout << "	FINAL MASS [kg] : " << massu * final_mass << endl;
 	cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
 

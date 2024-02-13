@@ -734,7 +734,6 @@ void DDPSolver::forward_pass_(
 		list_ctg_eval.reserve(N);
 		list_x_star.reserve(N);
 		list_u_star.reserve(N);
-		list_dynamic_eval.reserve(N);
 		list_eq_eval.reserve(N);
 		list_ineq_eval.reserve(N);
 
@@ -844,6 +843,177 @@ void DDPSolver::forward_pass_(
 }
 
 // Performs the DDP forward pass, that consists in the computation
+// of the new states and control after correction.
+// Inspired from ALTRO (Julia).
+// DA only for automatic differentiation.
+// See: https://github.com/RoboticExplorationLab/Altro.jl
+void DDPSolver::forward_pass_ref_(
+	vector<vectordb> const& list_x, vector<vectordb> const& list_u, vectordb const& x_goal) {
+	// Unpack parameters
+	double tol = solver_parameters_.DDP_tol();
+	unsigned int N = solver_parameters_.N();
+	unsigned int Nx = solver_parameters_.Nx();
+	unsigned int Nu = solver_parameters_.Nu();
+	unsigned int Neq = solver_parameters_.Neq();
+	unsigned int Nineq = solver_parameters_.Nineq();
+	unsigned int Nteq = solver_parameters_.Nteq();
+	unsigned int Ntineq = solver_parameters_.Ntineq();
+	vectordb alpha_parameters = solver_parameters_.line_search_parameters();
+	double z_min = alpha_parameters[0];
+	double z_max = alpha_parameters[1];
+	double alpha_factor = alpha_parameters[2];
+	int max_iter = alpha_parameters[3];
+	matrixdb error_mat(Nx, 1);
+
+	// Init loop variables
+	bool success = false; size_t counter = 0;
+	double alpha = 1.0;
+	while (!success) {
+
+		// Init lists
+		vector<vectordb> list_x_star(list_x_), list_u_star(list_u_);
+		vector<vectordb> list_eq_eval, list_ineq_eval;
+		vectordb teq_eval, tineq_eval;
+
+		// Reserve space
+		list_x_star.reserve(N);
+		list_u_star.reserve(N);
+		list_eq_eval.reserve(N);
+		list_ineq_eval.reserve(N);
+
+		// Rollout
+		double cost = 0; double z = 1e15;
+		for (size_t i = 0; i < N; i++) {
+
+			// Get state error
+			vectordb error = list_x_star[i] - list_x[i];
+			error_mat.setcol(0, error);
+
+			// Retrieve gains
+			matrixdb k = list_k_[N - 1 - i];
+			matrixdb K = list_K_[N - 1 - i];
+
+			// Get control correction
+			vectordb correction = vectordb((alpha * k + K * error_mat).getcol(0));
+			list_u_star.push_back(list_u[i] + correction);
+
+			// Identity vector building
+			vectordb x_star = list_x_star[i];
+			vectordb u_star = list_u_star[i];
+
+			// Evaluate dynamics
+			vectordb dynamic_eval = dynamics_.dynamic_db()(
+				x_star, u_star,
+				spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
+
+			// Evaluate AUL ctg and store constraints
+			vectordb constraints = get_AUL_cost_to_go(
+				x_star, u_star, i);
+			if (Neq == 0)
+				list_eq_eval.emplace_back();
+			else
+				list_eq_eval.emplace_back(constraints.extract(0, Neq - 1));
+			if (Nineq == 0)
+				list_ineq_eval.emplace_back();
+			else
+				list_ineq_eval.emplace_back(constraints.extract(Neq, Neq + Nineq - 1));
+			double ctg_eval = constraints[Neq + Nineq];
+
+			// Update cost and append list_x_star
+			list_x_star.emplace_back(dynamic_eval);
+			cost += ctg_eval;
+		}
+
+		// AUL terminal cost and store constraints
+		vectordb x_star = list_x_star[N];
+		vectordb constraints = get_AUL_terminal_cost(
+			x_star, x_goal);
+		if (Nteq == 0)
+			teq_eval = vectordb(0);
+		else
+			teq_eval = constraints.extract(0, Nteq - 1);
+		if (Ntineq == 0)
+			tineq_eval = vectordb(0);
+		else
+			tineq_eval = constraints.extract(Nteq, Nteq + Ntineq - 1);
+		double terminal_cost_eval = constraints[Nteq + Ntineq];
+
+		// Update cost 
+		cost += terminal_cost_eval;
+
+		// Get expected cost
+		double expected_cost = expected_cost_(alpha);
+
+		// If step too small
+		if (expected_cost < 1e-7) {
+			list_x_ = list_x;
+			list_u_ = list_u;
+			increase_regularisation_();
+			break;
+		}
+		else {
+			z = (cost_ - cost) / expected_cost;
+
+			// Check z \in interval
+			if (z > z_min && z < z_max) {
+				// Save all double lists
+				list_x_ = list_x_star;
+				list_u_ = list_u_star;
+				list_eq_ = list_eq_eval;
+				list_ineq_ = list_ineq_eval;
+				teq_ = teq_eval;
+				tineq_ = tineq_eval;
+				cost_ = cost;
+
+				// Recompute DA dynamics, ctg, and tc
+				// Make DA lists
+				for (size_t i = 0; i < N; i++) {
+
+					// Declare variables
+					vectorDA x_star_DA, u_star_DA;
+
+					// Identity vectors building
+					x_star_DA = id_vector(list_x_star[i], 0, 0, Nx - 1);
+					u_star_DA = id_vector(list_u_star[i], 0, Nx, Nu + Nx);
+
+					// Evaluate dynamics from sractch
+					list_dynamic_eval_[i] = dynamics_.dynamic()(
+						x_star_DA, u_star_DA,
+						spacecraft_parameters_, dynamics_.constants(),
+						solver_parameters_);
+
+					// Get constraints
+					vectorDA constraints(get_AUL_cost_to_go(
+						x_star_DA, u_star_DA, i));
+					DA ctg_eval = constraints[Neq + Nineq];
+					list_ctg_eval_[i] = ctg_eval;
+				}
+
+				// AUL terminal cost and store constraints
+				vectorDA x_star_DA = id_vector(list_x_[N], 0, 0, Nx - 1);
+				vectorDA constraints = get_AUL_terminal_cost(
+					x_star_DA, x_goal);
+				tc_eval_ = constraints[Nteq + Ntineq];
+				
+				break;
+			}
+			else {
+				// Decrease line search parameter
+				alpha *= alpha_factor;
+
+				// Check iteration number
+				if (counter > max_iter) {
+					list_x_ = list_x;
+					list_u_ = list_u;
+					break;
+				}
+			}
+		}
+		counter++;
+	}
+}
+
+// Performs the DDP forward pass, that consists in the computation
 // of the new states and control after correction using the DA mapping
 // Inspired from ALTRO (Julia).
 // See: https://github.com/RoboticExplorationLab/Altro.jl
@@ -883,7 +1053,6 @@ void DDPSolver::forward_pass_convRadius_(
 		list_ctg_eval.reserve(N);
 		list_x_star.reserve(N);
 		list_u_star.reserve(N);
-		list_dynamic_eval.reserve(N);
 		list_eq_eval.reserve(N);
 		list_ineq_eval.reserve(N);
 
@@ -1064,7 +1233,6 @@ void DDPSolver::forward_pass_convRadius_ls_(
 		list_ctg_eval.reserve(N);
 		list_x_star.reserve(N);
 		list_u_star.reserve(N);
-		list_dynamic_eval.reserve(N);
 		list_eq_eval.reserve(N);
 		list_ineq_eval.reserve(N);
 
@@ -1597,7 +1765,7 @@ void DDPSolver::solve(
 
 		// Forward pass (0 = classic method from ALTRO)
 		if (DDP_type % nb_method == 0)
-			forward_pass_(list_x, list_u, x_goal);
+			forward_pass_ref_(list_x, list_u, x_goal); // Spencer tweak
 
 		// Forward pass (1 = use of the DA mappings the dynamics)
 		else if (DDP_type % nb_method == 1)

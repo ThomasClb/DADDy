@@ -175,6 +175,16 @@ public:
 		DACE::vectordb const& x_goal);
 
 	// Performs the DDP forward pass, that consists in the computation
+	// of the new states and control after correction.
+	// Inspired from ALTRO (Julia).
+	// DA only for automatic differentiation.
+	// See: https://github.com/RoboticExplorationLab/Altro.jl
+	void forward_pass_ref_(
+		std::vector<DACE::vectordb> const& list_x,
+		std::vector<DACE::vectordb> const& list_u,
+		DACE::vectordb const& x_goal);
+
+	// Performs the DDP forward pass, that consists in the computation
 	// of the new states and control after correction using the DA mapping
 	// Inspired from ALTRO (Julia).
 	// See: https://github.com/RoboticExplorationLab/Altro.jl

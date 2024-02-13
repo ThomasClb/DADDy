@@ -15,7 +15,8 @@ using namespace DACE;
 using namespace std::chrono;
 using namespace std;
 
-SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro(unsigned int const& N) {
+SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro(
+	unsigned int const& N, unsigned int const& DDP_type) {
 	// Solver parameters
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
@@ -23,19 +24,18 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro(unsigned i
 	unsigned int Nineq = 3;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
-	double cost_to_go_gain = 5e-4;
+	double cost_to_go_gain = 1e-3;
 	double terminal_cost_gain = 1e9;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-4;
-	unsigned int DDP_type = 3 + 0*4;
 	double DDP_tol = 1e-4;
-	double AUL_tol = 5e-6;
+	double AUL_tol = 1e-6;
 	double PN_tol = 1e-10;
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int max_iter = 10000;
 	unsigned int DDP_max_iter = 100;
 	unsigned int AUL_max_iter = max_iter / DDP_max_iter;
-	unsigned int PN_max_iter = 100;
+	unsigned int PN_max_iter = 50;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
 	vectordb line_search_parameters{1e-8, 10.0, 0.5, 20};
@@ -67,21 +67,25 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro(unsigned i
 
 void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv) {
 	// Input check
-	if (argc < 5) {
+	if (argc < 7) {
 		cout << "Wrong number of arguments." << endl;
-		cout << "Requested number : 4" << endl;
+		cout << "Requested number : 6" << endl;
 		cout << "0 - Test case number." << endl;
 		cout << "1 - SpacecraftParameter adress." << endl;
-		cout << "2 - Number of nodes [-]." << endl;
-		cout << "3 - Time of flight [days]." << endl;
+		cout << "2 - DDP type [0-7]." << endl;
+		cout << "3 - Number of nodes [-]." << endl;
+		cout << "4 - Time of flight [days]." << endl;
+		cout << "5 - Perform fuel optimal optimisation [0/1]." << endl;
 		return;
 	}
 
 	// Unpack inputs
 	string spacecraft_parameters_file = argv[2];
-	int N = atoi(argv[3]);
-	double ToF = atof(argv[4]);
-	bool fuel_optimal = true;
+	unsigned int DDP_type = atoi(argv[3]);
+	unsigned int N = atoi(argv[4]);
+	double ToF = atof(argv[5]);
+	bool fuel_optimal = false;
+	if (atoi(argv[6]) == 1) { fuel_optimal = true; }
 
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
@@ -102,7 +106,8 @@ void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv) {
 	SpacecraftParameters spacecraft_parameters(spacecraft_parameters_file);
 
 	// Init solver parameters
-	SolverParameters solver_parameters = get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro(N);
+	SolverParameters solver_parameters = get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro(
+		N, DDP_type);
 
 	// Solver parameters
 	unsigned int Nx = solver_parameters.Nx();
@@ -131,7 +136,7 @@ void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv) {
 	vectordb x_goal = x_arrival; x_goal[Nx - 1] = ToF; // ToF
 
 	// First guess command
-	vectordb u_init(Nu, 1e-6 / thrustu); // [VU]
+	vectordb u_init(Nu, 1e-6); // [VU]
 	vector<vectordb> list_u_init(N, u_init);
 
 	// Output
@@ -145,7 +150,6 @@ void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv) {
 	auto start = high_resolution_clock::now();
 	solver.set_homotopy_coefficient(0.0);
 	solver.solve(x0, list_u_init, x_goal);
-	/*	*/
 	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 5e-3, 5e-3, 1e-4};
 	vectordb homotopy_sequence{0.3, 0.66, 0.9, 0.99, 0.99};
 	if (fuel_optimal) {
@@ -181,9 +185,9 @@ void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv) {
 	// Output
 	cout << endl;
 	cout << "Optimised" << endl;
-	cout << "	Total runtime : " + to_string(static_cast<int>(duration.count()) / 1e6) + "s" << endl;
-	cout << "	AUL solver runtime : " + to_string(static_cast<int>(duration_AUL.count()) / 1e6) + "s" << endl;
-	cout << "	PN solver runtime : " + to_string(static_cast<int>(duration_PN.count()) / 1e6) + "s" << endl;
+	cout << "	Total runtime : " + to_string(static_cast<double>(duration.count()) / 1e6) + "s" << endl;
+	cout << "	AUL solver runtime : " + to_string(static_cast<double>(duration_AUL.count()) / 1e6) + "s" << endl;
+	cout << "	PN solver runtime : " + to_string(static_cast<double>(duration_PN.count()) / 1e6) + "s" << endl;
 	cout << "	FINAL MASS [kg] : " << massu * final_mass << endl;
 	cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
 
