@@ -121,12 +121,18 @@ public:
 	DACE::vectordb get_AUL_cost_to_go(
 		DACE::vectordb const& x_star_DA, DACE::vectordb const& u_star_DA, std::size_t const& index);
 
-
 	// Increases the regulation to ensure Quu + rho*I
 	// is symeteric positive definite.
 	// Inspired from ALTRO (Julia).
 	// See: https://github.com/RoboticExplorationLab/Altro.jl
 	void increase_regularisation_();
+
+	// Increases the regulation to ensure Quu + rho*I
+	// is symeteric positive definite.
+	// Inspired from ALTRO (Julia).
+	// With a safe guard.
+	// See: https://github.com/RoboticExplorationLab/Altro.jl
+	void increase_regularisation_(DACE::matrixdb const& Quu);
 
 	// Decreases the regulation to ensure Quu + rho*I
 	// is symeteric positive definite.
@@ -168,6 +174,7 @@ public:
 	// Performs the DDP forward pass, that consists in the computation
 	// of the new states and control after correction.
 	// Inspired from ALTRO (Julia).
+	// DA only for automatic differentiation.
 	// See: https://github.com/RoboticExplorationLab/Altro.jl
 	void forward_pass_(
 		std::vector<DACE::vectordb> const& list_x,
@@ -177,18 +184,10 @@ public:
 	// Performs the DDP forward pass, that consists in the computation
 	// of the new states and control after correction.
 	// Inspired from ALTRO (Julia).
+	// The linesearch is tweaked to implement a memory from one iteration to the other.
 	// DA only for automatic differentiation.
 	// See: https://github.com/RoboticExplorationLab/Altro.jl
-	void forward_pass_ref_(
-		std::vector<DACE::vectordb> const& list_x,
-		std::vector<DACE::vectordb> const& list_u,
-		DACE::vectordb const& x_goal);
-
-	// Performs the DDP forward pass, that consists in the computation
-	// of the new states and control after correction using the DA mapping
-	// Inspired from ALTRO (Julia).
-	// See: https://github.com/RoboticExplorationLab/Altro.jl
-	void forward_pass_convRadius_(
+	void forward_pass_ls_(
 		std::vector<DACE::vectordb> const& list_x,
 		std::vector<DACE::vectordb> const& list_u,
 		DACE::vectordb const& x_goal);
@@ -198,19 +197,7 @@ public:
 	// The linesearch is tweaked to implement a memory from one iteration to the other.
 	// Inspired from ALTRO (Julia).
 	// See: https://github.com/RoboticExplorationLab/Altro.jl
-	void forward_pass_convRadius_ls_(
-		std::vector<DACE::vectordb> const& list_x,
-		std::vector<DACE::vectordb> const& list_u,
-		DACE::vectordb const& x_goal);
-
-	// Performs the DDP forward pass, that consists in the computation
-	// of the new states and control after correction using the DA mapping
-	// The linesearch is tweaked to implement a memory from one iteration to the other.
-	// The linesearch computation are done with floats (in DA vectors), the DA mappings are computed
-	// only when the linesearch is ended
-	// Inspired from ALTRO (Julia).
-	// See: https://github.com/RoboticExplorationLab/Altro.jl
-	void forward_pass_convRadius_ls_Spencer_(
+	void forward_pass_convRadius_ls_DA_(
 		std::vector<DACE::vectordb> const& list_x,
 		std::vector<DACE::vectordb> const& list_u,
 		DACE::vectordb const& x_goal);

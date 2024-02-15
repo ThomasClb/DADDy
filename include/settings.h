@@ -42,7 +42,7 @@
 #define G_0 (9.81) // Earth gravity field [m.s^-1]
 
 // Integration constants
-#define MIN_STEP (1e-8) // Minimum step size 0.1sec [TU]
+#define MIN_STEP (1e-6) // Minimum step size [s]
 #define EPS (1e-13) // Tolerance of the intergration scheme [-]
 
 // Eigenvalue computation constants

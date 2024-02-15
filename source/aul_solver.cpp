@@ -272,12 +272,14 @@ void AULSolver::solve(
 		cout << "#                             START AUL SOLVING                            #" << endl;
 		cout << "#                                                                          #" << endl;
 		cout << "############################################################################" << endl << endl;
-		cout << "Homotopy coefficient [0, 1] : " << solver_parameters.homotopy_coefficient();
+		cout << "Homotopy coefficient [0, 1] : " << solver_parameters.homotopy_coefficient() << endl;
+		cout << "Huber-loss coefficient [0, 1] : " << solver_parameters.huber_loss_coefficient();
 		cout << endl << endl << endl;
 	}
 	else if (verbosity >= 1) {
 		cout << endl;
 		cout << "AUL solving - Homotopy coefficient [0, 1] : " << solver_parameters.homotopy_coefficient() << endl;
+		cout << "            - Huber-loss coefficient [0, 1] : " << solver_parameters.huber_loss_coefficient() << endl;
 	}
 
 	// Init lists dual state and penalty factors lists

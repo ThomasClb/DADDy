@@ -149,7 +149,7 @@ vectorDA RK78(
     int N = Y0.size();
     double ERREST;
     int MAX_ITER = 10000; int NB_ITER = 0;
-    double H0 = MIN_STEP; double HS = 0.1; double H1 = 100.0;
+    double H0 = MIN_STEP/constants.tu(); double HS = 0.1; double H1 = 100.0;
     double BS = 20 * EPS;
 
     matrixDA Z(N, 16);
@@ -249,7 +249,7 @@ vectordb RK78(
     int N = Y0.size();
     double ERREST;
     int MAX_ITER = 10000; int NB_ITER = 0;
-    double H0 = MIN_STEP; double HS = 0.1; double H1 = 100.0;
+    double H0 = MIN_STEP / constants.tu(); double HS = 0.1; double H1 = 100.0;
     double BS = 20 * EPS;
 
     matrixdb Z(N, 16);
