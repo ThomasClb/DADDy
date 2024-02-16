@@ -201,16 +201,15 @@ void AULSolver::update_mu_() {
 	unsigned int Nteq = solver_parameters.Nteq();
 	unsigned int Ntineq = solver_parameters.Ntineq();
 	vectordb mu_parameters = solver_parameters.mu_parameters();
-	double mu_init = mu_parameters[0]; double mu_ub = mu_parameters[1]; double mu_factor = mu_parameters[2];
+	double mu_init = mu_parameters[0]; double mu_ub = mu_parameters[1];
+	double mu_factor = mu_parameters[2];
 
 	vector<vectordb> list_mu;
 	list_mu.reserve(list_mu_.size());
 	double buff = 0.0;
 	for (size_t i = 0; i < N; i++) {
 		// Unpack
-		vectordb lambda = list_lambda_[i];
 		vectordb mu = list_mu_[i];
-		vectordb ineq = list_ineq_[i];
 
 		// Iterate on constraints
 		for (size_t j = 0; j < Neq + Nineq; j++) {
@@ -223,9 +222,7 @@ void AULSolver::update_mu_() {
 	}
 
 	// Unpack
-	vectordb lambda = list_lambda_[N];
 	vectordb mu = list_mu_[N];
-	vectordb ineq = tineq_;
 
 	// Iterate on constraints
 	for (size_t j = 0; j < Nteq + Ntineq; j++) {
@@ -261,8 +258,9 @@ void AULSolver::solve(
 	unsigned int saving_iterations = solver_parameters.saving_iterations();
 	Constants constants = DDPsolver_.dynamics().constants();
 
-	// Init ToF
+	// Init DDPsolver
 	DDPsolver_.set_ToF(x_goal[x_goal.size() - 1]);
+	DDPsolver_.set_recompute_dynamics(true);
 
 	// Output
 	auto start_aul = high_resolution_clock::now();
@@ -276,10 +274,11 @@ void AULSolver::solve(
 		cout << "Huber-loss coefficient [0, 1] : " << solver_parameters.huber_loss_coefficient();
 		cout << endl << endl << endl;
 	}
-	else if (verbosity >= 1) {
+	else if (verbosity < 2) {
 		cout << endl;
 		cout << "AUL solving - Homotopy coefficient [0, 1] : " << solver_parameters.homotopy_coefficient() << endl;
 		cout << "            - Huber-loss coefficient [0, 1] : " << solver_parameters.huber_loss_coefficient() << endl;
+		cout << "	ITERATION [-], DDP ITERATIONS [-], RUNTIME [s], FINAL MASS [kg], MAX CONSTRAINT [-]" << endl;
 	}
 
 	// Init lists dual state and penalty factors lists
@@ -315,8 +314,13 @@ void AULSolver::solve(
 		auto stop = high_resolution_clock::now();
 		auto duration_mapping = duration_cast<microseconds>(stop - start);
 
-		// Check step acceptance
-		max_constraint = DDPsolver_.get_max_constraint_();
+		// Check constraints and that the solver is not stuck
+		double max_constraint_new = DDPsolver_.get_max_constraint_();
+		if (abs((max_constraint_new - max_constraint)/ max_constraint) < AUL_tol) {
+			DDPsolver_.set_recompute_dynamics(false);
+		}
+		else {DDPsolver_.set_recompute_dynamics(true);}
+		max_constraint = max_constraint_new;
 
 		// Store results
 		list_x_ = DDPsolver_.list_x();
@@ -330,20 +334,19 @@ void AULSolver::solve(
 		// Output
 		if (verbosity < 1) {
 			cout << AUL_n_iter_ << " - RUNTIME [s] : "
-				<< to_string(static_cast<int>(duration_mapping.count()) / 1e6) << ", "
+				<< to_string(static_cast<double>(duration_mapping.count()) / 1e6) << ", "
 				<< "FINAL MASS [kg] : " << DDPsolver_.list_x()[N][SIZE_VECTOR] * constants.massu() << ", "
 				<< "MAX CONSTRAINT [-] : " << max_constraint << endl << endl;
 		}
 		else if (verbosity < 2) {
-			cout << "	" << AUL_n_iter_ << " DDP ITERATIONS [-]" << DDPsolver_.n_iter()
-				<< " - RUNTIME [s] : "
-				<< to_string(static_cast<int>(duration_mapping.count()) / 1e6) << ", "
-				<< "FINAL MASS [kg] : " << DDPsolver_.list_x()[N][SIZE_VECTOR] * constants.massu() << ", "
-				<< "MAX CONSTRAINT [-] : " << max_constraint << endl;
+			cout << "	" << AUL_n_iter_ << ", " << DDPsolver_.n_iter()
+				<< ", "	<< to_string(static_cast<double>(duration_mapping.count()) / 1e6)
+				<< ", " << DDPsolver_.list_x()[N][SIZE_VECTOR] * constants.massu()
+				<< ", " << max_constraint << endl;
 		}
 
 		// Update dual state and penalities
-		update_lambda_(); update_mu_();
+		update_lambda_(); update_mu_();		
 		list_lambda_ = DDPsolver_.solver_parameters().list_lambda();
 		list_mu_ = DDPsolver_.solver_parameters().list_mu();
 
@@ -378,9 +381,9 @@ void AULSolver::solve(
 	auto stop_aul = high_resolution_clock::now();
 	auto duration_aul = duration_cast<microseconds>(stop_aul - start_aul);
 	if (verbosity < 1) {
-		cout << "Runtime : " + to_string(static_cast<int>(duration_aul.count()) / 1e6) + "s" << endl;
+		cout << "Runtime : " + to_string(static_cast<double>(duration_aul.count()) / 1e6) + "s" << endl;
 	}
 	else if (verbosity < 2) {
-		cout << "Runtime : " + to_string(static_cast<int>(duration_aul.count()) / 1e6) + "s" << endl;
+		cout << "Runtime : " + to_string(static_cast<double>(duration_aul.count()) / 1e6) + "s" << endl;
 	}
 }

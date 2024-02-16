@@ -34,7 +34,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int max_iter = 10000;
 	unsigned int DDP_max_iter = 100;
-	unsigned int AUL_max_iter = max_iter / DDP_max_iter;
+	unsigned int AUL_max_iter = 100;
 	unsigned int PN_max_iter = 50;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
@@ -44,7 +44,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(
 	double PN_regularisation(1e-8);
 	double PN_cv_rate_threshold(1.1);
 	double PN_alpha(1.0); double PN_gamma(0.5);
-	unsigned int verbosity = 0;
+	unsigned int verbosity = 1;
 	unsigned int saving_iterations = 0;
 
 	return SolverParameters(
@@ -138,10 +138,6 @@ void cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(int argc, char** argv) {
 	// First guess command
 	vectordb u_init(Nu, 1e-6 / thrustu); // [VU]
 	vector<vectordb> list_u_init(N, u_init);
-
-	// Output
-	cout << "DEPARTURE : " << endl << x0.extract(0, Nx - 1 - 1) << endl;
-	cout << "ARRIVAL : " << endl << x_goal.extract(0, Nx - 1 - 1) << endl;
 
 	// AULSolver
 	AULSolver solver(solver_parameters, spacecraft_parameters, dynamics);

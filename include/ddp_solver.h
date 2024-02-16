@@ -43,6 +43,7 @@ protected:
 
 	// Looping variables
 	unsigned int n_iter_;
+	bool recompute_dynamics_;
 	double rho_;
 	double alpha_;
 	double d_rho_;
@@ -96,6 +97,7 @@ public:
 	void set_ToF(double const& ToF);
 	void set_homotopy_coefficient(double const& homotopy_coefficient);
 	void set_huber_loss_coefficient(double const& huber_loss_coefficient);
+	void set_recompute_dynamics(bool const& recompute_dynamics);
 
 	// Returns the Augmented lagrangian cost-to-go:
 	// AUL_ctg = ctg + Lambda^T * c(x) + 0.5 * c(x)^T * I_mu * c(x)
@@ -197,7 +199,7 @@ public:
 	// The linesearch is tweaked to implement a memory from one iteration to the other.
 	// Inspired from ALTRO (Julia).
 	// See: https://github.com/RoboticExplorationLab/Altro.jl
-	void forward_pass_convRadius_ls_DA_(
+	void forward_pass_ls_DA_(
 		std::vector<DACE::vectordb> const& list_x,
 		std::vector<DACE::vectordb> const& list_u,
 		DACE::vectordb const& x_goal);

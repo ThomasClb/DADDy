@@ -79,6 +79,9 @@ void DDPSolver::set_homotopy_coefficient(double const& homotopy_coefficient) {
 void DDPSolver::set_huber_loss_coefficient(double const& huber_loss_coefficient) {
 	solver_parameters_.set_huber_loss_coefficient(huber_loss_coefficient);
 }
+void DDPSolver::set_recompute_dynamics(bool const& recompute_dynamics) {
+	recompute_dynamics_ = recompute_dynamics;
+}
 
 // Returns the Augmented lagrangian cost-to-go:
 // AUL_ctg = ctg + Lambda^T * c(x) + 0.5 * c(x)^T * I_mu * c(x)
@@ -403,7 +406,7 @@ bool DDPSolver::evaluate_convergence_(double const& d_cost) {
 	unsigned int max_iter = solver_parameters_.DDP_max_iter();
 
 	// Converged
-	if ((d_cost < tol && d_cost >= 0.0 && (n_iter_ >= 0.05*max_iter || d_cost==0))
+	if ((d_cost < tol && d_cost >= 0.0 && (n_iter_ >= 3 || d_cost==0))
 		|| n_iter_ >= max_iter)
 		return true;
 
@@ -840,7 +843,7 @@ void DDPSolver::forward_pass_(
 		double expected_cost = expected_cost_(alpha);
 
 		// If step too small
-		if (expected_cost < 1e-7) {
+		if (expected_cost < tol*tol) { // Hard coded: TO DO
 			list_x_ = list_x;
 			list_u_ = list_u;
 			increase_regularisation_();
@@ -1011,7 +1014,7 @@ void DDPSolver::forward_pass_ls_(
 		double expected_cost = expected_cost_(alpha_);
 
 		// If step too small
-		if (expected_cost < 1e-7) {
+		if (expected_cost < tol * tol) {
 			list_x_ = list_x;
 			list_u_ = list_u;
 			increase_regularisation_();
@@ -1088,7 +1091,7 @@ void DDPSolver::forward_pass_ls_(
 // only when the linesearch is ended.
 // Inspired from ALTRO (Julia).
 // See: https://github.com/RoboticExplorationLab/Altro.jl
-void DDPSolver::forward_pass_convRadius_ls_DA_(
+void DDPSolver::forward_pass_ls_DA_(
 	vector<vectordb> const& list_x, vector<vectordb> const& list_u, vectordb const& x_goal) {
 	// Unpack parameters
 	double tol = solver_parameters_.DDP_tol();
@@ -1209,7 +1212,7 @@ void DDPSolver::forward_pass_convRadius_ls_DA_(
 		double expected_cost = expected_cost_(alpha_);
 
 		// If step too small
-		if (expected_cost < 1e-7) {
+		if (expected_cost < tol*tol) {
 			list_x_ = list_x;
 			list_u_ = list_u;
 			increase_regularisation_();
@@ -1366,22 +1369,27 @@ void DDPSolver::solve(
 	d_rho_ = 0.0;
 	
 	// Init lists
-	list_x_ = vector<vectordb>();
-	list_dynamic_eval_ = vector<vectorDA>();
 	list_ctg_eval_ = vector<DA>();
 	list_eq_ = vector<vectordb>(); list_ineq_ = vector<vectordb>();
 
 	// Reserve
-	list_x_.reserve(N + 1);
-	list_dynamic_eval_.reserve(N);
+	
 	list_ctg_eval_.reserve(N);
 	list_eq_.reserve(N);
 	list_ineq_.reserve(N);
 
+	// Separte dynamic
+	if (recompute_dynamics_) {
+		list_x_ = vector<vectordb>();
+		list_dynamic_eval_ = vector<vectorDA>();
+		list_dynamic_eval_.reserve(N);
+		list_x_.reserve(N + 1);
+		list_x_.push_back(x0);
+	}
+
 	// Make first trajectory evaluation.
 
-	// Init cost and x
-	list_x_.push_back(x0);
+	// Init cost
 	cost_ = 0; n_iter_ = 0.0;
 	for (size_t i = 0; i < N; i++) {
 		// Make DA maps
@@ -1389,11 +1397,13 @@ void DDPSolver::solve(
 		vectorDA u_da = id_vector(list_u_init[i], 0, Nx, Nx + Nu);
 
 		// Get x_k+1
-		vectorDA x_kp1 = dynamics_.dynamic()(x_da, u_da,
-			spacecraft_parameters_, dynamics_.constants(),
-			solver_parameters_);
-		list_x_.emplace_back(x_kp1.cons());
-		list_dynamic_eval_.push_back(x_kp1);
+		if (recompute_dynamics_) {
+			vectorDA x_kp1 = dynamics_.dynamic()(x_da, u_da,
+				spacecraft_parameters_, dynamics_.constants(),
+				solver_parameters_);
+			list_x_.emplace_back(x_kp1.cons());
+			list_dynamic_eval_.push_back(x_kp1);
+		}
 
 		// Get cost to go
 
@@ -1477,7 +1487,7 @@ void DDPSolver::solve(
 
 		// Forward pass (2 = use of the DA mappings the dynamics + Linesearch)
 		else if (DDP_type % nb_method == 2)
-			forward_pass_convRadius_ls_DA_(list_x, list_u, x_goal);
+			forward_pass_ls_DA_(list_x, list_u, x_goal);
 
 		// Compute costs
 		tc = tc_eval_.cons();
