@@ -1153,7 +1153,7 @@ void DDPSolver::forward_pass_ls_DA_(
 			vectordb dynamic_eval, x_star, u_star;
 
 			// Check condition
-			list_condition_radius.emplace_back(
+			list_condition_radius.push_back(
 				max(correction_norm, error_norm) < dynamics_radius);
 
 			// Checks if [dx, du] belongs to the convergence radius of the dynamics
