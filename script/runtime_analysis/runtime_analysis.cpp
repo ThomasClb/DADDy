@@ -45,7 +45,7 @@ void run_runtime_analysis(int argc, char** argv) {
 	// Output
 	cout << "Test case : " + to_string(test_case)
 		<< ", DDP type : " + to_string(DDP_type)
-		<< ", Number of computations : " + to_string(nb_iteration)
-		<< ", Total runtime : " + to_string(duration_db) + "s"
-	    << ", Average runtime : " + to_string(duration_db / nb_iteration ) + "s" << endl;
+		<< ", Nd of computations : " + to_string(nb_iteration)
+		<< ", Total RT : " + to_string(duration_db) + "s"
+	    << ", Average RT : " + to_string(duration_db / nb_iteration ) + "s" << endl;
 }
