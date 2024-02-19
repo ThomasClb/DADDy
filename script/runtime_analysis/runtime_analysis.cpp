@@ -31,9 +31,7 @@ void run_runtime_analysis(int argc, char** argv) {
 	unsigned int nb_iteration = atoi(argv[10]);
 	
 	// Output
-	cout << "Test case : " + to_string(test_case) << endl;
-	cout << "DDP type : " + to_string(DDP_type) << endl;
-	cout << "Number of computations : " + to_string(nb_iteration) << endl;
+
 
 	// Execute correct test case
 	auto start = high_resolution_clock::now();
@@ -45,6 +43,9 @@ void run_runtime_analysis(int argc, char** argv) {
 	double duration_db = static_cast<double>(duration.count()) / (1e6);
 
 	// Output
-	cout << "Total runtime : " + to_string(duration_db) + "s" << endl;
-	cout << "Average runtime : " + to_string(duration_db / nb_iteration ) + "s" << endl;
+	cout << "Test case : " + to_string(test_case)
+		<< ", DDP type : " + to_string(DDP_type)
+		<< ", Number of computations : " + to_string(nb_iteration)
+		<< ", Total runtime : " + to_string(duration_db) + "s"
+	    << ", Average runtime : " + to_string(duration_db / nb_iteration ) + "s" << endl;
 }
