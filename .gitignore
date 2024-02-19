@@ -50,3 +50,6 @@ packages
 
 # Build folders
 build
+
+# VS script
+./script/main.cpp

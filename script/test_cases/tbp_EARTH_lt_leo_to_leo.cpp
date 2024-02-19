@@ -15,7 +15,8 @@ using namespace std::chrono;
 using namespace std;
 
 SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_leo(
-	unsigned int const& N, unsigned int const& DDP_type) {
+	unsigned int const& N, unsigned int const& DDP_type,
+	unsigned int verbosity) {
 	// Solver parameters
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
@@ -43,7 +44,6 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_leo(
 	double PN_regularisation(1e-8);
 	double PN_cv_rate_threshold(1.1);
 	double PN_alpha(1.0); double PN_gamma(0.5);
-	unsigned int verbosity = 0;
 	unsigned int saving_iterations = 0;
 
 	return SolverParameters(
@@ -66,15 +66,18 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_leo(
 
 void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 	// Input check
-	if (argc < 7) {
+	if (argc < 10) {
 		cout << "Wrong number of arguments." << endl;
-		cout << "Requested number : 6" << endl;
+		cout << "Requested number : 9" << endl;
 		cout << "0 - Test case number." << endl;
 		cout << "1 - SpacecraftParameter adress." << endl;
 		cout << "2 - DDP type [0-7]." << endl;
 		cout << "3 - Number of nodes [-]." << endl;
 		cout << "4 - Time of flight [days]." << endl;
 		cout << "5 - Perform fuel optimal optimisation [0/1]." << endl;
+		cout << "6 - Perform projected Newton solving [0/1]." << endl;
+		cout << "7 - Save results [0/1]." << endl;
+		cout << "8 - Verbosity [0-2]." << endl;
 		return;
 	}
 
@@ -84,7 +87,12 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 	unsigned int N = atoi(argv[4]);
 	double ToF = atof(argv[5]);
 	bool fuel_optimal = false;
+	bool pn_solving = false;
+	bool save_results = false;
+	int verbosity = atoi(argv[9]);
 	if (atoi(argv[6]) == 1) { fuel_optimal = true; }
+	if (atoi(argv[7]) == 1) { pn_solving = true; }
+	if (atoi(argv[8]) == 1) { save_results = true; }
 
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
@@ -113,7 +121,7 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 
 	// Init solver parameters
 	SolverParameters solver_parameters = get_SolverParameters_tbp_EARTH_lt_leo_to_leo(
-		N, DDP_type);
+		N, DDP_type, verbosity);
 
 	// Solver parameters
 	unsigned int Nx = solver_parameters.Nx();
@@ -148,10 +156,6 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 	vectordb u_init(Nu, 1e-6 / thrustu); // [VU]
 	// u_init[1] = 0.1 * T;
 	vector<vectordb> list_u_init(N, u_init);
-
-	// Output
-	cout << "DEPARTURE : " << endl << x0.extract(0, Nx - 1 - 1) << endl;
-	cout << "ARRIVAL : " << endl << x_goal.extract(0, Nx - 1 - 1) << endl;
 
 	// AULSolver
 	AULSolver solver(solver_parameters, spacecraft_parameters, dynamics);

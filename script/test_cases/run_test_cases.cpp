@@ -1,11 +1,11 @@
 /**
-	main.cpp
+	run_test_cases.cpp
 
-	Purpose: Execution script.
+	Purpose: Test cases execution script.
 
 	@author Thomas Caleb
 
-	@version 1.0 17/11/2023
+	@version 1.0 19/02/2024
 */
 
 #include "test_cases.h"

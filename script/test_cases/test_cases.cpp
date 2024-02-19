@@ -1,7 +1,7 @@
 /**
-	low-thrust_cr3bp.cpp
+	test_cases.cpp
 
-	Purpose: Low-thrust Halo L2 to Halo L1 transfer execution script.
+	Purpose: Executes a test case.
 
 	@author Thomas Caleb
 

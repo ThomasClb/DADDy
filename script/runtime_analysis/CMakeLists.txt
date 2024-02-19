@@ -1,10 +1,11 @@
 cmake_minimum_required (VERSION 3.1.1)
 
-project(TEST_CASES CXX)
+project(RUNTIME_ANALYSIS CXX)
 
 # Gathering source files
 file(GLOB_RECURSE source_files ../../source/*)
 file(GLOB_RECURSE test_files ../../script/test_cases/*)
+file(GLOB_RECURSE runtime_files ../../script/runtime_analysis/*)
 
 # Include
 
@@ -17,6 +18,7 @@ include_directories(../../../lib/dace/core/include)
 include_directories(../../include)
 include_directories(../../source)
 include_directories(../../script/test_cases)
+include_directories(../../script/runtime_analysis)
 include_directories(../../script)
 
 # Linking librairies (DACE)
@@ -24,16 +26,17 @@ link_directories(../../../lib/dace/build/interfaces/cxx)
 
 # Main executable
 add_executable(
-	test_cases
+	runtime_analysis
 	${source_files} 
 	${test_files}
-	../../script/test_cases/run_test_cases.cpp)
+	${test_files}
+	../../script/test_cases/run_runtime_analysis.cpp)
 
 # Properties
-set_target_properties(test_cases PROPERTIES
+set_target_properties(runtime_analysis PROPERTIES
     CXX_STANDARD 14)
 	
 # Link
 target_link_libraries(
-	test_cases
+	runtime_analysis
     dace)

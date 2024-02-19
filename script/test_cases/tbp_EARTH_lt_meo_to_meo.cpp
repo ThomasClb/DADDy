@@ -15,7 +15,8 @@ using namespace std::chrono;
 using namespace std;
 
 SolverParameters get_SolverParameters_tbp_EARTH_lt_meo_to_meo(
-	unsigned int const& N, unsigned int const& DDP_type) {
+	unsigned int const& N, unsigned int const& DDP_type,
+	unsigned int verbosity) {
 	// Solver parameters
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
@@ -43,7 +44,6 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_meo_to_meo(
 	double PN_regularisation(1e-8);
 	double PN_cv_rate_threshold(1.1);
 	double PN_alpha(1.0); double PN_gamma(0.5);
-	unsigned int verbosity = 0;
 	unsigned int saving_iterations = 0;
 
 	return SolverParameters(
@@ -66,15 +66,18 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_meo_to_meo(
 
 void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 	// Input check
-	if (argc < 7) {
+	if (argc < 10) {
 		cout << "Wrong number of arguments." << endl;
-		cout << "Requested number : 6" << endl;
+		cout << "Requested number : 9" << endl;
 		cout << "0 - Test case number." << endl;
 		cout << "1 - SpacecraftParameter adress." << endl;
 		cout << "2 - DDP type [0-7]." << endl;
 		cout << "3 - Number of nodes [-]." << endl;
 		cout << "4 - Time of flight [days]." << endl;
 		cout << "5 - Perform fuel optimal optimisation [0/1]." << endl;
+		cout << "6 - Perform projected Newton solving [0/1]." << endl;
+		cout << "7 - Save results [0/1]." << endl;
+		cout << "8 - Verbosity [0-2]." << endl;
 		return;
 	}
 
@@ -84,7 +87,12 @@ void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 	unsigned int N = atoi(argv[4]);
 	double ToF = atof(argv[5]);
 	bool fuel_optimal = false;
+	bool pn_solving = false;
+	bool save_results = false;
+	int verbosity = atoi(argv[9]);
 	if (atoi(argv[6]) == 1) { fuel_optimal = true; }
+	if (atoi(argv[7]) == 1) { pn_solving = true; }
+	if (atoi(argv[8]) == 1) { save_results = true; }
 
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
@@ -113,7 +121,7 @@ void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 
 	// Init solver parameters
 	SolverParameters solver_parameters = get_SolverParameters_tbp_EARTH_lt_meo_to_meo(
-		N, DDP_type);
+		N, DDP_type, verbosity);
 
 	// Solver parameters
 	unsigned int Nx = solver_parameters.Nx();
@@ -146,10 +154,6 @@ void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 	// u_init[1] = 0.1 * T;
 	vector<vectordb> list_u_init(N, u_init);
 
-	// Output
-	cout << "DEPARTURE : " << endl << x0.extract(0, Nx - 1 - 1) << endl;
-	cout << "ARRIVAL : " << endl << x_goal.extract(0, Nx - 1 - 1) << endl;
-
 	// AULSolver
 	AULSolver solver(solver_parameters, spacecraft_parameters, dynamics);
 
@@ -173,7 +177,8 @@ void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 	// PN test
 	auto start_inter = high_resolution_clock::now();
 	PNSolver pn_solver(solver);
-	pn_solver.solve(x_goal);
+	if (pn_solving)
+		pn_solver.solve(x_goal);
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
 	auto duration_AUL = duration_cast<microseconds>(start_inter - start);
@@ -190,39 +195,42 @@ void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 	double final_mass = list_x[N][6]; // [kg]
 
 	// Output
-	cout << endl;
-	cout << "Optimised" << endl;
-	cout << "	Total runtime : " + to_string(static_cast<double>(duration.count()) / 1e6) + "s" << endl;
-	cout << "	AUL solver runtime : " + to_string(static_cast<double>(duration_AUL.count()) / 1e6) + "s" << endl;
-	cout << "	PN solver runtime : " + to_string(static_cast<double>(duration_PN.count()) / 1e6) + "s" << endl;
-	cout << "	FINAL MASS [kg] : " << massu * final_mass << endl;
-	cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
-
-	// Print datasets
-
-	// Convert to cart
-	mu = mu / constants.mu();
-	for (size_t i = 0; i < list_u.size(); i++) {
-		// Unpack
-		vectordb x_i = list_x[i];
-		vectordb u_i = list_u[i];
-
-		// Convert to cartesian
-		x_i = equi_2_kep(x_i); // Convert to Keplerian
-		x_i = kep_2_cart(x_i, mu); // Convert to Cartesian
-		u_i = RTN_2_cart(u_i, x_i);
-
-		// Assign
-		list_u[i] = u_i;
-		list_x[i] = x_i;
+	if (verbosity <= 1) {
+		cout << endl;
+		cout << "Optimised" << endl;
+		cout << "	Total runtime : " + to_string(static_cast<double>(duration.count()) / 1e6) + "s" << endl;
+		cout << "	AUL solver runtime : " + to_string(static_cast<double>(duration_AUL.count()) / 1e6) + "s" << endl;
+		cout << "	PN solver runtime : " + to_string(static_cast<double>(duration_PN.count()) / 1e6) + "s" << endl;
+		cout << "	FINAL MASS [kg] : " << massu * final_mass << endl;
+		cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
 	}
-	list_x[list_u.size()] = kep_2_cart(equi_2_kep(list_x[list_u.size()]), mu);
+	// Print datasets
+	if (save_results) {
 
-	string file_name = "./data/datasets/tbp_EARTH_lt_meo_to_meo.dat";
-	string system_name = "TBP EARTH EQUINOCTIAL LT";
-	print_transfer_dataset(
-		file_name, system_name,
-		list_x, list_u,
-		x_departure, x_arrival,
-		dynamics, spacecraft_parameters, constants, solver_parameters);
+		// Convert to cart
+		mu = mu / constants.mu();
+		for (size_t i = 0; i < list_u.size(); i++) {
+			// Unpack
+			vectordb x_i = list_x[i];
+			vectordb u_i = list_u[i];
+
+			// Convert to cartesian
+			x_i = equi_2_kep(x_i); // Convert to Keplerian
+			x_i = kep_2_cart(x_i, mu); // Convert to Cartesian
+			u_i = RTN_2_cart(u_i, x_i);
+
+			// Assign
+			list_u[i] = u_i;
+			list_x[i] = x_i;
+		}
+		list_x[list_u.size()] = kep_2_cart(equi_2_kep(list_x[list_u.size()]), mu);
+
+		string file_name = "./data/datasets/tbp_EARTH_lt_meo_to_meo.dat";
+		string system_name = "TBP EARTH EQUINOCTIAL LT";
+		print_transfer_dataset(
+			file_name, system_name,
+			list_x, list_u,
+			x_departure, x_arrival,
+			dynamics, spacecraft_parameters, constants, solver_parameters);
+	}
 }
