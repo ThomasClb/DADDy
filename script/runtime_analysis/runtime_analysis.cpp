@@ -27,10 +27,12 @@ void run_runtime_analysis(int argc, char** argv) {
 
 	// Unpack inputs
 	unsigned int test_case = atoi(argv[1]);
+	unsigned int DDP_type = atoi(argv[3]);
 	unsigned int nb_iteration = atoi(argv[10]);
-
+	
 	// Output
 	cout << "Test case : " + to_string(test_case) << endl;
+	cout << "DDP type : " + to_string(DDP_type) << endl;
 	cout << "Number of computations : " + to_string(nb_iteration) << endl;
 
 	// Execute correct test case
