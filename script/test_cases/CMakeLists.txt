@@ -31,7 +31,7 @@ add_executable(
 
 # Properties
 set_target_properties(test_cases PROPERTIES
-    CXX_STANDARD 11)
+    CXX_STANDARD 14)
 	
 # Link
 target_link_libraries(
