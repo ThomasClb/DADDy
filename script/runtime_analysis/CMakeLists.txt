@@ -4,8 +4,10 @@ project(RUNTIME_ANALYSIS CXX)
 
 # Gathering source files
 file(GLOB_RECURSE source_files ../../source/*)
-file(GLOB_RECURSE test_files ../../script/test_cases/*)
-list(REMOVE_ITEM test_files "../../script/test_cases/run_test_cases.cpp")
+file(GLOB_RECURSE test_files
+	../../script/test_cases/tbp*.cpp
+	../../script/test_cases/cr3bp*.cpp
+	../../script/test_cases/test*.cpp)
 file(GLOB_RECURSE runtime_files ../../script/runtime_analysis/*)
 
 # Include
@@ -30,7 +32,7 @@ add_executable(
 	runtime_analysis
 	${source_files} 
 	${test_files}
-	${test_files}
+	${runtime_files}
 	../../script/runtime_analysis/run_runtime_analysis.cpp)
 
 # Properties
