@@ -30,7 +30,7 @@ add_executable(
 	${source_files} 
 	${test_files}
 	${test_files}
-	../../script/test_cases/run_runtime_analysis.cpp)
+	../../script/runtime_analysis/run_runtime_analysis.cpp)
 
 # Properties
 set_target_properties(runtime_analysis PROPERTIES
