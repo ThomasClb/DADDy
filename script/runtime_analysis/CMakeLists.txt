@@ -5,6 +5,7 @@ project(RUNTIME_ANALYSIS CXX)
 # Gathering source files
 file(GLOB_RECURSE source_files ../../source/*)
 file(GLOB_RECURSE test_files ../../script/test_cases/*)
+list(REMOVE_ITEM lib_srcs "I../../script/test_cases/run_test_cases.cpp")
 file(GLOB_RECURSE runtime_files ../../script/runtime_analysis/*)
 
 # Include
