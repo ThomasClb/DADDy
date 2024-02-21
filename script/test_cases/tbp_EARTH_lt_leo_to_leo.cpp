@@ -34,7 +34,7 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_leo(
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int max_iter = 10000;
 	unsigned int DDP_max_iter = 100;
-	unsigned int AUL_max_iter = max_iter / DDP_max_iter;
+	unsigned int AUL_max_iter = 100;
 	unsigned int PN_max_iter = 50;
 	vectordb lambda_parameters{ 0.0, 1e8 };
 	vectordb mu_parameters{ 1, 1e8, 10 };
@@ -113,7 +113,7 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 	// Spacecraft parameters
 	double m_0 = 1000.0 / massu; // [MASSU]
 	double dry_mass = m_0/2; // [MASSU]
-	double T = 20 / thrustu; // [THRUSTU]
+	double T = 0.5 / thrustu; // [THRUSTU]
 	double Isp = 2000.0 / tu; // [TU]
 	SpacecraftParameters spacecraft_parameters(
 		dynamics.constants(),
@@ -134,19 +134,18 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 	// Initial conditions [Equinoctial elements, MASSU, TU]
 	ToF = ToF / SEC2DAYS / tu; // [TU]
 	double dt = ToF / N; // [TU]
-	double altitude = 200;
-	double r_d = 6371 + altitude;
-	double r_a = r_d + 200;
+	double r_d = R_EARTH + 400.0;
+	double r_a = r_d + 0;
 	vectordb x_departure{ // Kep coordinates
 		r_d / lu, 0,
+		30 * DEG_2_RAD, 135 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
-		0 * DEG_2_RAD, 0 * DEG_2_RAD,
-		m_0, 2 * PI * sqrt(pow(r_d, 3) / mu) / tu };
+		m_0, 10*2 * PI * sqrt(pow(r_d/lu, 3) / (MU_EARTH/mu))};
 	vectordb x_arrival{ // Kep coordinates
 		r_a / lu, 0,
-		60 * DEG_2_RAD, 150 * DEG_2_RAD,
+		80 * DEG_2_RAD, 133 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
-		dry_mass, 2 * PI * sqrt(pow(r_a, 3) / mu) / tu };
+		dry_mass, 10*2 * PI * sqrt(pow(r_a/lu, 3) / (MU_EARTH / mu))};
 	x_departure = kep_2_equi(x_departure); // Equinoctial coordinates
 	x_arrival = kep_2_equi(x_arrival);
 	vectordb x0 = x_departure; x0[Nx - 1] = dt; // Time step
@@ -180,7 +179,8 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 	// PN test
 	auto start_inter = high_resolution_clock::now();
 	PNSolver pn_solver(solver);
-	pn_solver.solve(x_goal);
+	if (pn_solving)
+		pn_solver.solve(x_goal);
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
 	auto duration_AUL = duration_cast<microseconds>(start_inter - start);
@@ -197,39 +197,42 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 	double final_mass = list_x[N][6]; // [kg]
 
 	// Output
-	cout << endl;
-	cout << "Optimised" << endl;
-	cout << "	Total runtime : " + to_string(static_cast<double>(duration.count()) / 1e6) + "s" << endl;
-	cout << "	AUL solver runtime : " + to_string(static_cast<double>(duration_AUL.count()) / 1e6) + "s" << endl;
-	cout << "	PN solver runtime : " + to_string(static_cast<double>(duration_PN.count()) / 1e6) + "s" << endl;
-	cout << "	FINAL MASS [kg] : " << massu * final_mass << endl;
-	cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
+	if (verbosity <= 1) {
+		cout << endl;
+		cout << "Optimised" << endl;
+		cout << "	Total runtime : " + to_string(static_cast<double>(duration.count()) / 1e6) + "s" << endl;
+		cout << "	AUL solver runtime : " + to_string(static_cast<double>(duration_AUL.count()) / 1e6) + "s" << endl;
+		cout << "	PN solver runtime : " + to_string(static_cast<double>(duration_PN.count()) / 1e6) + "s" << endl;
+		cout << "	FINAL MASS [kg] : " << massu * final_mass << endl;
+		cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
+	}
 
 	// Print datasets
+	if (save_results) {
+		// Convert to cart
+		mu = mu / constants.mu();
+		for (size_t i = 0; i < list_u.size(); i++) {
+			// Unpack
+			vectordb x_i = list_x[i];
+			vectordb u_i = list_u[i];
 
-	// Convert to cart
-	mu = mu / constants.mu();
-	for (size_t i = 0; i < list_u.size(); i++) {
-		// Unpack
-		vectordb x_i = list_x[i];
-		vectordb u_i = list_u[i];
+			// Convert to cartesian
+			x_i = equi_2_kep(x_i); // Convert to Keplerian
+			x_i = kep_2_cart(x_i, mu); // Convert to Cartesian
+			u_i = RTN_2_cart(u_i, x_i);
 
-		// Convert to cartesian
-		x_i = equi_2_kep(x_i); // Convert to Keplerian
-		x_i = kep_2_cart(x_i, mu); // Convert to Cartesian
-		u_i = RTN_2_cart(u_i, x_i);
+			// Assign
+			list_u[i] = u_i;
+			list_x[i] = x_i;
+		}
+		list_x[list_u.size()] = kep_2_cart(equi_2_kep(list_x[list_u.size()]), mu);
 
-		// Assign
-		list_u[i] = u_i;
-		list_x[i] = x_i;
+		string file_name = "./data/datasets/tbp_EARTH_lt_leo_to_leo";
+		string system_name = "TBP EARTH EQUINOCTIAL LT";
+		print_transfer_dataset(
+			file_name, system_name,
+			list_x, list_u,
+			x_departure, x_arrival,
+			dynamics, spacecraft_parameters, constants, solver_parameters);
 	}
-	list_x[list_u.size()] = kep_2_cart(equi_2_kep(list_x[list_u.size()]), mu);
-
-	string file_name = "./data/datasets/tbp_EARTH_lt_leo_to_leo.dat";
-	string system_name = "TBP EARTH EQUINOCTIAL LT";
-	print_transfer_dataset(
-		file_name, system_name,
-		list_x, list_u,
-		x_departure, x_arrival,
-		dynamics, spacecraft_parameters, constants, solver_parameters);
 }

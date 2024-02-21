@@ -200,7 +200,7 @@ void cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(int argc, char** argv) {
 	
 	// Print datasets
 	if (save_results) {
-		string file_name = "./data/datasets/cr3bp_EARTH_MOON_lt_haloL2_to_haloL1.dat";
+		string file_name = "./data/datasets/cr3bp_EARTH_MOON_lt_haloL2_to_haloL1";
 		string system_name = "CR3BP EARTH-MOON CARTESIAN LT";
 		print_transfer_dataset(
 			file_name, system_name,

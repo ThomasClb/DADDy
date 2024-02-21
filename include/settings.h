@@ -38,6 +38,14 @@
 // DOI: https://doi.org/10.1007/s11071-023-08375-0
 #define EARTH_MOON_DISTANCE (384399)
 
+// J2 implementation [-]
+#define J_2 (1.082635854e-3)
+
+// Earth Radius [km]
+// From Wikipedia
+// https://en.wikipedia.org/wiki/Earth_radius
+#define R_EARTH (6378)
+
 // Thrust
 #define G_0 (9.81) // Earth gravity field [m.s^-1]
 

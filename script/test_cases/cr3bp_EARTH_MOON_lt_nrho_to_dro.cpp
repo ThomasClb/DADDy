@@ -170,7 +170,8 @@ void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv) {
 	// PN test
 	auto start_inter = high_resolution_clock::now();
 	PNSolver pn_solver(solver);
-	pn_solver.solve(x_goal);
+	if (pn_solving)
+		pn_solver.solve(x_goal);
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
 	auto duration_AUL = duration_cast<microseconds>(start_inter - start);
@@ -187,20 +188,24 @@ void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv) {
 	double final_mass = list_x[N][6]; // [kg]
 
 	// Output
-	cout << endl;
-	cout << "Optimised" << endl;
-	cout << "	Total runtime : " + to_string(static_cast<double>(duration.count()) / 1e6) + "s" << endl;
-	cout << "	AUL solver runtime : " + to_string(static_cast<double>(duration_AUL.count()) / 1e6) + "s" << endl;
-	cout << "	PN solver runtime : " + to_string(static_cast<double>(duration_PN.count()) / 1e6) + "s" << endl;
-	cout << "	FINAL MASS [kg] : " << massu * final_mass << endl;
-	cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
+	if (verbosity <= 1) {
+		cout << endl;
+		cout << "Optimised" << endl;
+		cout << "	Total runtime : " + to_string(static_cast<double>(duration.count()) / 1e6) + "s" << endl;
+		cout << "	AUL solver runtime : " + to_string(static_cast<double>(duration_AUL.count()) / 1e6) + "s" << endl;
+		cout << "	PN solver runtime : " + to_string(static_cast<double>(duration_PN.count()) / 1e6) + "s" << endl;
+		cout << "	FINAL MASS [kg] : " << massu * final_mass << endl;
+		cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
+	}
 
 	// Print datasets
-	string file_name = "./data/datasets/cr3bp_EARTH_MOON_lt_nrho_to_dro.dat";
-	string system_name = "CR3BP EARTH-MOON CARTESIAN LT";
-	print_transfer_dataset(
-		file_name, system_name,
-		list_x, list_u,
-		x_departure, x_arrival,
-		dynamics, spacecraft_parameters, constants, solver_parameters);
+	if (save_results) {
+		string file_name = "./data/datasets/cr3bp_EARTH_MOON_lt_nrho_to_dro";
+		string system_name = "CR3BP EARTH-MOON CARTESIAN LT";
+		print_transfer_dataset(
+			file_name, system_name,
+			list_x, list_u,
+			x_departure, x_arrival,
+			dynamics, spacecraft_parameters, constants, solver_parameters);
+	}
 }

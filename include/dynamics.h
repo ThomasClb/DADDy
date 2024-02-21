@@ -291,6 +291,7 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 	Constants const& constants) {
 	// Unpack
 	double v_e = spacecraft_parameters.ejection_velocity(); // [VU]
+	double lu = constants.lu();
 	double mu = MU_EARTH / constants.mu();
 	T sma = x[0]; // Equinoctial elements
 	T P_1 = x[1];
@@ -310,29 +311,54 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 	T cos_L = cos(L);
 	T sin_L = sin(L);
 	T B = sqrt(1.0 - P_1 * P_1 - P_2 * P_2);
+	T tan_i2 = Q_1 * Q_1 + Q_2 * Q_2;
+	T G = 1.0 + tan_i2;
+	T G_2 = pow(G, 2.0);
 	T Phi_L = 1 + P_1 * cos_L + P_2 * sin_L;
 	T inv_Phi_L = 1.0 / Phi_L;
 	T sqrt_a_mu = sqrt(sma / mu);
 	T Q_1_cos_L = Q_1 * cos_L;
+	T Q_1_sin_L = Q_1 * sin_L;
+	T Q_2_cos_L = Q_2 * cos_L;
 	T Q_2_sin_L = Q_2 * sin_L;
-	T d_Q = 0.5 * B * sqrt_a_mu * (1.0 + Q_1 * Q_1 + Q_2 * Q_2) * inv_Phi_L * u_N;
+	T d_Q = 0.5 * B * sqrt_a_mu * G * inv_Phi_L * u_N;
+
+	T pert_R = u_R;
+	T pert_T = u_T;
+	T pert_N = u_N;
+
+	// J2
+	bool with_j2 = true;
+	if (with_j2) {
+		T J2_mag = ((-3 * J_2 * mu * pow(R_EARTH / lu, 2)) / G_2) * pow(Phi_L / (sma * pow(B, 2.0)), 4.0);
+		// std::cout << J2_mag << std::endl;
+		T J2_R = 0.5 * (12 * pow(Q_1_cos_L - Q_2_sin_L, 2.0) - G_2) * J2_mag;
+		T J2_buff = 2.0 * (Q_1_cos_L - Q_2_sin_L) * J2_mag;
+		T J2_T = 2.0 * (Q_2_cos_L + Q_1_sin_L) * J2_buff;
+		T J2_N = J2_buff * (1 - tan_i2);
+
+		// Pertubating forces
+		pert_R += J2_R;
+		pert_T += J2_T;
+		pert_N += J2_N;
+	}
 
 	// Acceleration Gauss
 	T d_sma = 2 * sma * sqrt_a_mu / B * (
-		(P_2 * sin_L - P_1 * cos_L) * u_R
-		+ Phi_L * u_T);
+		(P_2 * sin_L - P_1 * cos_L) * pert_R
+		+ Phi_L * pert_T);
 	T d_P_1 = B * sqrt_a_mu * (
-		- cos_L * u_R
-		+ ((P_1 + sin_L) * inv_Phi_L + sin_L) * u_T
-		- P_2 * ((Q_1_cos_L - Q_2_sin_L)) * inv_Phi_L * u_N);
+		- cos_L * pert_R
+		+ ((P_1 + sin_L) * inv_Phi_L + sin_L) * pert_T
+		- P_2 * ((Q_1_cos_L - Q_2_sin_L)) * inv_Phi_L * pert_N);
 	T d_P_2 = B * sqrt_a_mu * (
-		- sin_L * u_R
-		+ ((P_2 + cos_L) * inv_Phi_L + cos_L) * u_T
-		- P_1 * ((Q_1_cos_L - Q_2_sin_L)) * inv_Phi_L * u_N);
+		- sin_L * pert_R
+		+ ((P_2 + cos_L) * inv_Phi_L + cos_L) * pert_T
+		- P_1 * ((Q_1_cos_L - Q_2_sin_L)) * inv_Phi_L * pert_N);
 	T d_Q_1 = d_Q * sin_L;
 	T d_Q_2 = d_Q * cos_L;
 	T d_L = Phi_L * Phi_L * pow(B, -3.0) / sqrt_a_mu  // Mean motion
-		- sma * sqrt_a_mu * B / Phi_L * (Q_1_cos_L - Q_2_sin_L) * u_N;
+		- sma * sqrt_a_mu * B / Phi_L * (Q_1_cos_L - Q_2_sin_L) * pert_N;
 
 	// Thrust
 	T inv_mass = 1 / x[6];
@@ -412,7 +438,7 @@ DACE::AlgebraicVector<T> dynamic_tbp_SUN_lt(
 	SpacecraftParameters const& spacecraft_parameters,
 	Constants const& constants,
 	SolverParameters const& solver_parameters) {
-	return RK78(acceleration_tbp_SUN_lt, x, u, 0, 1.0,
+	return RK4(acceleration_tbp_SUN_lt, x, u, 0, 1.0,
 		spacecraft_parameters, constants);
 }
 

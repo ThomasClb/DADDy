@@ -34,7 +34,7 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_meo_to_meo(
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int max_iter = 10000;
 	unsigned int DDP_max_iter = 100;
-	unsigned int AUL_max_iter = max_iter / DDP_max_iter;
+	unsigned int AUL_max_iter = 100;
 	unsigned int PN_max_iter = 50;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
@@ -113,7 +113,7 @@ void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 	// Spacecraft parameters
 	double m_0 = 1000.0 / massu; // [MASSU]
 	double dry_mass = m_0/2; // [MASSU]
-	double T = 20 / thrustu; // [THRUSTU]
+	double T = 0.5 / thrustu; // [THRUSTU]
 	double Isp = 2000.0 / tu; // [TU]
 	SpacecraftParameters spacecraft_parameters(
 		dynamics.constants(),
@@ -134,16 +134,19 @@ void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 	// Initial conditions [Equinoctial elements, MASSU, TU]
 	ToF = ToF / SEC2DAYS / tu; // [TU]
 	double dt = ToF / N; // [TU]
+	double altitude = 10000;
+	double r_d = R_EARTH + altitude;
+	double r_a = r_d + 0;
 	vectordb x_departure{ // Kep coordinates
-		10000 / lu, 0,
-		51 * DEG_2_RAD, 0 * DEG_2_RAD,
+		r_d / lu, 0,
+		30 * DEG_2_RAD, 142 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
-		m_0, 2 * PI * sqrt(pow(10000, 3) / mu) / tu };
+		m_0, 10 * 2 * PI * sqrt(pow(r_d / lu, 3) / (MU_EARTH / mu))};
 	vectordb x_arrival{ // Kep coordinates
-		24200 / lu, 0,
-		56 * DEG_2_RAD, 150 * DEG_2_RAD,
+		r_a / lu, 0,
+		80 * DEG_2_RAD, 140 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
-		dry_mass, 2 * PI * sqrt(pow(24200, 3) / mu) / tu };
+		dry_mass, 10 * 2 * PI * sqrt(pow(r_a/lu, 3) / (MU_EARTH / mu))};
 	x_departure = kep_2_equi(x_departure); // Equinoctial coordinates
 	x_arrival = kep_2_equi(x_arrival);
 	vectordb x0 = x_departure; x0[Nx - 1] = dt; // Time step
@@ -225,7 +228,7 @@ void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 		}
 		list_x[list_u.size()] = kep_2_cart(equi_2_kep(list_x[list_u.size()]), mu);
 
-		string file_name = "./data/datasets/tbp_EARTH_lt_meo_to_meo.dat";
+		string file_name = "./data/datasets/tbp_EARTH_lt_meo_to_meo";
 		string system_name = "TBP EARTH EQUINOCTIAL LT";
 		print_transfer_dataset(
 			file_name, system_name,

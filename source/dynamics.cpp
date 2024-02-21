@@ -215,15 +215,12 @@ vectordb kep_2_equi(vectordb const& kep_state_vector) {
 		ecc_anomaly /= 1 - ecc * cos(ecc_anomaly_init);
 	} while (abs(ecc_anomaly - ecc_anomaly_init) > EPS);
 
-	// Computing true anomaly
-	ecc_anomaly_init = sqrt((1 + ecc) / (1 - ecc)) * tan(ecc_anomaly / 2);
-
 	// Compute elements
 	double P_1 = ecc * sin(RAAN + omega);
 	double P_2 = ecc * cos(RAAN + omega);
 	double Q_1 = tan(inc / 2) * sin(RAAN);
 	double Q_2 = tan(inc / 2) * cos(RAAN);
-	double true_anomaly = (2 * atan(ecc_anomaly_init));
+	double true_anomaly = (2 * atan(sqrt((1 + ecc) / (1 - ecc)) * tan(ecc_anomaly / 2)));
 	double L = RAAN + omega + true_anomaly;
 	
 	// Store values in a vector
@@ -251,8 +248,8 @@ vectordb equi_2_kep(vectordb const& equi_state_vector) {
 	// Compute elements
 	double ecc = sqrt(P_1*P_1 + P_2*P_2);
 	double inc = 2 * atan(sqrt(Q_1 * Q_1 + Q_2 * Q_2));
-	double RAAN = atan2(Q_2, Q_1);
-	double omega = atan2(P_2, P_1) - RAAN;
+	double RAAN = atan2(Q_1, Q_2);
+	double omega = atan2(P_1, P_2) - RAAN;
 	double true_anomaly = L - omega - RAAN;
 	double ecc_anomaly = 2 * atan(sqrt((1 - ecc) / (1 + ecc)) * tan(true_anomaly / 2));
 	double M = fmod(ecc_anomaly - ecc *sin(ecc_anomaly), 2*PI);

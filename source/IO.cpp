@@ -169,8 +169,21 @@ void print_transfer_dataset(
 	vector<vector<vectordb>> list_data{
 		list_x, list_u,  list_departure, list_arrival };
 
+
+	// Make file name
+	int power = 9;
+	double thrust_mass = ((spacecraft_parameters.thrust() * spacecraft_parameters.constants().thrustu()
+		/ (spacecraft_parameters.initial_mass() * spacecraft_parameters.constants().massu())
+		) * pow(10.0, power));
+	int exposant = log10(thrust_mass);
+	int mantisse = static_cast<int>(thrust_mass) / static_cast<int>(pow(10, exposant));
+	string str_T2m = to_string(mantisse) + "e" + to_string(exposant - power);
+	string file_name_ = file_name + "_"
+		+ to_string(solver_parameters.DDP_type()) + "_"
+		+ str_T2m + ".dat";
+
 	print_dataset(
-		file_name, system_name,
+		file_name_, system_name,
 		spacecraft_parameters,
 		list_title, list_data);
 }

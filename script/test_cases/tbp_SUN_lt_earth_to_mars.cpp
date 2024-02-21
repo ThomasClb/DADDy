@@ -126,7 +126,7 @@ void tbp_SUN_lt_earth_to_mars(int argc, char** argv) {
 	DA::setEps(1e-90);
 
 	// Initial conditions [3*LU, 3*VU, MASSU, TU]
-	ToF /=  SEC2DAYS * tu; // [TU]
+	ToF /=  (SEC2DAYS * tu); // [TU]
 	double dt = ToF / N; // [TU]
 	vectordb x_departure{
 		-140699693 / lu, -51614428 / lu, 980 / lu,
@@ -150,8 +150,8 @@ void tbp_SUN_lt_earth_to_mars(int argc, char** argv) {
 	auto start = high_resolution_clock::now();
 	solver.set_homotopy_coefficient(0.0);
 	solver.solve(x0, list_u_init, x_goal);
-	vectordb homotopy_sequence{0.9, 0.999};
-	vectordb huber_loss_coefficient_sequence{1e-2, 1e-3};
+	vectordb homotopy_sequence{0.5, 0.9, 0.999};
+	vectordb huber_loss_coefficient_sequence{1e-2, 2e-3, 1e-3};
 	if (fuel_optimal) {
 		for (size_t i = 0; i < homotopy_sequence.size(); i++) {
 			solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
@@ -196,7 +196,7 @@ void tbp_SUN_lt_earth_to_mars(int argc, char** argv) {
 
 	// Print datasets
 	if (save_results) {
-		string file_name = "./data/datasets/tbp_SUN_lt_earth_to_mars.dat";
+		string file_name = "./data/datasets/tbp_SUN_lt_earth_to_mars";
 		string system_name = "TBP SUN CARTESIAN LT";
 		print_transfer_dataset(
 			file_name, system_name,
