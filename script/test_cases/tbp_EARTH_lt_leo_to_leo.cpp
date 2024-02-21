@@ -138,14 +138,14 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 	double r_a = r_d + 0;
 	vectordb x_departure{ // Kep coordinates
 		r_d / lu, 0,
-		30 * DEG_2_RAD, 135 * DEG_2_RAD,
+		45 * DEG_2_RAD, 145 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
-		m_0, 10*2 * PI * sqrt(pow(r_d/lu, 3) / (MU_EARTH/mu))};
+		m_0, 2*PI*sqrt(pow(r_d, 3) / MU_EARTH)/tu };
 	vectordb x_arrival{ // Kep coordinates
 		r_a / lu, 0,
-		80 * DEG_2_RAD, 133 * DEG_2_RAD,
+		45 * DEG_2_RAD, 140 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
-		dry_mass, 10*2 * PI * sqrt(pow(r_a/lu, 3) / (MU_EARTH / mu))};
+		dry_mass, 2 * PI * sqrt(pow(r_a, 3) / MU_EARTH) / tu };
 	x_departure = kep_2_equi(x_departure); // Equinoctial coordinates
 	x_arrival = kep_2_equi(x_arrival);
 	vectordb x0 = x_departure; x0[Nx - 1] = dt; // Time step

@@ -321,20 +321,19 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 	T Q_1_sin_L = Q_1 * sin_L;
 	T Q_2_cos_L = Q_2 * cos_L;
 	T Q_2_sin_L = Q_2 * sin_L;
-	T d_Q = 0.5 * B * sqrt_a_mu * G * inv_Phi_L * u_N;
-
 	T pert_R = u_R;
 	T pert_T = u_T;
 	T pert_N = u_N;
 
 	// J2
-	bool with_j2 = true;
+	bool with_j2 = false;
 	if (with_j2) {
-		T J2_mag = ((-3 * J_2 * mu * pow(R_EARTH / lu, 2)) / G_2) * pow(Phi_L / (sma * pow(B, 2.0)), 4.0);
+		T J2_mag = (1.5 * J_2 * MU_EARTH * pow(R_EARTH, 2)) * pow(sma * lu * pow(B, 2) * inv_Phi_L, -4);
 		// std::cout << J2_mag << std::endl;
-		T J2_R = 0.5 * (12 * pow(Q_1_cos_L - Q_2_sin_L, 2.0) - G_2) * J2_mag;
-		T J2_buff = 2.0 * (Q_1_cos_L - Q_2_sin_L) * J2_mag;
-		T J2_T = 2.0 * (Q_2_cos_L + Q_1_sin_L) * J2_buff;
+		J2_mag /= (constants.mu() / lu / lu) * G_2;
+		T J2_R = (12 * pow(Q_1_cos_L - Q_2_sin_L, 2.0) - G_2) * J2_mag;
+		T J2_buff = 4 * (Q_1_cos_L - Q_2_sin_L) * J2_mag;
+		T J2_T = 2 * (Q_2_cos_L + Q_1_sin_L) * J2_buff;
 		T J2_N = J2_buff * (1 - tan_i2);
 
 		// Pertubating forces
@@ -355,6 +354,7 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 		- sin_L * pert_R
 		+ ((P_2 + cos_L) * inv_Phi_L + cos_L) * pert_T
 		- P_1 * ((Q_1_cos_L - Q_2_sin_L)) * inv_Phi_L * pert_N);
+	T d_Q = 0.5 * B * sqrt_a_mu * G * inv_Phi_L * pert_N;
 	T d_Q_1 = d_Q * sin_L;
 	T d_Q_2 = d_Q * cos_L;
 	T d_L = Phi_L * Phi_L * pow(B, -3.0) / sqrt_a_mu  // Mean motion
