@@ -311,8 +311,7 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 	T cos_L = cos(L);
 	T sin_L = sin(L);
 	T B = sqrt(1.0 - P_1 * P_1 - P_2 * P_2);
-	T tan_i2 = Q_1 * Q_1 + Q_2 * Q_2;
-	T G = 1.0 + tan_i2;
+	T G = 1.0 + Q_1 * Q_1 + Q_2 * Q_2;
 	T G_2 = pow(G, 2.0);
 	T Phi_L = 1 + P_1 * cos_L + P_2 * sin_L;
 	T inv_Phi_L = 1.0 / Phi_L;
@@ -321,6 +320,7 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 	T Q_1_sin_L = Q_1 * sin_L;
 	T Q_2_cos_L = Q_2 * cos_L;
 	T Q_2_sin_L = Q_2 * sin_L;
+	T Q_1_cos_L_m_Q_2_sin_L = Q_1_cos_L - Q_2_sin_L;
 	T pert_R = u_R;
 	T pert_T = u_T;
 	T pert_N = u_N;
@@ -331,10 +331,10 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 		T J2_mag = (1.5 * J_2 * MU_EARTH * pow(R_EARTH, 2)) * pow(sma * lu * pow(B, 2) * inv_Phi_L, -4);
 		// std::cout << J2_mag << std::endl;
 		J2_mag /= (constants.mu() / lu / lu) * G_2;
-		T J2_R = (12 * pow(Q_1_cos_L - Q_2_sin_L, 2.0) - G_2) * J2_mag;
-		T J2_buff = 4 * (Q_1_cos_L - Q_2_sin_L) * J2_mag;
+		T J2_R = (12 * pow(Q_1_cos_L_m_Q_2_sin_L, 2.0) - G_2) * J2_mag;
+		T J2_buff = 4 * Q_1_cos_L_m_Q_2_sin_L * J2_mag;
 		T J2_T = 2 * (Q_2_cos_L + Q_1_sin_L) * J2_buff;
-		T J2_N = J2_buff * (1 - tan_i2);
+		T J2_N = J2_buff * (2 - G);
 
 		// Pertubating forces
 		pert_R += J2_R;
@@ -349,16 +349,16 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 	T d_P_1 = B * sqrt_a_mu * (
 		- cos_L * pert_R
 		+ ((P_1 + sin_L) * inv_Phi_L + sin_L) * pert_T
-		- P_2 * ((Q_1_cos_L - Q_2_sin_L)) * inv_Phi_L * pert_N);
+		- P_2 * Q_1_cos_L_m_Q_2_sin_L * inv_Phi_L * pert_N);
 	T d_P_2 = B * sqrt_a_mu * (
 		- sin_L * pert_R
 		+ ((P_2 + cos_L) * inv_Phi_L + cos_L) * pert_T
-		- P_1 * ((Q_1_cos_L - Q_2_sin_L)) * inv_Phi_L * pert_N);
+		- P_1 * Q_1_cos_L_m_Q_2_sin_L * inv_Phi_L * pert_N);
 	T d_Q = 0.5 * B * sqrt_a_mu * G * inv_Phi_L * pert_N;
 	T d_Q_1 = d_Q * sin_L;
 	T d_Q_2 = d_Q * cos_L;
 	T d_L = Phi_L * Phi_L * pow(B, -3.0) / sqrt_a_mu  // Mean motion
-		- sma * sqrt_a_mu * B / Phi_L * (Q_1_cos_L - Q_2_sin_L) * pert_N;
+		- sma * sqrt_a_mu * B * inv_Phi_L * Q_1_cos_L_m_Q_2_sin_L * pert_N;
 
 	// Thrust
 	T inv_mass = 1 / x[6];

@@ -39,15 +39,21 @@ if __name__ == "__main__":
     os.chdir("../../")
     
     
-    # TO DO : have file name as an input
+    DDP_type = "_2"
+    T2m_ratio = "_5e-4"
+        
+    #file_name = './data/datasets/tbp_SUN_lt_earth_to_mars'
+    #file_name = './data/datasets/tbp_EARTH_lt_leo_to_geo'
+    #file_name = './data/datasets/tbp_EARTH_lt_leo_to_leo'
+    file_name = './data/datasets/tbp_EARTH_lt_meo_to_meo'
+    #file_name = './data/datasets/cr3bp_EARTH_MOON_lt_haloL2_to_haloL1'
+    #file_name = './data/datasets/cr3bp_EARTH_MOON_lt_nrho_to_dro'
+    #file_name = './data/datasets/cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2'
+    #file_name = './data/datasets/cr3bp_EARTH_MOON_lt_dro_to_dro'
     
-    #file_name = './data/datasets/tbp_SUN_lt_earth_to_mars.dat'
-    #file_name = './data/datasets/tbp_EARTH_lt_leo_to_geo.dat'
     
-    #file_name = './data/datasets/cr3bp_EARTH_MOON_lt_haloL2_to_haloL1.dat'
-    #file_name = './data/datasets/cr3bp_EARTH_MOON_lt_nrho_to_dro.dat'
-    #file_name = './data/datasets/cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2.dat'
-    file_name = './data/datasets/cr3bp_EARTH_MOON_lt_dro_to_dro.dat'
+    
+    file_name = file_name + DDP_type + T2m_ratio + ".dat"
 
     
     # Load dataset
@@ -58,4 +64,4 @@ if __name__ == "__main__":
     plot_2d(dataset)
     plot_thrust_profile(dataset)
     #plot_keplerian(dataset)
-    #plot_keplerians(dataset)
+    plot_keplerians(dataset)

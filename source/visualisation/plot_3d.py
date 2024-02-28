@@ -291,7 +291,7 @@ def plot_3d(dataset):
     plot_thrust_vector(dataset, ax,
                        thrust_color,
                        denormalise)
-    
+
     # Plot reference orbits
     plot_reference_orbits(dataset, ax,
                           list_colors_reference,
