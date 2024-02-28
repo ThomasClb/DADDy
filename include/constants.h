@@ -17,6 +17,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <limits>
 #include <dace/dace_s.h>
 
 #include "settings.h"
