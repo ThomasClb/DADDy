@@ -280,7 +280,7 @@ def plot_3d(dataset):
        ax.plot([xb], [yb], [zb], 'w')
        
     # White background
-    ax.w_xaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
+    #   ax.w_xaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
     
     # Set labels
     ax.set_xlabel(list_names_state[1])

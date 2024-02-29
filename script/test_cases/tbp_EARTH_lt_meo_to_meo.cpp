@@ -118,6 +118,7 @@ void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 	SpacecraftParameters spacecraft_parameters(
 		dynamics.constants(),
 		m_0, dry_mass, T, Isp);
+	spacecraft_parameters.save("./data/datasets/tbp_EARTH_1e-5.dat");
 
 	// Init solver parameters
 	SolverParameters solver_parameters = get_SolverParameters_tbp_EARTH_lt_meo_to_meo(
