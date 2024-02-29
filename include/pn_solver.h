@@ -49,6 +49,11 @@ protected:
 	std::vector<DACE::matrixdb> der_tineq_; // List of terminal inequality constraints derivatives
 	std::vector<DACE::vectorDA> list_dynamics_; // List of dynamics evaluations
 
+	// Looping attributes
+	DACE::vectordb  X_U_;
+	// MAKE vector X_U
+ 	// Make vector EQ_INEQ 
+
 // Methods
 public:
 	// Empty constructors
@@ -75,8 +80,7 @@ public:
 	const DACE::vectordb tineq() const;
 
 	// Setters
-	void set_list_x(std::vector<DACE::vectordb> const& list_x);
-	void set_list_u(std::vector<DACE::vectordb> const& list_u);
+	void set_list_x_u();
 
 
 	// Solves the optimisation problem with a projected Newton method
@@ -118,12 +122,12 @@ public:
 		std::vector<DACE::vectordb>,
 		std::vector<DACE::vectordb>> update_constraints_double_(
 			DACE::vectordb const& x_goal,
-			std::vector<DACE::vectordb> const& list_x,
-			std::vector<DACE::vectordb> const& list_u);
+			DACE::vectordb const& X_U,
+			DACE::vectordb const& correction);
 
-	// Updates the constraints without DA
+	// Assign the constraints without DA
 	// Given the list of equalities, and inequalities
-	void update_constraints_double_(
+	void assign_constraints_double_(
 		std::pair<
 		std::vector<DACE::vectordb>,
 		std::vector<DACE::vectordb>> const& list_eq_ineq);

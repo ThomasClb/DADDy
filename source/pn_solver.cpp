@@ -23,7 +23,7 @@ PNSolver::PNSolver() : AULsolver_(AULSolver()),
 	teq_(vectordb(0)), tineq_(vectordb(0)),
 	list_der_eq_(vector<vector<matrixdb>>(0)),
 	list_der_ineq_(vector<vector<matrixdb>>(0)),
-	der_teq_(vector<matrixdb>(0)), der_tineq_(vector<matrixdb>(0)) {}
+	der_teq_(vector<matrixdb>(0)), der_tineq_(vector<matrixdb>(0)), X_U_(0) {}
 
 // Constructors
 PNSolver::PNSolver(AULSolver const& AULsolver) : AULsolver_(AULsolver),
@@ -34,7 +34,36 @@ PNSolver::PNSolver(AULSolver const& AULsolver) : AULsolver_(AULsolver),
 	teq_(AULsolver.teq()), tineq_(AULsolver.tineq()),
 	list_der_eq_(vector<vector<matrixdb>>(AULsolver.list_eq().size())),
 	list_der_ineq_(vector<vector<matrixdb>>(AULsolver.list_ineq().size())),
-	der_teq_(vector<matrixdb>(0)), der_tineq_(vector<matrixdb>(0)) {}
+	der_teq_(vector<matrixdb>(0)), der_tineq_(vector<matrixdb>(0)),
+	X_U_() {
+	// Unpack
+	DDPSolver ddp_solver = DDPsolver();
+	SolverParameters solver_parameters = ddp_solver.solver_parameters();
+	unsigned int N = solver_parameters.N();
+	unsigned int Nx = solver_parameters.Nx();
+	unsigned int Nu = solver_parameters.Nu();
+	X_U_ = vectordb(N*(Nx + Nu));
+
+	// First control
+	for (size_t j=0; j<Nu; j++)  {
+		X_U_[j] = list_u_[0][j];
+	}
+
+	// Loop
+	for (size_t i=1; i<N; i++) {
+		for (size_t j=0; j<Nx; j++)  {
+			X_U_[(i - 1)*(Nx + Nu) + Nu + j] = list_x_[i][j];
+		}
+		for (size_t j=0; j<Nu; j++)  {
+			X_U_[i*(Nx + Nu) + j] = list_u_[i][j];
+		}
+	}
+
+	// Last state
+	for (size_t j=0; j<Nx; j++)  {
+		X_U_[(N - 1)*(Nx + Nu) + Nu + j] = list_x_[N][j];
+	}
+}
 
 // Copy constructor
 PNSolver::PNSolver(
@@ -46,7 +75,35 @@ PNSolver::PNSolver(
 	teq_(solver.teq_), tineq_(solver.tineq_),
 	list_der_eq_(vector<vector<matrixdb>>(solver.list_eq_.size())),
 	list_der_ineq_(vector<vector<matrixdb>>(solver.list_ineq_.size())),
-	der_teq_(vector<matrixdb>(0)), der_tineq_(vector<matrixdb>(0)) {}
+	der_teq_(vector<matrixdb>(0)), der_tineq_(vector<matrixdb>(0)), X_U_(0) {
+	// Unpack
+	DDPSolver ddp_solver = DDPsolver();
+	SolverParameters solver_parameters = ddp_solver.solver_parameters();
+	unsigned int N = solver_parameters.N();
+	unsigned int Nx = solver_parameters.Nx();
+	unsigned int Nu = solver_parameters.Nu();
+	X_U_ = vectordb(N*(Nx + Nu));
+
+	// First control
+	for (size_t j=0; j<Nu; j++)  {
+		X_U_[j] = list_u_[0][j];
+	}
+
+	// Last state
+	for (size_t j=0; j<Nx; j++)  {
+		X_U_[(N - 1)*(Nx + Nu) + Nu + j] = list_x_[N][j];
+	}
+
+	// Loop
+	for (size_t i=1; i<N; i++) {
+		for (size_t j=0; j<Nx; j++)  {
+			X_U_[(i - 1)*(Nx + Nu) + Nu + j] = list_x_[i][j];
+		}
+		for (size_t j=0; j<Nu; j++)  {
+			X_U_[i*(Nx + Nu) + j] = list_u_[i][j];
+		}
+	}
+}
 
 // Destructors
 PNSolver::~PNSolver() {}
@@ -63,8 +120,29 @@ const vectordb PNSolver::tineq() const { return tineq_; }
 const double PNSolver::cost() const { return cost_; }
 
 // Setters
-void PNSolver::set_list_x(vector<vectordb> const& list_x) { list_x_ = list_x;}
-void PNSolver::set_list_u(vector<vectordb> const& list_u) { list_u_ = list_u;}
+void PNSolver::set_list_x_u() {
+	// Unpack
+	DDPSolver ddp_solver = DDPsolver();
+	SolverParameters solver_parameters = ddp_solver.solver_parameters();
+	unsigned int N = solver_parameters.N();
+	unsigned int Nx = solver_parameters.Nx();
+	unsigned int Nu = solver_parameters.Nu();
+
+
+	// Loop for x
+	for (size_t i=1; i< N + 1; i++) {
+		for (size_t j=0; j<Nx; j++)  {
+			list_x_[i][j] = X_U_[(i - 1)*(Nx + Nu) + Nu + j];
+		}
+	}
+
+	// Loop for u
+	for (size_t i=0; i<N; i++) {
+		for (size_t j=0; j<Nu; j++)  {
+			list_u_[i][j] = X_U_[i*(Nx + Nu) + j];
+		}
+	}
+}
 
 // Solves the optimisation problem with a projected Newton method
 // Inspired from ALTRO (Julia).
@@ -107,7 +185,7 @@ void PNSolver::solve(vectordb const& x_goal) {
 	for (size_t i = 0; i < max_iter; i++) {
 		// Output
 		if (verbosity < 1) {
-			if (i % 5 == 0)
+			// if (i % 5 == 0)
 				cout << i << " - " << prev_violation << " - " << list_x_[N][SIZE_VECTOR] * constants.massu() << endl;
 		}
 
@@ -143,6 +221,7 @@ void PNSolver::solve(vectordb const& x_goal) {
 			cv_rate = log(violation) / log(prev_violation);
 			prev_violation = violation;
 		}
+		set_list_x_u(); // TO DO: check if it can be moved outside
 	}
 
 	return;
@@ -169,17 +248,15 @@ double PNSolver::line_search_(
 	unsigned int Nu = solver_parameters.Nu();
 	matrixdb mat_z(d_0.size(), 1);
 
-	// Init loope
+	// Init loop
 	double violation(violation_0); vectordb d(d_0);
-	vector<vectordb> list_x = list_x;
-	vector<vectordb> list_u = list_u_;
 	for (size_t i = 0; i < 10; i++) {
 		// Solve Sigma * z = d <=> L * L^t * z = d using
 		// block tridiagonal Cholesky factorisation.
 		vectordb z = solve_cholesky_(tridiag_L, d);
 		mat_z.setcol(0, z);	
-		vectordb corr(N * (Nu + Nx));
-
+		vectordb correction(N * (Nu + Nx));
+ 
 		// Compute correction
 		size_t counter_z = 0; size_t counter_corr = 0;
 		for (size_t j = 0; j < block_D.size(); j++) {
@@ -195,21 +272,22 @@ double PNSolver::line_search_(
 
 			// Assign
 			for (size_t k = 0; k < corr_j.size(); k++) {
-				corr[counter_corr + k] += alpha * corr_j[k];
+				correction[counter_corr + k] += alpha * corr_j[k];
 			}
 			counter_z += N_j;
 			counter_corr += corr_j.size() - Nx;
-		}			
+		}
 
-		// Update x, u
-		pair<vector<vectordb>,
-			 vector<vectordb>> list_x_u = update_list_x_u_(corr); // TO DO : modify
+		// Comoute X_U
+		vectordb X_U = X_U_ - correction;
 
 		// Evaluate constraints
 		pair<
 			vector<vectordb>,
 			vector<vectordb>> list_eq_ineq = update_constraints_double_( // TO DO : DA method
-			x_goal, list_x_u.first, list_x_u.second);
+			x_goal, X_U, correction);
+
+		// TO DO use DA expansion
 
 		// Get the max constraint
 		violation = get_max_constraint_(
@@ -218,10 +296,10 @@ double PNSolver::line_search_(
 		// Check exit
 		if (violation <= violation_0) {
 			// Update state
-			set_list_x(list_x_u.first); set_list_u(list_x_u.second);;
+			X_U_ = X_U;
 
 			// Update constraints
-			update_constraints_double_(list_eq_ineq);
+			assign_constraints_double_(list_eq_ineq);
 
 			break;
 		}
@@ -409,7 +487,7 @@ void PNSolver::update_constraints_(
 		vectorDA x_DA = id_vector(list_x_[i], 0, 0, Nx - 1);
 		vectorDA u_DA = id_vector(list_u_[i], 0, Nx, Nu + Nx);
 
-		// Constraints evaluations TO DO DA
+		// Constraints evaluations
 		vectorDA eq_eval = dynamics.equality_constraints()(
 			x_DA, u_DA, spacecraft_parameters, dynamics.constants(), solver_parameters);
 		vectorDA ineq_eval = dynamics.inequality_constraints()(
@@ -476,8 +554,8 @@ pair<
 	vector<vectordb>,
 	vector<vectordb>> PNSolver::update_constraints_double_(
 	vectordb const& x_goal,
-	vector<vectordb> const& list_x,
-	vector<vectordb> const& list_u) {
+	vectordb const& X_U,
+	vectordb const& correction) {
 	// Unpack
 	DDPSolver ddp_solver = DDPsolver();
 	SolverParameters solver_parameters = ddp_solver.solver_parameters();
@@ -493,19 +571,33 @@ pair<
 
 	// Init lists
 	vector<vectordb> list_eq, list_ineq;
+	vectordb EQ_INEQ(N*(Neq + Nx + Nineq) + Nteq + Ntineq);
 	list_eq.reserve(N + 1);
 	list_ineq.reserve(N + 1);
 
 	// Update path constraints
 
 	// Loop on all steps
+	vectordb x(Nx), xp1(Nx), u(Nu);
 	for (size_t i = 0; i < N; i++) {
 
-		// Get x, u
-		vectordb x = list_x[i];
-		vectordb u = list_u[i];
-
-		// Constraints evaluations TO DO DA
+		// Get x, u, xp1
+		for (size_t j=0; j<Nu; j++) {
+			u[j] = X_U[i*(Nu + Nx) + j];
+		}
+		if (i == 0)
+			x = list_x_[0]; // Never changes
+		else {
+			for (size_t j=0; j<Nx; j++) {
+				x[j] = X_U[(i - 1)*(Nu + Nx) + Nu + j];
+			}
+		}
+		for (size_t j=0; j<Nx; j++) {
+			xp1[j] = X_U[i*(Nu + Nx) + Nu + j];
+		}
+	
+		/**/
+		// Constraints evaluations
 		vectordb eq_eval = dynamics.equality_constraints_db()(
 			x, u, spacecraft_parameters, dynamics.constants(), solver_parameters);
 		vectordb ineq_eval = dynamics.inequality_constraints_db()(
@@ -514,7 +606,7 @@ pair<
 
 		// Continuity constraints TO DO DA
 		vectordb x_kp1_eval = (dynamics.dynamic_db()(
-			x, u, spacecraft_parameters, dynamics.constants(), solver_parameters) - list_x[i + 1]); // TO DO : use DA, test
+			x, u, spacecraft_parameters, dynamics.constants(), solver_parameters) - xp1); // TO DO : use DA, test
 
 		// Add continuity constraints
 		for (size_t k = 0; k < Nx; k++) {
@@ -528,8 +620,10 @@ pair<
 
 	// Update terminal constraints
 
-	// Get x
-	vectordb x = list_x[N];
+	// Get x_f
+	for (size_t j=0; j<Nx; j++) {
+		x[j] = X_U[(N - 1)*(Nu + Nx) + Nu + j];
+	}
 
 	// Constraints evaluations TO DO DA
 	vectordb teq_eval = dynamics.terminal_equality_constraints_db()(
@@ -548,7 +642,7 @@ pair<
 
 // Updates the constraints without DA
 // Given the list of equalities, and inequalities
-void PNSolver::update_constraints_double_(
+void PNSolver::assign_constraints_double_(
 	pair<
 		vector<vectordb>,
 		vector<vectordb>>  const& list_eq_ineq) {

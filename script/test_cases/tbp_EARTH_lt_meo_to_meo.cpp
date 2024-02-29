@@ -140,12 +140,12 @@ void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 	double r_a = r_d + 0;
 	vectordb x_departure{ // Kep coordinates
 		r_d / lu, 0,
-		80 * DEG_2_RAD, 180 * DEG_2_RAD,
+		85 * DEG_2_RAD, 180 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
 		m_0, 2 * PI * sqrt(pow(r_d, 3) / MU_EARTH) / tu };
 	vectordb x_arrival{ // Kep coordinates
 		r_a / lu, 0,
-		80 * DEG_2_RAD, 160 * DEG_2_RAD,
+		85 * DEG_2_RAD, 170 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
 		dry_mass, 2 * PI * sqrt(pow(r_a, 3) / MU_EARTH) / tu };
 	x_departure = kep_2_equi(x_departure); // Equinoctial coordinates

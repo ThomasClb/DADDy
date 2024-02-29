@@ -35,7 +35,7 @@ SolverParameters get_SolverParameters_tbp_SUN_lt_earth_to_mars(
 	unsigned int max_iter = 10000;
 	unsigned int DDP_max_iter = 100;
 	unsigned int AUL_max_iter = max_iter / DDP_max_iter;
-	unsigned int PN_max_iter = 100;
+	unsigned int PN_max_iter = 20;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
 	vectordb line_search_parameters{1e-8, 10.0, 0.5, 20};

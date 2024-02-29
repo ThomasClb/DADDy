@@ -326,7 +326,7 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 	T pert_N = u_N;
 
 	// J2
-	bool with_j2 = false;
+	bool with_j2 = true;
 	if (with_j2) {
 		T J2_mag = (1.5 * J_2 * MU_EARTH * pow(R_EARTH, 2)) * pow(sma * lu * pow(B, 2) * inv_Phi_L, -4);
 		// std::cout << J2_mag << std::endl;
@@ -340,7 +340,7 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 		pert_R += J2_R;
 		pert_T += J2_T;
 		pert_N += J2_N;
-	}
+	} 
 
 	// Acceleration Gauss
 	T d_sma = 2 * sma * sqrt_a_mu / B * (

@@ -39,29 +39,29 @@ if __name__ == "__main__":
     #os.chdir("../../")
     
     # TO DO move to inline parameters
-    test_case = 4
+    test_case = 1
     DDP_type = "_2"
     T2m_ratio = "_5e-4"
     
     file_name = ""
     if test_case == 0:
-        test_case = ""
+        file_name = ""
     elif test_case == 1:
-        test_case = './data/datasets/tbp_SUN_lt_earth_to_mars'
+        file_name = './data/datasets/tbp_SUN_lt_earth_to_mars'
     elif test_case == 2:
-        test_case = './data/datasets/tbp_EARTH_lt_leo_to_geo'
+        file_name = './data/datasets/tbp_EARTH_lt_leo_to_geo'
     elif test_case == 3:
-        test_case = './data/datasets/tbp_EARTH_lt_leo_to_leo'
+        file_name = './data/datasets/tbp_EARTH_lt_leo_to_leo'
     elif test_case == 4:
-        test_case = './data/datasets/tbp_EARTH_lt_meo_to_meo'
-    elif test_case == 5:
+        file_name = './data/datasets/tbp_EARTH_lt_meo_to_meo'
+    elif file_name == 5:
         test_case = './data/datasets/cr3bp_EARTH_MOON_lt_haloL2_to_haloL1'
-    elif test_case == 6:
+    elif file_name == 6:
         test_case = './data/datasets/cr3bp_EARTH_MOON_lt_nrho_to_dro'
-    elif test_case == 7:
-        test_case = './data/datasets/cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2'
+    elif file_name == 7:
+        file_name = './data/datasets/cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2'
     elif test_case == 8:
-        test_case = './data/datasets/cr3bp_EARTH_MOON_lt_dro_to_dro'    
+        file_name = './data/datasets/cr3bp_EARTH_MOON_lt_dro_to_dro'    
     
     # Build name
     file_name = file_name + DDP_type + T2m_ratio + ".dat"
