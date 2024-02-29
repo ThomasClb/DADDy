@@ -39,10 +39,6 @@ protected:
 	std::vector<DACE::vectordb> list_u_; // List of controls
 	double cost_; // Output cost [-]
 	std::vector<std::vector<DACE::matrixdb>> list_der_cost_; // Output cost derivatives [-]
-	std::vector<DACE::vectordb> list_eq_; // List of equality constraints
-	std::vector<DACE::vectordb> list_ineq_; // List of inequality constraints
-	DACE::vectordb teq_; // List of terminal equality constraints
-	DACE::vectordb tineq_; // List of terminal inequality constraints
 	std::vector<std::vector<DACE::matrixdb>> list_der_eq_; // List of equality constraints derivatives
 	std::vector<std::vector<DACE::matrixdb>> list_der_ineq_; // List of inequality constraints derivatives
 	std::vector<DACE::matrixdb> der_teq_; // List of terminal equality constraints derivatives
@@ -51,6 +47,8 @@ protected:
 
 	// Looping attributes
 	DACE::vectordb  X_U_;
+	DACE::vectordb  EQ_INEQ_;
+	std::vector<DACE::matrixdb> der_EQ_INEQ_;
 	// MAKE vector X_U
  	// Make vector EQ_INEQ 
 
@@ -74,10 +72,6 @@ public:
 	const std::vector<DACE::vectordb> list_x() const;
 	const std::vector<DACE::vectordb> list_u() const;
 	const double cost() const;
-	const std::vector<DACE::vectordb> list_eq() const;
-	const std::vector<DACE::vectordb> list_ineq() const;
-	const DACE::vectordb teq() const;
-	const DACE::vectordb tineq() const;
 
 	// Setters
 	void set_list_x_u();
@@ -100,37 +94,17 @@ public:
 
 	// Computes the maximum constraints given eq in ineq constraints
 	double get_max_constraint_(
-		std::vector<DACE::vectordb> const& list_eq,
-		std::vector<DACE::vectordb> const& list_ineq);
-
-	// Computes the maximum constraints using the attributes
-	double get_max_constraint_();
-
-	// Updates the values of controls and states given corrections
-	// Return the list of equalities, and inequalities
-	std::pair<
-		std::vector<DACE::vectordb>,
-		std::vector<DACE::vectordb>> update_list_x_u_(
-			DACE::vectordb const& correction);
+		DACE::vectordb const& EQ_INEQ);
 
 	// Computes the new constraints given states and controls
 	void update_constraints_(DACE::vectordb const& x_goal);
 
 	// Computes the new constraints given states and controls without DA
 	// Return the list of equalities, and inequalities
-	std::pair<
-		std::vector<DACE::vectordb>,
-		std::vector<DACE::vectordb>> update_constraints_double_(
+	DACE::vectordb update_constraints_double_(
 			DACE::vectordb const& x_goal,
 			DACE::vectordb const& X_U,
 			DACE::vectordb const& correction);
-
-	// Assign the constraints without DA
-	// Given the list of equalities, and inequalities
-	void assign_constraints_double_(
-		std::pair<
-		std::vector<DACE::vectordb>,
-		std::vector<DACE::vectordb>> const& list_eq_ineq);
 
 	// Returns the vector of active constraints and their gradients
 	// first it the active constraints vector

@@ -30,12 +30,12 @@ SolverParameters get_SolverParameters_tbp_SUN_lt_earth_to_mars(
 	double huber_loss_coefficient = 5e-3;
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-4; 
-	double PN_tol = 1e-10;
+	double PN_tol = 1e-12;
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int max_iter = 10000;
 	unsigned int DDP_max_iter = 100;
 	unsigned int AUL_max_iter = max_iter / DDP_max_iter;
-	unsigned int PN_max_iter = 20;
+	unsigned int PN_max_iter = 50;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
 	vectordb line_search_parameters{1e-8, 10.0, 0.5, 20};

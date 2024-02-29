@@ -25,8 +25,8 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro(
 	unsigned int Nineq = 3;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
-	double cost_to_go_gain = 1e-3;
-	double terminal_cost_gain = 1e9;
+	double cost_to_go_gain = 1e-5;
+	double terminal_cost_gain = 5e9;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-4;
 	double DDP_tol = 1e-4;
@@ -34,7 +34,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro(
 	double PN_tol = 1e-10;
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int max_iter = 10000;
-	unsigned int DDP_max_iter = 100;
+	unsigned int DDP_max_iter = 200;
 	unsigned int AUL_max_iter = max_iter / DDP_max_iter;
 	unsigned int PN_max_iter = 50;
 	vectordb lambda_parameters{0.0, 1e8};
@@ -154,8 +154,8 @@ void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv) {
 	auto start = high_resolution_clock::now();
 	solver.set_homotopy_coefficient(0.0);
 	solver.solve(x0, list_u_init, x_goal);
-	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 5e-3, 5e-3, 1e-4};
-	vectordb homotopy_sequence{0.3, 0.66, 0.9, 0.99, 0.99};
+	vectordb huber_loss_coefficient_sequence{5e-2, 1e-3, 1e-3, 1e-4};
+	vectordb homotopy_sequence{0.66, 0.66, 0.999, 0.999};
 	if (fuel_optimal) {
 		for (size_t i = 0; i < homotopy_sequence.size(); i++) {
 			solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);

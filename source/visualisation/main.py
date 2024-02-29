@@ -39,7 +39,7 @@ if __name__ == "__main__":
     #os.chdir("../../")
     
     # TO DO move to inline parameters
-    test_case = 1
+    test_case = 6
     DDP_type = "_2"
     T2m_ratio = "_5e-4"
     
@@ -54,11 +54,11 @@ if __name__ == "__main__":
         file_name = './data/datasets/tbp_EARTH_lt_leo_to_leo'
     elif test_case == 4:
         file_name = './data/datasets/tbp_EARTH_lt_meo_to_meo'
-    elif file_name == 5:
-        test_case = './data/datasets/cr3bp_EARTH_MOON_lt_haloL2_to_haloL1'
-    elif file_name == 6:
-        test_case = './data/datasets/cr3bp_EARTH_MOON_lt_nrho_to_dro'
-    elif file_name == 7:
+    elif test_case == 5:
+        file_name = './data/datasets/cr3bp_EARTH_MOON_lt_haloL2_to_haloL1'
+    elif test_case == 6:
+        file_name = './data/datasets/cr3bp_EARTH_MOON_lt_nrho_to_dro'
+    elif test_case == 7:
         file_name = './data/datasets/cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2'
     elif test_case == 8:
         file_name = './data/datasets/cr3bp_EARTH_MOON_lt_dro_to_dro'    
@@ -71,8 +71,10 @@ if __name__ == "__main__":
     dataset = get_dataset(file_name)
     
     # Plots
-    plot_3d(dataset)
-    plot_2d(dataset)
+    #plot_3d(dataset)
+    #plot_2d(dataset)
     plot_thrust_profile(dataset)
-    #plot_keplerian(dataset)
-    plot_keplerians(dataset)
+
+    if "tbp" in file_name:
+        #plot_keplerian(dataset)
+        plot_keplerians(dataset)
