@@ -39,10 +39,6 @@ protected:
 	std::vector<DACE::vectordb> list_u_; // List of controls
 	double cost_; // Output cost [-]
 	std::vector<std::vector<DACE::matrixdb>> list_der_cost_; // Output cost derivatives [-]
-	std::vector<std::vector<DACE::matrixdb>> list_der_eq_; // List of equality constraints derivatives
-	std::vector<std::vector<DACE::matrixdb>> list_der_ineq_; // List of inequality constraints derivatives
-	std::vector<DACE::matrixdb> der_teq_; // List of terminal equality constraints derivatives
-	std::vector<DACE::matrixdb> der_tineq_; // List of terminal inequality constraints derivatives
 	std::vector<DACE::vectorDA> list_dynamics_; // List of dynamics evaluations
 
 	// Looping attributes

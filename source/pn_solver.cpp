@@ -19,9 +19,6 @@ PNSolver::PNSolver() : AULsolver_(AULSolver()),
 	list_x_(vector<vectordb>(0)), list_u_(vector<vectordb>(0)),
 	cost_(0),
 	list_der_cost_(vector<vector<matrixdb>>(0)),
-	list_der_eq_(vector<vector<matrixdb>>(0)),
-	list_der_ineq_(vector<vector<matrixdb>>(0)),
-	der_teq_(vector<matrixdb>(0)), der_tineq_(vector<matrixdb>(0)),
 	X_U_(0), EQ_INEQ_(0), der_EQ_INEQ_(0) {}
 
 // Constructors
@@ -29,9 +26,6 @@ PNSolver::PNSolver(AULSolver const& AULsolver) : AULsolver_(AULsolver),
 	list_x_(AULsolver.list_x()), list_u_(AULsolver.list_u()),
 	cost_(AULsolver.cost()),
 	list_der_cost_(vector<vector<matrixdb>>(AULsolver.list_eq().size() + 1)),
-	list_der_eq_(vector<vector<matrixdb>>(AULsolver.list_eq().size())),
-	list_der_ineq_(vector<vector<matrixdb>>(AULsolver.list_ineq().size())),
-	der_teq_(vector<matrixdb>(0)), der_tineq_(vector<matrixdb>(0)),
 	X_U_(), EQ_INEQ_(), der_EQ_INEQ_() {
 	// Unpack
 	DDPSolver ddp_solver = DDPsolver();
@@ -45,7 +39,7 @@ PNSolver::PNSolver(AULSolver const& AULsolver) : AULsolver_(AULsolver),
 	unsigned int Ntineq = solver_parameters.Ntineq();
 	X_U_ = vectordb(N*(Nx + Nu));
 	EQ_INEQ_ = vectordb(N*(Nx + Neq + Nineq) + Nteq + Ntineq);
-	der_EQ_INEQ_ = vector<matrixdb>(N*(Nx + Neq + Nineq) + Nteq + Ntineq);
+	der_EQ_INEQ_ = vector<matrixdb>(N*6 + 4);
 
 	// First control
 	for (size_t j=0; j<Nu; j++)  {
@@ -74,9 +68,6 @@ PNSolver::PNSolver(
 	list_x_(solver.list_x_), list_u_(solver.list_u_),
 	cost_(solver.cost_),
 	list_der_cost_(vector<vector<matrixdb>>(solver.AULsolver_.list_eq().size() + 1)),
-	list_der_eq_(vector<vector<matrixdb>>(solver.AULsolver_.list_eq().size())),
-	list_der_ineq_(vector<vector<matrixdb>>(solver.AULsolver_.list_ineq().size())),
-	der_teq_(vector<matrixdb>(0)), der_tineq_(vector<matrixdb>(0)),
 	X_U_(solver.X_U_), EQ_INEQ_(solver.EQ_INEQ_),
 	der_EQ_INEQ_(solver.der_EQ_INEQ_) {}
 
@@ -341,7 +332,7 @@ void PNSolver::update_constraints_(
 	// Loop on all steps
 	list_dynamics_ = vector<vectorDA>(); list_dynamics_.reserve(N);
 	vectorDA x_DA, u_DA;
-	vectordb xp1;
+	vectordb x_kp1;
 	for (size_t i = 0; i < N; i++) {
 
 		// Get DA x, u
@@ -358,7 +349,7 @@ void PNSolver::update_constraints_(
 				i*(Nx + Nu),
 				Nu - 1 + i*(Nx + Nu)),
 			0, Nx, Nu + Nx);
-		xp1 = X_U_.extract(
+		x_kp1 = X_U_.extract(
 					Nu + i*(Nx + Nu),
 					Nu + Nx - 1 + i*(Nx + Nu));
 
@@ -373,7 +364,7 @@ void PNSolver::update_constraints_(
 			x_DA, u_DA,
 			spacecraft_parameters, dynamics.constants(), solver_parameters); // TO DO : test radius + evaluate 
 		list_dynamics_.push_back(x_kp1_eval);
-		x_kp1_eval -= xp1;
+		x_kp1_eval -= x_kp1;
 
 		// Add continuity constraints
 		eq_eval.reserve(Nx);
@@ -388,9 +379,12 @@ void PNSolver::update_constraints_(
 			ineq_eval, Nx, Nu, false);
 
 		// Dependency with kp1
-		der_eq.reserve(1); der_ineq.reserve(1);
-		der_eq.push_back(id_Nx);
-		der_ineq.push_back(null_Nx);
+		der_EQ_INEQ_[6*i] = der_eq[0];
+		der_EQ_INEQ_[6*i + 1] = der_eq[1];
+		der_EQ_INEQ_[6*i + 2] = id_Nx;
+		der_EQ_INEQ_[6*i + 3] = der_ineq[0];
+		der_EQ_INEQ_[6*i + 4] = der_ineq[1];
+		der_EQ_INEQ_[6*i + 5] = null_Nx;
 
 		// Assign
 		for (size_t k = 0; k < Neq; k++) {
@@ -399,8 +393,6 @@ void PNSolver::update_constraints_(
 			EQ_INEQ_[i*(Nx + Neq + Nineq) + Neq + k] = x_kp1_eval[k].cons();}
 		for (size_t k = 0; k < Nineq; k++) {
 			EQ_INEQ_[i*(Nx + Neq + Nineq) + Neq + Nx + k] = ineq_eval[k].cons();}
-		list_der_eq_[i] = der_eq;
-		list_der_ineq_[i] = der_ineq;
 	}
 
 	// Update terminal constraints
@@ -429,8 +421,10 @@ void PNSolver::update_constraints_(
 		EQ_INEQ_[N*(Nx + Neq + Nineq) + k] = teq_eval.cons()[k];}
 	for (size_t k = 0; k < Ntineq; k++) {
 		EQ_INEQ_[N*(Nx + Neq + Nineq) + Nteq + Nx + k] = tineq_eval.cons()[k];}
-	der_teq_ = der_teq;
-	der_tineq_ = der_tineq;
+	der_EQ_INEQ_[6*N] = der_teq[0];
+	der_EQ_INEQ_[6*N + 1] = der_teq[1];
+	der_EQ_INEQ_[6*N + 2] = der_tineq[0];
+	der_EQ_INEQ_[6*N + 3] = der_tineq[1];
 }
 
 // Computes the new constraints given states and controls without DA
@@ -600,16 +594,20 @@ pair<
 		matrixdb D_i(
 			Neq_active + Nineq_active + Nc_active,
 			(2 * Nx + Nu));
-		vector<matrixdb> der_eq = list_der_eq_[i];
-		vector<matrixdb> der_ineq = list_der_ineq_[i];
+		matrixdb der_eq_x = der_EQ_INEQ_[6*i];
+		matrixdb der_eq_u = der_EQ_INEQ_[6*i + 1];
+		matrixdb der_eq_x_kp1 = der_EQ_INEQ_[6*i + 2];
+		matrixdb der_ineq_x = der_EQ_INEQ_[6*i + 3];
+		matrixdb der_ineq_u = der_EQ_INEQ_[6*i + 4];
+		matrixdb der_ineq_x_kp1 = der_EQ_INEQ_[6*i + 5];
 
 		// Equality constraints
 		for (size_t j = 0; j < list_active_eq_index.size(); j++) {
 			// Get derivatives
 			size_t active_eq_index_j = list_active_eq_index[j];
-			vectordb dx(der_eq[0].getrow(active_eq_index_j));
-			vectordb du(der_eq[1].getrow(active_eq_index_j));
-			vectordb dxkp1(der_eq[2].getrow(active_eq_index_j));
+			vectordb dx(der_eq_x.getrow(active_eq_index_j));
+			vectordb du(der_eq_u.getrow(active_eq_index_j));
+			vectordb dxkp1(der_eq_x_kp1.getrow(active_eq_index_j));
 
 			// Assign to D_i
 			for (size_t k = 0; k < Nx; k++) {
@@ -625,9 +623,9 @@ pair<
 		for (size_t j = 0; j < list_active_ineq_index.size(); j++) {
 			// Get derivatives
 			size_t active_ineq_index_j = list_active_ineq_index[j];
-			vectordb dx(der_ineq[0].getrow(active_ineq_index_j));
-			vectordb du(der_ineq[1].getrow(active_ineq_index_j));
-			vectordb dxkp1(der_ineq[2].getrow(active_ineq_index_j));
+			vectordb dx(der_ineq_x.getrow(active_ineq_index_j));
+			vectordb du(der_ineq_u.getrow(active_ineq_index_j));
+			vectordb dxkp1(der_ineq_x_kp1.getrow(active_ineq_index_j));
 
 			// Assign to D_i
 			size_t index_j = j + Neq_active;
@@ -644,9 +642,9 @@ pair<
 		for (size_t j = 0; j < list_active_c_index.size(); j++) {
 			// Get derivatives
 			size_t active_c_index_j = list_active_c_index[j];
-			vectordb dx(der_eq[0].getrow(active_c_index_j));
-			vectordb du(der_eq[1].getrow(active_c_index_j));
-			vectordb dxkp1(der_eq[2].getrow(active_c_index_j));
+			vectordb dx(der_eq_x.getrow(active_c_index_j));
+			vectordb du(der_eq_u.getrow(active_c_index_j));
+			vectordb dxkp1(der_eq_x_kp1.getrow(active_c_index_j));
 
 			// Assign to D_i
 			size_t index_j = j + Neq_active + Nineq_active;
@@ -710,14 +708,16 @@ pair<
 		Nx);
 
 	// Equality constraints
+	matrixdb der_teq_x = der_EQ_INEQ_[6*N];
+	matrixdb der_tineq_x = der_EQ_INEQ_[6*N + 2];
 	for (size_t j = 0; j < list_active_teq_index.size(); j++) {
-		vectordb dx(der_teq_[0].getrow(list_active_teq_index[j]));
+		vectordb dx(der_teq_x.getrow(list_active_teq_index[j]));
 		D_i.setrow(j, dx);
 	}
 
 	// Inequality constraints
 	for (size_t j = 0; j < list_active_tineq_index.size(); j++) {
-		vectordb dx(der_tineq_[0].getrow(list_active_tineq_index[j]));
+		vectordb dx(der_tineq_x.getrow(list_active_tineq_index[j]));
 		D_i.setrow(j + Nteq_active, dx);
 	}
 

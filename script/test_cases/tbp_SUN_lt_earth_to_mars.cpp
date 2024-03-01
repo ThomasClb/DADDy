@@ -30,7 +30,7 @@ SolverParameters get_SolverParameters_tbp_SUN_lt_earth_to_mars(
 	double huber_loss_coefficient = 5e-3;
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-4; 
-	double PN_tol = 1e-12;
+	double PN_tol = 1e-10;
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int max_iter = 10000;
 	unsigned int DDP_max_iter = 100;
