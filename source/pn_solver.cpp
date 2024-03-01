@@ -323,7 +323,6 @@ double PNSolver::get_max_constraint_(
 }
 
 // Computes the new constraints given states and controls
-// TO DO DA
 void PNSolver::update_constraints_(
 	vectordb const& x_goal,
 	bool const& force_DA) {
@@ -386,7 +385,7 @@ void PNSolver::update_constraints_(
 		vectorDA ineq_eval = dynamics.inequality_constraints()(
 			x_DA, u_DA, spacecraft_parameters, dynamics.constants(), solver_parameters);
 
-		// Continuity constraints TO DO DA
+		// Continuity constraints
 		vectorDA x_kp1_eval;
 		if (force_DA) {
 			x_kp1_eval = dynamics.dynamic()(
@@ -451,7 +450,7 @@ void PNSolver::update_constraints_(
 			Nu + Nx - 1 + (N - 1)*(Nx + Nu)),
 		0, 0, Nx - 1);
 
-	// Constraints evaluations TO DO DA
+	// Constraints evaluations
 	vectorDA teq_eval = dynamics.terminal_equality_constraints()(
 		x_DA, x_goal, spacecraft_parameters, dynamics.constants(), solver_parameters);
 	vectorDA tineq_eval = dynamics.terminal_inequality_constraints()(
@@ -558,7 +557,7 @@ vectordb PNSolver::update_constraints_double_(
 	// Get x_f
 	for (size_t j=0; j<Nx; j++) {x[j] = X_U[(N - 1)*(Nu + Nx) + Nu + j];}
 
-	// Constraints evaluations TO DO DA
+	// Constraints evaluations
 	vectordb teq_eval = dynamics.terminal_equality_constraints_db()(
 		x, x_goal, spacecraft_parameters, dynamics.constants(), solver_parameters);
 	vectordb tineq_eval = dynamics.terminal_inequality_constraints_db()(
