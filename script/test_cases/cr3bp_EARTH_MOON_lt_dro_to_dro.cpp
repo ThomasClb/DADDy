@@ -198,9 +198,6 @@ void cr3bp_EARTH_MOON_lt_dro_to_dro(int argc, char** argv) {
 		
 		}
 	}
-	
-	// Set DACE at order 1 (No Hessian needed)
-	DA::setTO(1);
 
 	// PN test
 	auto start_inter = high_resolution_clock::now();

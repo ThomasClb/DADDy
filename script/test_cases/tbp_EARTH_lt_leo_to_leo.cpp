@@ -173,9 +173,6 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 		}
 	}
 
-	// Set DACE at order 1 (No Hessian needed)
-	DA::setTO(1);
-
 	// PN test
 	auto start_inter = high_resolution_clock::now();
 	PNSolver pn_solver(solver);

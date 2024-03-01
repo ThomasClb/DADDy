@@ -36,7 +36,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro(
 	unsigned int max_iter = 10000;
 	unsigned int DDP_max_iter = 200;
 	unsigned int AUL_max_iter = max_iter / DDP_max_iter;
-	unsigned int PN_max_iter = 50;
+	unsigned int PN_max_iter = 400;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
 	vectordb line_search_parameters{1e-8, 10.0, 0.5, 20};
@@ -163,9 +163,6 @@ void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv) {
 			solver.solve(x0, solver.list_u(), x_goal);
 		}
 	}
-
-	// Set DACE at order 1 (No Hessian needed)
-	DA::setTO(1);
 
 	// PN test
 	auto start_inter = high_resolution_clock::now();

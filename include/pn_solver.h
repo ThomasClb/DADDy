@@ -46,9 +46,10 @@ protected:
 	std::vector<DACE::vectorDA> list_dynamics_; // List of dynamics evaluations
 
 	// Looping attributes
-	DACE::vectordb  X_U_;
-	DACE::vectordb  EQ_INEQ_;
-	std::vector<DACE::matrixdb> der_EQ_INEQ_;
+	DACE::vectordb  X_U_; // Concatenated states and controls
+	DACE::vectordb  EQ_INEQ_; // Concatenated constraints
+	DACE::vectordb  correction_; // Vector of all corrections
+	std::vector<DACE::matrixdb> der_EQ_INEQ_; // Concatenated constraints derivatives
 	// MAKE vector X_U
  	// Make vector EQ_INEQ 
 
@@ -97,7 +98,8 @@ public:
 		DACE::vectordb const& EQ_INEQ);
 
 	// Computes the new constraints given states and controls
-	void update_constraints_(DACE::vectordb const& x_goal);
+	void update_constraints_(
+		DACE::vectordb const& x_goal, bool const& force_DA);
 
 	// Computes the new constraints given states and controls without DA
 	// Return the list of equalities, and inequalities
@@ -110,7 +112,7 @@ public:
 	// first it the active constraints vector
 	// second is a pair with the list of gradients of constraints first
 	// second.second is the list of active constraints.
-	linearised_constraints get_d_block_D_();
+	linearised_constraints get_linearised_constraints_();
 
 	// Return the matrix Sigma = D_a * D_a^t 
 	// Where is D_a without the active constraints.

@@ -173,8 +173,6 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 			solver.solve(x0, solver.list_u(), x_goal);
 		}
 	}
-	// Set DACE at order 1 (No Hessian needed)
-	DA::setTO(1);
 
 	// PN test
 	auto start_inter = high_resolution_clock::now();
