@@ -24,11 +24,15 @@
 #include "aul_solver.h"
 
 // Stores the list of active index
-// N * [active_index_eq, active_index_ineq, active_index_cont]
-// [active_index_teq, active_index_tineq, [] ]
-using tri_vector_size_t = std::vector
-	<std::vector<std::vector<std::size_t>>>;
+// N concatenated [active_index_eq, active_index_ineq, active_index_cont]
+// concatenated with [active_index_teq, active_index_tineq]
+using bi_vector_size_t = std::vector<std::vector<std::size_t>>;
 
+// Stores the linearised constraint
+// [constraints, Jacobian, active constraints index]
+using linearised_constraints = std::tuple<
+	DACE::vectordb, std::vector<DACE::matrixdb>, 
+	std::vector<std::vector<std::size_t>>>;
 
 class PNSolver {
 
@@ -106,11 +110,7 @@ public:
 	// first it the active constraints vector
 	// second is a pair with the list of gradients of constraints first
 	// second.second is the list of active constraints.
-	std::pair<
-		DACE::vectordb,
-		std::pair<
-		std::vector<DACE::matrixdb>,
-		tri_vector_size_t> > get_d_block_D_();
+	linearised_constraints get_d_block_D_();
 
 	// Return the matrix Sigma = D_a * D_a^t 
 	// Where is D_a without the active constraints.
@@ -118,7 +118,7 @@ public:
 	// TO DO: add reference.
 	sym_tridiag_matrixdb get_block_sigma_sq_(
 		std::vector<DACE::matrixdb> const& block_Delta,
-		tri_vector_size_t const& list_active_index);
+		std::vector<std::vector<std::size_t>> const& list_active_index);
 };
 
 

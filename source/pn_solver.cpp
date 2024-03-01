@@ -146,9 +146,13 @@ void PNSolver::solve(vectordb const& x_goal) {
 	double violation(prev_violation);
 	for (size_t i = 0; i < max_iter; i++) {
 		// Output
-		if (verbosity < 1) {
-			// if (i % 5 == 0)
-				cout << i << " - " << prev_violation << " - " << X_U_[X_U_.size() - 2] * constants.massu() << endl;
+		if (verbosity == 0) {
+			cout << i << " - " << prev_violation 
+				<< " - " << X_U_[X_U_.size() - 2] * constants.massu() << endl;
+		} else if (verbosity == 1) {
+			if (i % 5 == 0)
+				cout << i << " - " << prev_violation
+					<< " - " << X_U_[X_U_.size() - 2] * constants.massu() << endl;
 		}
 
 		// Check termination constraints
@@ -158,13 +162,13 @@ void PNSolver::solve(vectordb const& x_goal) {
 		// Build active constraint vector and its gradient
 		if (i != 0)
 			update_constraints_(x_goal);
-		pair<vectordb, pair<vector<matrixdb>, tri_vector_size_t>> d_block_D = get_d_block_D_();
-		vectordb d = d_block_D.first;
-		vector<matrixdb> block_D = d_block_D.second.first;
+		linearised_constraints constraints = get_d_block_D_();
+		vectordb d = get<0>(constraints);
+		vector<matrixdb> block_D = get<1>(constraints);
 
 		// Make Sigma = D * D^t as a tridiagonal matrix
 		sym_tridiag_matrixdb tridiag_sigma = get_block_sigma_sq_(
-			block_D, d_block_D.second.second);
+			block_D, get<2>(constraints));
 
 		// Compute block tridiagonal Cholesky factorisation of Sigma.
 		sym_tridiag_matrixdb tridiag_L_sigma = cholesky_(tridiag_sigma);
@@ -243,10 +247,8 @@ double PNSolver::line_search_(
 		vectordb X_U = X_U_ - correction;
 
 		// Evaluate constraints
-		vectordb EQ_INEQ = update_constraints_double_( // TO DO : DA method
+		vectordb EQ_INEQ = update_constraints_double_( 
 			x_goal, X_U, correction);
-
-		// TO DO use DA expansion
 
 		// Get the max constraint
 		violation = get_max_constraint_(EQ_INEQ);
@@ -308,6 +310,7 @@ double PNSolver::get_max_constraint_(
 }
 
 // Computes the new constraints given states and controls
+// TO DO DA
 void PNSolver::update_constraints_(
 	vectordb const& x_goal) {
 	// Unpack
@@ -429,6 +432,7 @@ void PNSolver::update_constraints_(
 
 // Computes the new constraints given states and controls without DA
 // Return the list of equalities, and inequalities
+// TO DO DA
 vectordb PNSolver::update_constraints_double_(
 	vectordb const& x_goal,
 	vectordb const& X_U,
@@ -457,20 +461,13 @@ vectordb PNSolver::update_constraints_double_(
 
 		// Get x, u, xp1
 		for (size_t j=0; j<Nu; j++) {
-			u[j] = X_U[i*(Nu + Nx) + j];
-		}
+			u[j] = X_U[i*(Nu + Nx) + j];}
 		if (i == 0)
 			x = list_x_[0]; // Never changes
-		else {
-			for (size_t j=0; j<Nx; j++) {
-				x[j] = X_U[(i - 1)*(Nu + Nx) + Nu + j];
-			}
-		}
-		for (size_t j=0; j<Nx; j++) {
-			xp1[j] = X_U[i*(Nu + Nx) + Nu + j];
-		}
+		else
+			for (size_t j=0; j<Nx; j++) {x[j] = X_U[(i - 1)*(Nu + Nx) + Nu + j];}
+		for (size_t j=0; j<Nx; j++) {xp1[j] = X_U[i*(Nu + Nx) + Nu + j];}
 	
-		/**/
 		// Constraints evaluations
 		vectordb eq_eval = dynamics.equality_constraints_db()(
 			x, u, spacecraft_parameters, dynamics.constants(), solver_parameters);
@@ -494,9 +491,7 @@ vectordb PNSolver::update_constraints_double_(
 	// Update terminal constraints
 
 	// Get x_f
-	for (size_t j=0; j<Nx; j++) {
-		x[j] = X_U[(N - 1)*(Nu + Nx) + Nu + j];
-	}
+	for (size_t j=0; j<Nx; j++) {x[j] = X_U[(N - 1)*(Nu + Nx) + Nu + j];}
 
 	// Constraints evaluations TO DO DA
 	vectordb teq_eval = dynamics.terminal_equality_constraints_db()(
@@ -509,8 +504,6 @@ vectordb PNSolver::update_constraints_double_(
 		EQ_INEQ[N*(Nx + Neq + Nineq) + k] = teq_eval[k];}
 	for (size_t k = 0; k < Ntineq; k++) {
 		EQ_INEQ[N*(Nx + Neq + Nineq) + Nteq + Nx + k] = tineq_eval[k];}
-
-
 	return EQ_INEQ;
 }
 
@@ -518,11 +511,7 @@ vectordb PNSolver::update_constraints_double_(
 // first it the active constraints vector
 // second is a pair with the list of gradients of constraints first
 // second.second is the list of active constraints.
-pair<
-	vectordb,
-	pair<
-	vector<matrixdb>,
-	tri_vector_size_t>> PNSolver::get_d_block_D_() {
+linearised_constraints PNSolver::get_d_block_D_() {
 	// Unpack
 	DDPSolver ddp_solver = DDPsolver();
 	SolverParameters solver_parameters = ddp_solver.solver_parameters();
@@ -539,9 +528,8 @@ pair<
 
 	// Init d and D
 	vectordb d; vector<matrixdb> block_D;
-	tri_vector_size_t list_active_constraint_index;
+	vector<vector<size_t>> list_active_constraint_index(3*N + 2);
 	d.reserve(N + 1); block_D.reserve(N + 1);
-	list_active_constraint_index.reserve(N + 1);
 
 	// Path constraints
 	for (size_t i = 0; i < N; i++) {
@@ -667,8 +655,9 @@ pair<
 
 		// Assign
 		block_D.push_back(D_i);
-		list_active_constraint_index.push_back(vector<vector<size_t>>{
-			list_active_eq_index, list_active_ineq_index, list_active_c_index});
+		list_active_constraint_index[3*i] = list_active_eq_index;
+		list_active_constraint_index[3*i + 1] = list_active_ineq_index;
+		list_active_constraint_index[3*i + 2] = list_active_c_index;
 	}
 
 	// Terminal constraints
@@ -723,16 +712,11 @@ pair<
 
 	// Assign
 	block_D.push_back(D_i);
-	list_active_constraint_index.push_back(vector<vector<size_t>>{
-		list_active_teq_index, list_active_tineq_index, vector<size_t>()});
+	list_active_constraint_index[3*N] = list_active_teq_index;
+	list_active_constraint_index[3*N + 1] = list_active_tineq_index;
 
 	// Return d & D
-	return pair<
-		vectordb,
-		pair<
-			vector<matrixdb>,
-			tri_vector_size_t>>(
-		d, pair<vector<matrixdb>, tri_vector_size_t>( block_D, list_active_constraint_index));
+	return linearised_constraints(d, block_D, list_active_constraint_index);
 }
 
 // Return the matrix Sigma = D_a * D_a^t 
@@ -741,7 +725,7 @@ pair<
 // TO DO: add reference.
 sym_tridiag_matrixdb PNSolver::get_block_sigma_sq_(
 	vector<matrixdb> const& block_Delta,
-	tri_vector_size_t const& list_active_index) {
+	vector<vector<size_t>> const& list_active_index) {
 	// Unpack
 	DDPSolver ddp_solver = DDPsolver();
 	SolverParameters solver_parameters = ddp_solver.solver_parameters();
@@ -759,42 +743,40 @@ sym_tridiag_matrixdb PNSolver::get_block_sigma_sq_(
 
 		// Unpack
 		matrixdb Delta_i = block_Delta[i];
-		vector<vector<size_t>> list_active_index_i = list_active_index[i];
-		vector<size_t> list_active_index_c_i = list_active_index_i[2];
-		size_t Neq_i(list_active_index_i[0].size());
-		size_t Nineq_i(list_active_index_i[1].size());
-		size_t Nc_i(list_active_index_c_i.size());
+		size_t Neq_ineq_i(list_active_index[3*i + 0].size()
+			+ list_active_index[3*i + 1].size());
+		size_t Nc_i(list_active_index[3*i + 2].size());
 
 		// Unpack contraints gradient blocks
-		matrixdb A_i(Neq_i + Nineq_i, Nx), C_i(Nc_i, Nx);
-		matrixdb B_i(Neq_i + Nineq_i, Nu), D_i(Nc_i, Nu);
+		matrixdb A_i(Neq_ineq_i, Nx), C_i(Nc_i, Nx);
+		matrixdb B_i(Neq_ineq_i, Nu), D_i(Nc_i, Nu);
 
-		if (Neq_i + Nineq_i != 0) {
+		if (Neq_ineq_i!= 0) {
 			if (i == 0)
 				B_i = Delta_i.submat(
 					0, 0,
-					Neq_i + Nineq_i - 1, Nu - 1);
+					Neq_ineq_i- 1, Nu - 1);
 			else {
 				A_i = Delta_i.submat(
 					0, 0,
-					Neq_i + Nineq_i - 1, Nx - 1);
+					Neq_ineq_i - 1, Nx - 1);
 				B_i = Delta_i.submat(
 					0, Nx,
-					Neq_i + Nineq_i - 1, Nx + Nu - 1);
+					Neq_ineq_i - 1, Nx + Nu - 1);
 			}
 		}
 		if (Nc_i != 0) {
 			if (i == 0)
 				D_i = Delta_i.submat(
-					Neq_i + Nineq_i, 0,
-					Neq_i + Nineq_i + Nc_i - 1, Nu - 1);
+					Neq_ineq_i, 0,
+					Neq_ineq_i + Nc_i - 1, Nu - 1);
 			else {
 				C_i = Delta_i.submat(
-					Neq_i + Nineq_i, 0,
-					Neq_i + Nineq_i + Nc_i - 1, Nx - 1);
+					Neq_ineq_i, 0,
+					Neq_ineq_i + Nc_i - 1, Nx - 1);
 				D_i = Delta_i.submat(
-					Neq_i + Nineq_i, Nx,
-					Neq_i + Nineq_i + Nc_i - 1, Nx + Nu - 1);
+					Neq_ineq_i, Nx,
+					Neq_ineq_i + Nc_i - 1, Nx + Nu - 1);
 			}
 		}
 		matrixdb B_i_t = B_i.transpose(); matrixdb D_i_t = D_i.transpose();
@@ -851,7 +833,7 @@ sym_tridiag_matrixdb PNSolver::get_block_sigma_sq_(
 		if (i != 0) {
 			size_diag_im1 = list_diag[i - 1].ncols();
 			size_t size_diag_i = diag_i.ncols();
-			vector<size_t> list_active_index_c_im1 = list_active_index[i - 1][2];
+			vector<size_t> list_active_index_c_im1 = list_active_index[3*(i - 1) + 2];
 			size_t Nc_im1 = list_active_index_c_im1.size();
 			subdiag_i = matrixdb(size_diag_i, size_diag_im1);
 			if (size_diag_i != 0 && Nc_im1 != 0 && size_diag_im1 != 0) {
@@ -878,10 +860,9 @@ sym_tridiag_matrixdb PNSolver::get_block_sigma_sq_(
 
 	// Last elements
 	size_t i = N;
-	matrixdb Delta_i = block_Delta[i];
-	vector<vector<size_t>> list_active_index_i = list_active_index[i];
-	size_t Nteq(list_active_index_i[0].size());
-	size_t Ntineq(list_active_index_i[1].size());
+	matrixdb Delta_i = block_Delta[N];
+	size_t Nteq(list_active_index[3*N].size());
+	size_t Ntineq(list_active_index[3*N + 1].size());
 	matrixdb A_i(Nteq + Ntineq, Nx, 0.0);
 	if (Nteq + Ntineq != 0) {
 		A_i = Delta_i.submat(
@@ -900,9 +881,9 @@ sym_tridiag_matrixdb PNSolver::get_block_sigma_sq_(
 	matrixdb diag_i(R_i);
 
 	// Tridiag
-	size_t size_diag_im1 = list_diag[i - 1].ncols();
+	size_t size_diag_im1 = list_diag[N - 1].ncols();
 	size_t size_diag_i = diag_i.ncols();
-	vector<size_t> list_active_index_c_im1 = list_active_index[i - 1][2];
+	vector<size_t> list_active_index_c_im1 = list_active_index[3*(N - 1) + 2];
 	size_t Nc_im1 = list_active_index_c_im1.size();
 	matrixdb subdiag_i(size_diag_i, size_diag_im1);
 	matrixdb W_i = -1.0 * A_i;
@@ -920,7 +901,5 @@ sym_tridiag_matrixdb PNSolver::get_block_sigma_sq_(
 	list_diag.push_back(diag_i);
 	list_subdiag.push_back(subdiag_i);
 	
-	return pair<
-		vector<matrixdb>,
-		vector<matrixdb>>(list_diag, list_subdiag);
+	return sym_tridiag_matrixdb(list_diag, list_subdiag);
 }
