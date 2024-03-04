@@ -39,7 +39,7 @@ if __name__ == "__main__":
     #os.chdir("../../")
     
     # TO DO move to inline parameters
-    test_case = 6
+    test_case = 4
     DDP_type = "_2"
     T2m_ratio = "_5e-4"
     
@@ -66,15 +66,29 @@ if __name__ == "__main__":
     # Build name
     file_name = file_name + DDP_type + T2m_ratio + ".dat"
 
+
+    # 
+    list_2d = ["tbp", "lyapunov", "dro", "leo", "meo"]
+    list_3d = ["nrho", "halo", "leo", "meo"]
     
     # Load dataset
     dataset = get_dataset(file_name)
     
     # Plots
-    #plot_3d(dataset)
-    #plot_2d(dataset)
-    plot_thrust_profile(dataset)
 
-    if "tbp" in file_name:
+    plot_thrust_profile(dataset)
+    
+    for i in list_2d:
+        if i in file_name:
+            plot_2d(dataset)
+            break
+
+    for i in list_3d:
+        if i in file_name:
+            plot_3d(dataset)
+            break
+
+    if ("tbp" in file_name):
         #plot_keplerian(dataset)
         plot_keplerians(dataset)
+

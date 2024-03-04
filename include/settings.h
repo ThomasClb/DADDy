@@ -54,7 +54,7 @@
 #define EPS (1e-13) // Tolerance of the intergration scheme [-]
 
 // Eigenvalue computation constants
-#define MAX_ITER_JAC 100 // Maximum number of iteration of the  matrix sqrt computation algorithm [-]
-#define TOL_JAC (100*EPS) // Tolerance of the matrix sqrt computation algorithm [-]
+#define MAX_ITER_JAC 1000 // Maximum number of iteration of the  matrix sqrt computation algorithm [-]
+#define TOL_JAC (1000*EPS) // Tolerance of the matrix sqrt computation algorithm [-]
 
 #endif

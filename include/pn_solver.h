@@ -50,8 +50,6 @@ protected:
 	DACE::vectordb  EQ_INEQ_; // Concatenated constraints
 	DACE::vectordb  correction_; // Vector of all corrections
 	std::vector<DACE::matrixdb> der_EQ_INEQ_; // Concatenated constraints derivatives
-	// MAKE vector X_U
- 	// Make vector EQ_INEQ 
 
 // Methods
 public:

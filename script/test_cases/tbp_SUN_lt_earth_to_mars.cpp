@@ -21,7 +21,7 @@ SolverParameters get_SolverParameters_tbp_SUN_lt_earth_to_mars(
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
 	unsigned int Neq = 0;
-	unsigned int Nineq = 3;
+	unsigned int Nineq = 2;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
 	double homotopy_coefficient = 0.0;

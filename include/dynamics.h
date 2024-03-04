@@ -312,7 +312,6 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 	T sin_L = sin(L);
 	T B = sqrt(1.0 - P_1 * P_1 - P_2 * P_2);
 	T G = 1.0 + Q_1 * Q_1 + Q_2 * Q_2;
-	T G_2 = pow(G, 2.0);
 	T Phi_L = 1 + P_1 * cos_L + P_2 * sin_L;
 	T inv_Phi_L = 1.0 / Phi_L;
 	T sqrt_a_mu = sqrt(sma / mu);
@@ -326,10 +325,10 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 	T pert_N = u_N;
 
 	// J2
-	bool with_j2 = true;
+	bool with_j2 = false;
 	if (with_j2) {
+		T G_2 = pow(G, 2.0);
 		T J2_mag = (1.5 * J_2 * MU_EARTH * pow(R_EARTH, 2)) * pow(sma * lu * pow(B, 2) * inv_Phi_L, -4);
-		// std::cout << J2_mag << std::endl;
 		J2_mag /= (constants.mu() / lu / lu) * G_2;
 		T J2_R = (12 * pow(Q_1_cos_L_m_Q_2_sin_L, 2.0) - G_2) * J2_mag;
 		T J2_buff = 4 * Q_1_cos_L_m_Q_2_sin_L * J2_mag;
@@ -438,7 +437,8 @@ DACE::AlgebraicVector<T> dynamic_tbp_SUN_lt(
 	SpacecraftParameters const& spacecraft_parameters,
 	Constants const& constants,
 	SolverParameters const& solver_parameters) {
-	return RK4(acceleration_tbp_SUN_lt, x, u, 0, 1.0,
+	return RK78(
+		acceleration_tbp_SUN_lt, x, u, 0, 1.0,
 		spacecraft_parameters, constants);
 }
 
@@ -465,7 +465,8 @@ DACE::AlgebraicVector<T> dynamic_cr3bp_lt(
 	SpacecraftParameters const& spacecraft_parameters,
 	Constants const& constants,
 	SolverParameters const& solver_parameters) {
-	return RK78(acceleration_cr3bp_lt, x, u, 0, 1.0,
+	return RK78(
+		acceleration_cr3bp_lt, x, u, 0, 1.0,
 		spacecraft_parameters, constants);
 }
 
@@ -525,10 +526,10 @@ DACE::AlgebraicVector<T> equality_constraints(
 // Returns the path inequality contraints given
 // the current state, the control and the parameters.
 // Mass constraints, and thrust constraints.
-// For low-thrust
-// Nineq = 3
+// For low-thrust tbp
+// Nineq = 2
 template<typename T>
-DACE::AlgebraicVector<T> inequality_constraints_low_thrust(
+DACE::AlgebraicVector<T> inequality_constraints_tbp_lt(
 	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T> const& u,
 	SpacecraftParameters const& spacecraft_parameters,
 	Constants const& constants,
@@ -539,14 +540,47 @@ DACE::AlgebraicVector<T> inequality_constraints_low_thrust(
 	double initial_mass = spacecraft_parameters.initial_mass(); // [MASSU]
 
 	// Init
-	DACE::AlgebraicVector<T> output; output.reserve(2 + 1);
+	DACE::AlgebraicVector<T> output; output.reserve(1 + 1);
 
 	// Thrust (1)
-	T T_const = u.dot(u)/ (T_max * T_max) - 1.0; // [-]
+	T T_const = u.dot(u)/(T_max*T_max) - 1.0; // [-]
 	output.push_back(T_const);
 
-	// Mass (2)
-	output.push_back(dry_mass - x[SIZE_VECTOR]); output.push_back(x[SIZE_VECTOR] - initial_mass); // Mass
+	// Mass (1)
+	output.push_back(dry_mass - x[SIZE_VECTOR]); // Mass
+
+	// TO DO 1 primary
+	
+	return output;
+}
+
+// Returns the path inequality contraints given
+// the current state, the control and the parameters.
+// Mass constraints, and thrust constraints.
+// For low-thrust cr3bp
+// Nineq = 2
+template<typename T>
+DACE::AlgebraicVector<T> inequality_constraints_cr3bp_lt(
+	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T> const& u,
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
+	SolverParameters const& solver_parameters) {
+	// Unpack parameters
+	double T_max = spacecraft_parameters.thrust(); // [THRUSTU]
+	double dry_mass = spacecraft_parameters.dry_mass(); // [MASSU]
+	double initial_mass = spacecraft_parameters.initial_mass(); // [MASSU]
+
+	// Init
+	DACE::AlgebraicVector<T> output; output.reserve(1 + 1);
+
+	// Thrust (1)
+	T T_const = u.dot(u) - T_max*T_max; // [THRUSTU²]
+	output.push_back(T_const);
+
+	// Mass (1)
+	output.push_back(dry_mass - x[SIZE_VECTOR]); // Mass
+
+	// TO DO 2 primaries
 	
 	return output;
 }

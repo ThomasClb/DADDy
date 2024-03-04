@@ -21,12 +21,12 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_leo(
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
 	unsigned int Neq = 0;
-	unsigned int Nineq = 3;
+	unsigned int Nineq = 2;
 	unsigned int Nteq = 5;
 	unsigned int Ntineq = 0;
 	double homotopy_coefficient = 0.0;
 	double cost_to_go_gain = 1e-5;
-	double terminal_cost_gain = 1e8;
+	double terminal_cost_gain = 1e5;
 	double huber_loss_coefficient = 5e-3;
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6;

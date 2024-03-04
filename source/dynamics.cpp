@@ -377,7 +377,7 @@ Dynamics get_tbp_SUN_lt_dynamics() {
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return inequality_constraints_low_thrust(a, b, c, e, d); });
+			return inequality_constraints_tbp_lt(a, b, c, e, d); });
 	tcFunction tc([](
 		vectorDA const& a, vectordb const& b,
 		SpacecraftParameters const& c,
@@ -420,7 +420,7 @@ Dynamics get_tbp_SUN_lt_dynamics() {
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return inequality_constraints_low_thrust(a, b, c, e, d); });
+			return inequality_constraints_tbp_lt(a, b, c, e, d); });
 	tcFunction_db tc_db([](
 		vectordb const& a, vectordb const& b,
 		SpacecraftParameters const& c,
@@ -475,7 +475,7 @@ Dynamics get_tbp_EARTH_lt_dynamics() {
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return inequality_constraints_low_thrust(a, b, c, e, d); });
+			return inequality_constraints_tbp_lt(a, b, c, e, d); });
 	tcFunction tc([](
 		vectorDA const& a, vectordb const& b,
 		SpacecraftParameters const& c,
@@ -518,7 +518,7 @@ Dynamics get_tbp_EARTH_lt_dynamics() {
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return inequality_constraints_low_thrust(a, b, c, e, d); });
+			return inequality_constraints_tbp_lt(a, b, c, e, d); });
 	tcFunction_db tc_db([](
 		vectordb const& a, vectordb const& b,
 		SpacecraftParameters const& c,
@@ -571,7 +571,7 @@ Dynamics get_cr3bp_EARTH_MOON_lt_dynamics() {
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return inequality_constraints_low_thrust(a, b, c, e, d); });
+			return inequality_constraints_cr3bp_lt(a, b, c, e, d); });
 	tcFunction tc([](
 		vectorDA const& a, vectordb const& b,
 		SpacecraftParameters const& c,
@@ -614,7 +614,7 @@ Dynamics get_cr3bp_EARTH_MOON_lt_dynamics() {
 		SpacecraftParameters const& c,
 		Constants const& e,
 		SolverParameters const& d) {
-			return inequality_constraints_low_thrust(a, b, c, e, d); });
+			return inequality_constraints_cr3bp_lt(a, b, c, e, d); });
 	tcFunction_db tc_db([](
 		vectordb const& a, vectordb const& b,
 		SpacecraftParameters const& c,

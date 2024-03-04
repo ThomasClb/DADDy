@@ -22,7 +22,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro(
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
 	unsigned int Neq = 0;
-	unsigned int Nineq = 3;
+	unsigned int Nineq = 2;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
 	double cost_to_go_gain = 1e-1;
@@ -188,8 +188,8 @@ void cr3bp_EARTH_MOON_lt_dro_to_dro(int argc, char** argv) {
 	auto start = high_resolution_clock::now();
 	solver.set_homotopy_coefficient(0.0);
 	solver.solve(x0, list_u_init, x_goal);
-	vectordb homotopy_sequence{0.95, 0.95, 1};
-	vectordb huber_loss_coefficient_sequence{ 1e-3, 1e-3, 1e-3};
+	vectordb homotopy_sequence{0.5, 0.95, 1};
+	vectordb huber_loss_coefficient_sequence{1e-2, 1e-3, 1e-3};
 	if (fuel_optimal) {
 		for (size_t i = 0; i < homotopy_sequence.size(); i++) {
 			solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
