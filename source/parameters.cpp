@@ -162,7 +162,7 @@ void SpacecraftParameters::load(string const& file_name) {
 // Default constructor
 SolverParameters::SolverParameters() :
 	N_(40), Nx_((SIZE_VECTOR + 1) + 1), Nu_(SIZE_VECTOR / 2),
-	Neq_(0), Nineq_(3),
+	Neq_(0), Nineq_(2),
 	Nteq_(6), Ntineq_(0),
 	ToF_(0.0),
 	cost_to_go_gain_(1e-2), terminal_cost_gain_(1e4),

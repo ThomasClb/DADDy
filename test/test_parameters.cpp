@@ -209,7 +209,7 @@ TEST(TestSolverParameters, EmptyConstructor) {
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
 	unsigned int Neq = 0;
-	unsigned int Nineq = 3;
+	unsigned int Nineq = 2;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
 	double cost_to_go_gain = 1e-2;
@@ -290,7 +290,7 @@ TEST(TestSolverParameters, FilledConstructor) {
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
 	unsigned int Neq = 0;
-	unsigned int Nineq = 3;
+	unsigned int Nineq = 2;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
 	double cost_to_go_gain = 1e-2;
@@ -387,7 +387,7 @@ TEST(TestSolverParameters, CopyConstructor) {
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
 	unsigned int Neq = 0;
-	unsigned int Nineq = 3;
+	unsigned int Nineq = 2;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
 	double cost_to_go_gain = 1e-2;
@@ -487,7 +487,7 @@ TEST(TestSolverParameters, Setters) {
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
 	unsigned int Neq = 0;
-	unsigned int Nineq = 3;
+	unsigned int Nineq = 2;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
 	double ToF = 10.0;
