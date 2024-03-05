@@ -117,32 +117,7 @@ void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 	double vu = constants.vu();
 
 	// Spacecraft parameters
-	double m_0 = 1000.0 / massu; // [MASSU]
-	double dry_mass = m_0/2; // [MASSU]
-	double T = 0.5 / thrustu; // [THRUSTU]
-	double Isp = 2000.0 / tu; // [TU]
-	SpacecraftParameters spacecraft_parameters(
-		dynamics.constants(),
-		m_0, dry_mass, T, Isp);
-	spacecraft_parameters.save("./data/spacecraft_parameters/tbp_EARTH_5e-4.dat");
-
-	m_0 = 100.0 / massu; // [MASSU]
-	dry_mass = m_0 / 2; // [MASSU]
-	T = 0.01 / thrustu; // [THRUSTU]
-	Isp = 2000.0 / tu; // [TU]
-	spacecraft_parameters = SpacecraftParameters(
-		dynamics.constants(),
-		m_0, dry_mass, T, Isp);
-	spacecraft_parameters.save("./data/spacecraft_parameters/tbp_EARTH_1e-4.dat");
-
-	m_0 = 5000.0 / massu; // [MASSU]
-	dry_mass = m_0 / 2; // [MASSU]
-	T = 0.1 / thrustu; // [THRUSTU]
-	Isp = 2000.0 / tu; // [TU]
-	spacecraft_parameters = SpacecraftParameters(
-		dynamics.constants(),
-		m_0, dry_mass, T, Isp);
-	spacecraft_parameters.save("./data/spacecraft_parameters/tbp_EARTH_2e-5.dat");
+	SpacecraftParameters spacecraft_parameters(spacecraft_parameters_file);
 
 	// Init solver parameters
 	SolverParameters solver_parameters = get_SolverParameters_tbp_EARTH_lt_meo_to_meo(
@@ -166,12 +141,12 @@ void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 		r_d / lu, 0,
 		85 * DEG_2_RAD, 180 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
-		m_0, 2 * PI * sqrt(pow(r_d, 3) / MU_EARTH) / tu };
+		spacecraft_parameters.initial_mass(), 2 * PI * sqrt(pow(r_d, 3) / MU_EARTH) / tu };
 	vectordb x_arrival{ // Kep coordinates
 		r_a / lu, 0,
 		85 * DEG_2_RAD, 170 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
-		dry_mass, 2 * PI * sqrt(pow(r_a, 3) / MU_EARTH) / tu };
+		spacecraft_parameters.dry_mass(), 2 * PI * sqrt(pow(r_a, 3) / MU_EARTH) / tu };
 	x_departure = kep_2_equi(x_departure); // Equinoctial coordinates
 	x_arrival = kep_2_equi(x_arrival);
 	vectordb x0 = x_departure; x0[Nx - 1] = dt; // Time step

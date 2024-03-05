@@ -117,14 +117,7 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	double vu = constants.vu();
 
 	// Spacecraft parameters
-	double m_0 = 1000.0 / massu; // [MASSU]
-	double dry_mass = m_0/2; // [MASSU]
-	double T = 1 / thrustu; // [THRUSTU]
-	double Isp = 2000.0 / tu; // [TU]
-	SpacecraftParameters spacecraft_parameters(
-		dynamics.constants(),
-		m_0, dry_mass, T, Isp);
-	// spacecraft_parameters.save(spacecraft_parameters_file);
+	SpacecraftParameters spacecraft_parameters(spacecraft_parameters_file);
 
 	// Init solver parameters
 	SolverParameters solver_parameters = get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
@@ -147,12 +140,12 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 		lu / lu, 0,
 		0 * DEG_2_RAD, 150 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
-		m_0, 2 * PI * sqrt(pow(lu, 3) / mu) / tu };
+		spacecraft_parameters.initial_mass(), 2 * PI * sqrt(pow(lu, 3) / mu) / tu };
 	vectordb x_arrival{ // Kep coordinates
 		(lu + r_p) / 2.0 / lu, (lu - r_p) / (lu + r_p),
 		0 * DEG_2_RAD, 150 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
-		dry_mass, 2 * PI * sqrt(pow((lu + r_p) / 2.0, 3) / mu) / tu   };
+		spacecraft_parameters.dry_mass(), 2 * PI * sqrt(pow((lu + r_p) / 2.0, 3) / mu) / tu };
 	x_departure = kep_2_equi(x_departure); // Equinoctial coordinates
 	x_arrival = kep_2_equi(x_arrival);
 	vectordb x0 = x_departure; x0[Nx - 1] = dt; // Time step
@@ -240,4 +233,5 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 			x_departure, x_arrival,
 			dynamics, spacecraft_parameters, constants, solver_parameters);
 	}
+
 }
