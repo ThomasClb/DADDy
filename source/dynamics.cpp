@@ -316,14 +316,16 @@ vectordb RTN_2_cart(
 	vectordb r = cart_state_vector.extract(0, 2);
 	vectordb v = cart_state_vector.extract(3, 5);
 
-	// Angular momentum
-	vectordb h = r.cross(v);
+	// Make RTN triade
+	vectordb N = (r.cross(v)).normalize(); // Angular momentum
+	vectordb T = v.normalize();
+	vectordb R = (T.cross(N)).normalize();
 
 	// Make matrix
-	matrixdb matrix(h.size());
-	matrix.setcol(0, r.normalize());
-	matrix.setcol(1, v.normalize());
-	matrix.setcol(2, h.normalize());
+	matrixdb matrix(R.size());
+	matrix.setcol(0, R);
+	matrix.setcol(1, T);
+	matrix.setcol(2, N);
 
 	return matrix * RTN_vector;
 }

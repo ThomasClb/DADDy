@@ -30,16 +30,16 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
 	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-3;
-	vectordb homotopy_sequence{0, 1, 1.0 };
-	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 1e-3 };
+	vectordb homotopy_sequence{0, 0.9, 0.999};
+	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 1e-3};
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6; 
-	double PN_tol = 1e-12;
-	double PN_active_constraint_tol = 1e-13;
+	double PN_tol = 1e-10;
+	double PN_active_constraint_tol = 1e-11;
 	unsigned int max_iter = 10000;
 	unsigned int DDP_max_iter = 100;
 	unsigned int AUL_max_iter = max_iter / DDP_max_iter;
-	unsigned int PN_max_iter = 50;
+	unsigned int PN_max_iter = 100;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
 	vectordb line_search_parameters{1e-8, 10.0, 0.5, 20};
@@ -102,7 +102,7 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
-	cout.precision(5);
+	cout.precision(10);
 
 	// Set dynamics
 	Dynamics dynamics = get_tbp_EARTH_lt_dynamics();
@@ -134,7 +134,7 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	// Initial conditions [Equinoctial elements, MASSU, TU]
 	ToF = ToF / SEC2DAYS / tu; // [TU]
 	double dt = ToF / N; // [TU]
-	double altitude = 5000;
+	double altitude = 25000;
 	double r_p = R_EARTH + altitude;
 	vectordb x_departure{ // Kep coordinates
 		lu / lu, 0,

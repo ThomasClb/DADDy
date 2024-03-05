@@ -543,7 +543,7 @@ DACE::AlgebraicVector<T> inequality_constraints_tbp_lt(
 	DACE::AlgebraicVector<T> output; output.reserve(1 + 1);
 
 	// Thrust (1)
-	T T_const = u.dot(u)/(T_max*T_max) - 1.0; // [-]
+	T T_const = u.dot(u)/(T_max * T_max) - 1.0; // [-]
 	output.push_back(T_const);
 
 	// Mass (1)

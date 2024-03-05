@@ -95,7 +95,6 @@ void PNSolver::set_list_x_u() {
 	unsigned int Nx = solver_parameters.Nx();
 	unsigned int Nu = solver_parameters.Nu();
 
-
 	// Loop for x
 	for (size_t i=1; i< N + 1; i++) {
 		for (size_t j=0; j<Nx; j++)  {
@@ -175,7 +174,6 @@ void PNSolver::solve(vectordb const& x_goal) {
 
 		// Build active constraint vector and its gradient
 		linearised_constraints constraints = get_linearised_constraints_();
-		vectordb d = get<0>(constraints);
 		vector<matrixdb> block_D = get<1>(constraints);
 
 		// Make Sigma = D * D^t as a tridiagonal matrix
@@ -187,20 +185,20 @@ void PNSolver::solve(vectordb const& x_goal) {
 
 		// Line search loop
 		cv_rate = 1e15; double violation_mem = prev_violation;
-		for (size_t j = 0; j < 5; j++) {
+		for (size_t j = 0; j < 10; j++) {
 			// Termination checks
 			if (violation < constraint_tol || cv_rate < cv_rate_threshold)
 				break;
 
 			// Line search
-			violation = line_search_(x_goal, L, block_D, d, violation);
+			violation = line_search_(x_goal, L, block_D, get<0>(constraints), violation);
 
 			// Update cv_rate
 			cv_rate = log(violation) / log(prev_violation);
 			prev_violation = violation;
 		}
 	}
-	set_list_x_u();
+	set_list_x_u(); // Print results in list_x, list_u
 	return;
 }
 
@@ -227,7 +225,7 @@ double PNSolver::line_search_(
 
 	// Init loop
 	double violation(violation_0); vectordb d(d_0);
-	for (size_t i = 0; i < 10; i++) {
+	for (size_t i = 0; i < 20; i++) {
 		// Solve Sigma * z = d <=> L * L^t * z = d using
 		// block tridiagonal Cholesky factorisation.
 		vectordb z = solve_cholesky_(L, d);
@@ -280,7 +278,7 @@ double PNSolver::line_search_(
 		}
 
 		// Update
-		alpha *= gamma; 
+		alpha *= gamma;
 	}
 	return violation;
 }
