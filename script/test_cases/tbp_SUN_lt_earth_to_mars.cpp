@@ -24,10 +24,14 @@ SolverParameters get_SolverParameters_tbp_SUN_lt_earth_to_mars(
 	unsigned int Nineq = 2;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
-	double homotopy_coefficient = 0.0;
+	bool with_J2 = false;
 	double cost_to_go_gain = 1e-2;
 	double terminal_cost_gain = 1e4;
+	double mass_leak = 1e-8;
+	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-3;
+	vectordb homotopy_sequence{0, 0.5, 0.9, 0.999 };
+	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 2e-3, 1e-3 };
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-4; 
 	double PN_tol = 1e-10;
@@ -49,9 +53,11 @@ SolverParameters get_SolverParameters_tbp_SUN_lt_earth_to_mars(
 	return SolverParameters(
 		N, Nx, Nu,
 		Neq, Nineq,
-		Nteq, Ntineq,
-		cost_to_go_gain, terminal_cost_gain,
+		Nteq, Ntineq, with_J2,
+		cost_to_go_gain, terminal_cost_gain, mass_leak,
 		homotopy_coefficient, huber_loss_coefficient,
+		homotopy_sequence,
+		huber_loss_coefficient_sequence,
 		DDP_type,
 		DDP_tol, AUL_tol, PN_tol,
 		DDP_max_iter, AUL_max_iter, PN_max_iter,
@@ -148,16 +154,18 @@ void tbp_SUN_lt_earth_to_mars(int argc, char** argv) {
 
 	// Run DDP
 	auto start = high_resolution_clock::now();
-	solver.set_homotopy_coefficient(0.0);
-	solver.solve(x0, list_u_init, x_goal);
-	vectordb homotopy_sequence{0.5, 0.9, 0.999};
-	vectordb huber_loss_coefficient_sequence{1e-2, 2e-3, 1e-3};
-	if (fuel_optimal) {
-		for (size_t i = 0; i < homotopy_sequence.size(); i++) {
-			solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
-			solver.set_homotopy_coefficient(homotopy_sequence[i]);
+	vectordb homotopy_sequence = solver_parameters.homotopy_coefficient_sequence();
+	vectordb huber_loss_coefficient_sequence = solver_parameters.huber_loss_coefficient_sequence();
+	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
+		solver.set_homotopy_coefficient(homotopy_sequence[i]);
+		solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
+		if (i == 0 && homotopy_sequence[i] == 0)
+			solver.solve(x0, list_u_init, x_goal);
+		else
 			solver.solve(x0, solver.list_u(), x_goal);
-		}
+
+		if (!fuel_optimal)
+			break;
 	}
 
 	// PN test

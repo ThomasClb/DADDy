@@ -102,10 +102,14 @@ protected:
 	unsigned int Nteq_; // Size of terminal equality constraints vector [-]
 	unsigned int Ntineq_; // Size of terminal equality constraints vector [-]
 	double ToF_; // Time-of-flight, initialized at solving [TU]
+	bool with_J2_; // With J2 dynamics [True/False]
 	double cost_to_go_gain_; // ctg magnitude [-]
 	double terminal_cost_gain_; // tc magnitude [-]
-	double homotopy_coefficient_; // Homotpy coefficient between the NRJ optimal and the fuel optimal [0, 1]
-	double huber_loss_coefficient_; // coefficient of the Huber loss regularisation
+	double mass_leak_; // Mass leak term for fuel optimal optimisation [0, <<1]
+	double homotopy_coefficient_; // Homotpy coefficient between the NRJ optimal and the fuel optimal optimisation [0, 1]
+	double huber_loss_coefficient_; // Coefficient of the Huber loss regularisation
+	DACE::vectordb homotopy_coefficient_sequence_; // Homotpy coefficient sequence for fuel optimal optimisation
+	DACE::vectordb huber_loss_coefficient_sequence_; // Coefficient of the Huber loss regularisation sequence for fuel optimal optimisation
 	unsigned int DDP_type_; // Choice of the DDP method 0 = classic, 1 = DA-based
 	double DDP_tol_; // DDPSolver tolerance [-]
 	double AUL_tol_; // AULSolver tolerance [-]
@@ -141,8 +145,12 @@ public:
 		unsigned int const& Nx, unsigned int const& Nu,
 		unsigned int const& Neq, unsigned int const& Nineq,
 		unsigned int const& Nteq, unsigned int const& Ntineq,
+		bool const& with_J2,
 		double const& cost_to_go_gain, double const& terminal_cost_gain,
+		double const& mass_leak,
 		double const& homotopy_coefficient, double const& huber_loss_coefficient,
+		DACE::vectordb const& homotopy_coefficient_sequence,
+		DACE::vectordb const& huber_loss_coefficient_sequence,
 		unsigned int const& DDP_type,
 		double const& DDP_tol, double const& AUL_tol, double const& PN_tol,
 		unsigned int const& DDP_max_iter, unsigned int const& AUL_max_iter,
@@ -171,10 +179,14 @@ public:
 	const unsigned int Nteq() const;
 	const unsigned int Ntineq() const;
 	const double ToF() const;
+	const bool with_J2() const;
 	const double cost_to_go_gain() const;
 	const double terminal_cost_gain() const;
+	const double mass_leak() const;
 	const double homotopy_coefficient() const;
 	const double huber_loss_coefficient() const;
+	const DACE::vectordb homotopy_coefficient_sequence() const;
+	const DACE::vectordb huber_loss_coefficient_sequence() const;
 	const unsigned int DDP_type() const;
 	const double DDP_tol() const;
 	const double AUL_tol() const;
@@ -205,4 +217,5 @@ public:
 	void set_list_mu(std::vector<DACE::vectordb> const& list_mu);
 
 };
+
 #endif

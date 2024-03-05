@@ -164,9 +164,12 @@ SolverParameters::SolverParameters() :
 	N_(40), Nx_((SIZE_VECTOR + 1) + 1), Nu_(SIZE_VECTOR / 2),
 	Neq_(0), Nineq_(2),
 	Nteq_(6), Ntineq_(0),
-	ToF_(0.0),
+	ToF_(0.0), with_J2_(false),
 	cost_to_go_gain_(1e-2), terminal_cost_gain_(1e4),
+	mass_leak_(1e-8),
 	homotopy_coefficient_(0), huber_loss_coefficient_(5e-3),
+	homotopy_coefficient_sequence_(1, 0),
+	huber_loss_coefficient_sequence_(1, 1e-2),
 	DDP_type_(0),
 	DDP_tol_(1e-4), AUL_tol_(1e-4), PN_tol_(1e-12),
 	DDP_max_iter_(100), AUL_max_iter_(100), PN_max_iter_(60),
@@ -205,8 +208,12 @@ SolverParameters::SolverParameters(
 	unsigned int const& Nx, unsigned int const& Nu,
 	unsigned int const& Neq, unsigned int const& Nineq,
 	unsigned int const& Nteq, unsigned int const& Ntineq,
+	bool const& with_J2,
 	double const& cost_to_go_gain, double const& terminal_cost_gain,
+	double const& mass_leak,
 	double const& homotopy_coefficient, double const& huber_loss_coefficient,
+	vectordb const& homotopy_coefficient_sequence,
+	vectordb const& huber_loss_coefficient_sequence,
 	unsigned int const& DDP_type,
 	double const& DDP_tol, double const& AUL_tol, double const& PN_tol,
 	unsigned int const& DDP_max_iter, unsigned int const& AUL_max_iter,
@@ -221,10 +228,14 @@ SolverParameters::SolverParameters(
 	N_(N), Nx_(Nx), Nu_(Nu),
 	Neq_(Neq), Nineq_(Nineq),
 	Nteq_(Nteq), Ntineq_(Ntineq), ToF_(0.0),
+	with_J2_(with_J2),
 	cost_to_go_gain_(cost_to_go_gain),
 	terminal_cost_gain_(terminal_cost_gain),
+	mass_leak_(mass_leak),
 	homotopy_coefficient_(homotopy_coefficient),
 	huber_loss_coefficient_(huber_loss_coefficient),
+	homotopy_coefficient_sequence_(homotopy_coefficient_sequence),
+	huber_loss_coefficient_sequence_(huber_loss_coefficient_sequence),
 	DDP_type_(DDP_type),
 	DDP_tol_(DDP_tol), AUL_tol_(AUL_tol), PN_tol_(PN_tol),
 	DDP_max_iter_(DDP_max_iter), AUL_max_iter_(AUL_max_iter), PN_max_iter_(PN_max_iter),
@@ -264,10 +275,14 @@ SolverParameters::SolverParameters(SolverParameters const& param) :
 	Neq_(param.Neq_), Nineq_(param.Nineq_),
 	Nteq_(param.Nteq_), Ntineq_(param.Ntineq_),
 	ToF_(param.ToF_),
+	with_J2_(param.with_J2_),
 	cost_to_go_gain_(param.cost_to_go_gain_),
 	terminal_cost_gain_(param.terminal_cost_gain_),
+	mass_leak_(param.mass_leak_),
 	homotopy_coefficient_(param.homotopy_coefficient_),
 	huber_loss_coefficient_(param.huber_loss_coefficient_),
+	homotopy_coefficient_sequence_(param.homotopy_coefficient_sequence_),
+	huber_loss_coefficient_sequence_(param.huber_loss_coefficient_sequence_),
 	DDP_type_(param.DDP_type_),
 	DDP_tol_(param.DDP_tol_), AUL_tol_(param.AUL_tol_), PN_tol_(param.PN_tol_),
 	DDP_max_iter_(param.DDP_max_iter_), AUL_max_iter_(param.AUL_max_iter_),
@@ -295,10 +310,16 @@ const unsigned int SolverParameters::Nineq() const { return Nineq_; }
 const unsigned int SolverParameters::Nteq() const { return Nteq_; }
 const unsigned int SolverParameters::Ntineq() const { return Ntineq_; }
 const double SolverParameters::ToF() const { return ToF_; }
+const bool SolverParameters::with_J2() const { return with_J2_; }
 const double SolverParameters::cost_to_go_gain() const { return cost_to_go_gain_; }
 const double SolverParameters::terminal_cost_gain() const { return terminal_cost_gain_; }
+const double SolverParameters::mass_leak() const { return mass_leak_; }
 const double SolverParameters::homotopy_coefficient() const { return homotopy_coefficient_; }
 const double SolverParameters::huber_loss_coefficient() const { return huber_loss_coefficient_; }
+const vectordb SolverParameters::homotopy_coefficient_sequence() const {
+	return homotopy_coefficient_sequence_; }
+const vectordb SolverParameters::huber_loss_coefficient_sequence() const {
+	return huber_loss_coefficient_sequence_; }
 const unsigned int SolverParameters::DDP_type() const { return DDP_type_; }
 const double SolverParameters::DDP_tol() const { return DDP_tol_; }
 const double SolverParameters::AUL_tol() const { return AUL_tol_; }

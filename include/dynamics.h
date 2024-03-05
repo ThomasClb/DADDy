@@ -225,10 +225,6 @@ public:
 
 */
 
-// Wraps a value between 0 and mod > 0
-double wrap_mod(double const& value, double const& mod);
-DACE::DA wrap_mod(DACE::DA const& value, double const& mod); // DA version
-
 // Acceleration functions
 
 // Computes the derivaties in an Sun-centered 2-body problem.
@@ -241,7 +237,8 @@ DACE::AlgebraicVector<T> acceleration_tbp_SUN_lt(
 	DACE::AlgebraicVector<T> const& x,
 	DACE::AlgebraicVector<T> const& u, double const& t,
 	SpacecraftParameters const& spacecraft_parameters,
-	Constants const& constants) {
+	Constants const& constants,
+	SolverParameters const& solver_parameters) {
 	// Unpack
 	double v_e = spacecraft_parameters.ejection_velocity(); // [VU]
 
@@ -288,11 +285,13 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 	DACE::AlgebraicVector<T> const& x,
 	DACE::AlgebraicVector<T> const& u, double const& t,
 	SpacecraftParameters const& spacecraft_parameters,
-	Constants const& constants) {
+	Constants const& constants,
+	SolverParameters const& solver_parameters) {
 	// Unpack
 	double v_e = spacecraft_parameters.ejection_velocity(); // [VU]
 	double lu = constants.lu();
 	double mu = MU_EARTH / constants.mu();
+	bool with_J2 = solver_parameters.with_J2();
 	T sma = x[0]; // Equinoctial elements
 	T P_1 = x[1];
 	T P_2 = x[2];
@@ -325,8 +324,7 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 	T pert_N = u_N;
 
 	// J2
-	bool with_j2 = false;
-	if (with_j2) {
+	if (with_J2) {
 		T G_2 = pow(G, 2.0);
 		T J2_mag = (1.5 * J_2 * MU_EARTH * pow(R_EARTH, 2)) * pow(sma * lu * pow(B, 2) * inv_Phi_L, -4);
 		J2_mag /= (constants.mu() / lu / lu) * G_2;
@@ -388,7 +386,8 @@ DACE::AlgebraicVector<T>  acceleration_cr3bp_lt(
 	DACE::AlgebraicVector<T>  const& state_vector,
 	DACE::AlgebraicVector<T> const& u, double const& t,
 	SpacecraftParameters const& spacecraft_parameters,
-	Constants const& constants) {
+	Constants const& constants,
+	SolverParameters const& solver_parameters) {
 	// Unpack
 	T x = state_vector[0];
 	T y = state_vector[1];
@@ -439,7 +438,7 @@ DACE::AlgebraicVector<T> dynamic_tbp_SUN_lt(
 	SolverParameters const& solver_parameters) {
 	return RK78(
 		acceleration_tbp_SUN_lt, x, u, 0, 1.0,
-		spacecraft_parameters, constants);
+		spacecraft_parameters, constants, solver_parameters);
 }
 
 // Returns the next state given
@@ -453,7 +452,7 @@ DACE::AlgebraicVector<T> dynamic_tbp_EARTH_lt(
 	SolverParameters const& solver_parameters) {
 	return RK78(
 		acceleration_tbp_EARTH_lt, x, u, 0, 1.0,
-		spacecraft_parameters, constants);
+		spacecraft_parameters, constants, solver_parameters);
 }
 
 // Returns the next state given
@@ -467,7 +466,7 @@ DACE::AlgebraicVector<T> dynamic_cr3bp_lt(
 	SolverParameters const& solver_parameters) {
 	return RK78(
 		acceleration_cr3bp_lt, x, u, 0, 1.0,
-		spacecraft_parameters, constants);
+		spacecraft_parameters, constants, solver_parameters);
 }
 
 // Returns the cost-to-go given
@@ -483,6 +482,7 @@ T cost_to_go(
 	double tol = solver_parameters.DDP_tol();
 	unsigned int N = solver_parameters.N();
 	double gain = solver_parameters.cost_to_go_gain(); // [-]
+	double mass_leak = solver_parameters.mass_leak(); // [-]
 	double homotopy_coefficient = solver_parameters.homotopy_coefficient(); // [-]
 	double delta = solver_parameters.huber_loss_coefficient(); // [-]
 	double ToF = solver_parameters.ToF(); // [-]
@@ -502,13 +502,13 @@ T cost_to_go(
 
 	// Pseudo-Huber loss
 	NRJ_ctg = NRJ_ctg / pow(delta, 2.0); // Normalise NRJ optimal term
-	double mass_leak = tol * tol / pow(delta, 2.0);
+	mass_leak = mass_leak / pow(delta, 2.0);
 	T fuel_ctg = sqrt(1.0 + NRJ_ctg + mass_leak) - 1.0;
 
 	// Homotopy
 	double c_1 = 0.5 * gain * delta * delta * (1.0 - homotopy_coefficient);
 	double c_2 = delta *  gain * homotopy_coefficient;
-	return(c_1 * NRJ_ctg + c_2 * fuel_ctg);
+	return c_1 * NRJ_ctg + c_2 * fuel_ctg;
 }
 
 // Returns the path equality contraints given

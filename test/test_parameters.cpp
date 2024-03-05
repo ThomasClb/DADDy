@@ -212,10 +212,14 @@ TEST(TestSolverParameters, EmptyConstructor) {
 	unsigned int Nineq = 2;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
+	bool with_J2 = false;
 	double cost_to_go_gain = 1e-2;
 	double terminal_cost_gain = 1e4;
+	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-3;
+	vectordb homotopy_coefficient_sequence(1, 0);
+	vectordb huber_loss_coefficient_sequence(1, 1e-2);
 	unsigned int DDP_type = 0;
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-4;
@@ -246,10 +250,14 @@ TEST(TestSolverParameters, EmptyConstructor) {
 	EXPECT_EQ(solver_parameters.Nteq(), Nteq);
 	EXPECT_EQ(solver_parameters.Ntineq(), Ntineq);
 	EXPECT_EQ(solver_parameters.ToF(), ToF);
+	EXPECT_EQ(solver_parameters.with_J2(), with_J2);
 	EXPECT_EQ(solver_parameters.cost_to_go_gain(), cost_to_go_gain);
 	EXPECT_EQ(solver_parameters.terminal_cost_gain(), terminal_cost_gain);
+	EXPECT_EQ(solver_parameters.mass_leak(), mass_leak);
 	EXPECT_EQ(solver_parameters.homotopy_coefficient(), homotopy_coefficient);
 	EXPECT_EQ(solver_parameters.huber_loss_coefficient(), huber_loss_coefficient);
+	EXPECT_EQ(solver_parameters.homotopy_coefficient_sequence(), homotopy_coefficient_sequence);
+	EXPECT_EQ(solver_parameters.huber_loss_coefficient_sequence(), huber_loss_coefficient_sequence);
 	EXPECT_EQ(solver_parameters.DDP_type(), DDP_type);
 	EXPECT_EQ(solver_parameters.DDP_tol(), DDP_tol);
 	EXPECT_EQ(solver_parameters.AUL_tol(), AUL_tol);
@@ -293,10 +301,14 @@ TEST(TestSolverParameters, FilledConstructor) {
 	unsigned int Nineq = 2;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
+	bool with_J2 = true;
 	double cost_to_go_gain = 1e-2;
 	double terminal_cost_gain = 1e4;
+	double mass_leak = 1e-10;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-3;
+	vectordb homotopy_coefficient_sequence(2, 0);
+	vectordb huber_loss_coefficient_sequence(2, 1e-2);
 	unsigned int DDP_type = 0;
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-4;
@@ -321,9 +333,14 @@ TEST(TestSolverParameters, FilledConstructor) {
 		N, Nx, Nu,
 		Neq, Nineq,
 		Nteq, Ntineq,
+		with_J2,
 		cost_to_go_gain, terminal_cost_gain,
+		mass_leak,
 		homotopy_coefficient,
-		huber_loss_coefficient, DDP_type,
+		huber_loss_coefficient,
+		homotopy_coefficient_sequence,
+		huber_loss_coefficient_sequence,
+		DDP_type,
 		DDP_tol, AUL_tol, PN_tol,
 		DDP_max_iter, AUL_max_iter, PN_max_iter,
 		line_search_parameters,
@@ -343,10 +360,14 @@ TEST(TestSolverParameters, FilledConstructor) {
 	EXPECT_EQ(solver_parameters.Nteq(), Nteq);
 	EXPECT_EQ(solver_parameters.Ntineq(), Ntineq);
 	EXPECT_EQ(solver_parameters.ToF(), ToF);
+	EXPECT_EQ(solver_parameters.with_J2(), with_J2);
 	EXPECT_EQ(solver_parameters.cost_to_go_gain(), cost_to_go_gain);
 	EXPECT_EQ(solver_parameters.terminal_cost_gain(), terminal_cost_gain);
+	EXPECT_EQ(solver_parameters.mass_leak(), mass_leak);
 	EXPECT_EQ(solver_parameters.homotopy_coefficient(), homotopy_coefficient);
 	EXPECT_EQ(solver_parameters.huber_loss_coefficient(), huber_loss_coefficient);
+	EXPECT_EQ(solver_parameters.homotopy_coefficient_sequence(), homotopy_coefficient_sequence);
+	EXPECT_EQ(solver_parameters.huber_loss_coefficient_sequence(), huber_loss_coefficient_sequence);
 	EXPECT_EQ(solver_parameters.DDP_type(), DDP_type);
 	EXPECT_EQ(solver_parameters.DDP_tol(), DDP_tol);
 	EXPECT_EQ(solver_parameters.AUL_tol(), AUL_tol);
@@ -390,10 +411,14 @@ TEST(TestSolverParameters, CopyConstructor) {
 	unsigned int Nineq = 2;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
+	bool with_J2 = true;
 	double cost_to_go_gain = 1e-2;
 	double terminal_cost_gain = 1e4;
+	double mass_leak = 1e-10;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-3;
+	vectordb homotopy_coefficient_sequence(2, 0);
+	vectordb huber_loss_coefficient_sequence(2, 1e-2);
 	unsigned int DDP_type = 0;
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-4;
@@ -418,9 +443,14 @@ TEST(TestSolverParameters, CopyConstructor) {
 		N, Nx, Nu,
 		Neq, Nineq,
 		Nteq, Ntineq,
+		with_J2,
 		cost_to_go_gain, terminal_cost_gain,
+		mass_leak,
 		homotopy_coefficient,
-		huber_loss_coefficient, DDP_type,
+		huber_loss_coefficient,
+		homotopy_coefficient_sequence,
+		huber_loss_coefficient_sequence,
+		DDP_type,
 		DDP_tol, AUL_tol, PN_tol,
 		DDP_max_iter, AUL_max_iter, PN_max_iter,
 		line_search_parameters,
@@ -440,11 +470,15 @@ TEST(TestSolverParameters, CopyConstructor) {
 	EXPECT_EQ(solver_parameters_copy.Nineq(), Nineq);
 	EXPECT_EQ(solver_parameters_copy.Nteq(), Nteq);
 	EXPECT_EQ(solver_parameters_copy.Ntineq(), Ntineq);
+	EXPECT_EQ(solver_parameters_copy.with_J2(), with_J2);
 	EXPECT_EQ(solver_parameters_copy.ToF(), ToF);
 	EXPECT_EQ(solver_parameters_copy.cost_to_go_gain(), cost_to_go_gain);
 	EXPECT_EQ(solver_parameters_copy.terminal_cost_gain(), terminal_cost_gain);
+	EXPECT_EQ(solver_parameters_copy.mass_leak(), mass_leak);
 	EXPECT_EQ(solver_parameters_copy.homotopy_coefficient(), homotopy_coefficient);
 	EXPECT_EQ(solver_parameters_copy.huber_loss_coefficient(), huber_loss_coefficient);
+	EXPECT_EQ(solver_parameters_copy.homotopy_coefficient_sequence(), homotopy_coefficient_sequence);
+	EXPECT_EQ(solver_parameters_copy.huber_loss_coefficient_sequence(), huber_loss_coefficient_sequence);
 	EXPECT_EQ(solver_parameters_copy.DDP_type(), DDP_type);
 	EXPECT_EQ(solver_parameters_copy.DDP_tol(), DDP_tol);
 	EXPECT_EQ(solver_parameters_copy.AUL_tol(), AUL_tol);

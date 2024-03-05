@@ -29,13 +29,15 @@ TEST(TestDynamics, AccTBPSUNLT) {
 	vectorDA u(3, 1.0/ constants.thrustu() + DA(1));
 	double t = 0; double dt = 1.0;
 	SpacecraftParameters sp(constants);
-	vectorDA xf = acceleration_tbp_SUN_lt(x0, u, t, sp, constants);
+	SolverParameters solver_p;
+	vectorDA xf = acceleration_tbp_SUN_lt(x0, u, t, sp, constants, solver_p);
 
 	// Tests
 	EXPECT_EQ(xf.size(), x0.size());
 
 	// For doubles
-	vectordb xf_db = acceleration_tbp_SUN_lt(x0.cons(), u.cons(), t, sp, constants);
+	vectordb xf_db = acceleration_tbp_SUN_lt(
+		x0.cons(), u.cons(), t, sp, constants, solver_p);
 
 	// Tests
 	EXPECT_EQ(xf_db.size(), x0.cons().size());
@@ -54,13 +56,15 @@ TEST(TestDynamics, AccTBPEARTHLT) {
 	vectorDA u(3, 1.0 / constants.thrustu() + DA(1));
 	double t = 0; double dt = 1.0;
 	SpacecraftParameters sp(constants);
-	vectorDA xf = acceleration_tbp_EARTH_lt(x0, u, t, sp, constants);
+	SolverParameters solver_p;
+	vectorDA xf = acceleration_tbp_EARTH_lt(x0, u, t, sp, constants, solver_p);
 
 	// Tests
 	EXPECT_EQ(xf.size(), x0.size());
 
 	// For doubles
-	vectordb xf_db = acceleration_tbp_EARTH_lt(x0.cons(), u.cons(), t, sp, constants);
+	vectordb xf_db = acceleration_tbp_EARTH_lt(
+		x0.cons(), u.cons(), t, sp, constants, solver_p);
 
 	// Tests
 	EXPECT_EQ(xf_db.size(), x0.cons().size());
@@ -79,13 +83,15 @@ TEST(TestDynamics, AccCR3BPLT) {
 	vectorDA u(3, 1.0 / constants.thrustu() + DA(1));
 	double t = 0; double dt = 1.0;
 	SpacecraftParameters sp(constants);
-	vectorDA xf = acceleration_cr3bp_lt(x0, u, t, sp, constants);
+	SolverParameters solver_p;
+	vectorDA xf = acceleration_cr3bp_lt(x0, u, t, sp, constants, solver_p);
 
 	// Tests
 	EXPECT_EQ(xf.size(), x0.size());
 
 	// For doubles
-	vectordb xf_db = acceleration_cr3bp_lt(x0.cons(), u.cons(), t, sp, constants);
+	vectordb xf_db = acceleration_cr3bp_lt(
+		x0.cons(), u.cons(), t, sp, constants, solver_p);
 
 	// Tests
 	EXPECT_EQ(xf_db.size(), x0.cons().size());

@@ -31,6 +31,10 @@ using sym_tridiag_matrixdb = std::pair<
 	std::vector<DACE::matrixdb>,
 	std::vector<DACE::matrixdb>>;
 
+// Wraps a value between 0 and mod > 0
+double wrap_mod(double const& value, double const& mod);
+DACE::DA wrap_mod(DACE::DA const& value, double const& mod); // DA version
+
 // Turns a sym_tridiag_matrixdb to a matrixdb
 // upperdiag = true (default) means the sub-diagonal is copied on the upper diagonal
 // upperdiag = false means the upper diagonal is 0, therefore, the output is not symmetric

@@ -14,6 +14,28 @@
 using namespace std;
 using namespace DACE;
 
+
+// Wraps a value between 0 and mod > 0
+double wrap_mod(double const& value, double const& mod) {
+    double val = value;
+    while (val > mod || val < 0.0) {
+        if (val >= mod)
+            val -= mod;
+        else if (val < 0)
+            val += mod;
+    }
+    return val;
+}
+
+// Wraps a value between 0 and mod > 0 DA version
+DA wrap_mod(DACE::DA const& value, double const& mod) {
+    DA val = value;
+    double cons = val.cons();
+    val += wrap_mod(cons, mod) - cons;
+    return val;
+}
+
+
 // Turns a sym_tridiag_matrixdb to a matrixdb
 // upperdiag = true (default) means the sub-diagonal is copied on the upper diagonal
 // upperdiag = false means the upper diagonal is 0, therefore, the output is not symmetric
