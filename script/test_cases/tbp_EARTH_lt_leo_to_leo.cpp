@@ -135,15 +135,15 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 	ToF = ToF / SEC2DAYS / tu; // [TU]
 	double dt = ToF / N; // [TU]
 	double r_d = R_EARTH + 400.0;
-	double r_a = r_d + 0;
+	double r_a = r_d - 100;
 	vectordb x_departure{ // Kep coordinates
 		r_d / lu, 0,
-		45 * DEG_2_RAD, 145 * DEG_2_RAD,
+		51 * DEG_2_RAD, 145 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
 		spacecraft_parameters.initial_mass(), 2*PI*sqrt(pow(r_d, 3) / MU_EARTH)/tu };
 	vectordb x_arrival{ // Kep coordinates
 		r_a / lu, 0,
-		45 * DEG_2_RAD, 140 * DEG_2_RAD,
+		56 * DEG_2_RAD, 145 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
 		spacecraft_parameters.dry_mass(), 2 * PI * sqrt(pow(r_a, 3) / MU_EARTH) / tu };
 	x_departure = kep_2_equi(x_departure); // Equinoctial coordinates

@@ -25,7 +25,7 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
 	unsigned int Nteq = 5;
 	unsigned int Ntineq = 0;
 	bool with_J2 = false;
-	double cost_to_go_gain = 1e-3;
+	double cost_to_go_gain = 1e-5;
 	double terminal_cost_gain = 1e5;
 	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
@@ -39,7 +39,7 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
 	unsigned int max_iter = 10000;
 	unsigned int DDP_max_iter = 100;
 	unsigned int AUL_max_iter = max_iter / DDP_max_iter;
-	unsigned int PN_max_iter = 100;
+	unsigned int PN_max_iter = 200;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
 	vectordb line_search_parameters{1e-8, 10.0, 0.5, 20};
@@ -100,10 +100,6 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	if (atoi(argv[7]) == 1) { pn_solving = true; }
 	if (atoi(argv[8]) == 1) { save_results = true; }
 
-	// Set double precision
-	typedef std::numeric_limits<double> dbl;
-	cout.precision(10);
-
 	// Set dynamics
 	Dynamics dynamics = get_tbp_EARTH_lt_dynamics();
 	
@@ -134,18 +130,18 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	// Initial conditions [Equinoctial elements, MASSU, TU]
 	ToF = ToF / SEC2DAYS / tu; // [TU]
 	double dt = ToF / N; // [TU]
-	double altitude = 25000;
+	double altitude = 4000;
 	double r_p = R_EARTH + altitude;
 	vectordb x_departure{ // Kep coordinates
-		lu / lu, 0,
-		0 * DEG_2_RAD, 150 * DEG_2_RAD,
-		0 * DEG_2_RAD, 0 * DEG_2_RAD,
-		spacecraft_parameters.initial_mass(), 2 * PI * sqrt(pow(lu, 3) / mu) / tu };
-	vectordb x_arrival{ // Kep coordinates
 		(lu + r_p) / 2.0 / lu, (lu - r_p) / (lu + r_p),
 		0 * DEG_2_RAD, 150 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
-		spacecraft_parameters.dry_mass(), 2 * PI * sqrt(pow((lu + r_p) / 2.0, 3) / mu) / tu };
+		spacecraft_parameters.initial_mass(), 2 * PI * sqrt(pow((lu + r_p) / 2.0, 3) / mu) / tu};
+	vectordb x_arrival{ // Kep coordinates
+		lu / lu, 0,
+		0 * DEG_2_RAD, 150 * DEG_2_RAD,
+		0 * DEG_2_RAD, 0 * DEG_2_RAD,
+		spacecraft_parameters.dry_mass(), 2 * PI * sqrt(pow(lu, 3) / mu) / tu };
 	x_departure = kep_2_equi(x_departure); // Equinoctial coordinates
 	x_arrival = kep_2_equi(x_arrival);
 	vectordb x0 = x_departure; x0[Nx - 1] = dt; // Time step
@@ -154,6 +150,11 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	// First guess command
 	vectordb u_init(Nu, 1e-6 / thrustu); // [VU]
 	vector<vectordb> list_u_init(N, u_init);
+
+	
+	// Set double precision
+	typedef std::numeric_limits<double> dbl;
+	cout.precision(5);
 
 	// AULSolver
 	AULSolver solver(solver_parameters, spacecraft_parameters, dynamics);

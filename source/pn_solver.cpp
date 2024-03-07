@@ -154,7 +154,7 @@ void PNSolver::solve(vectordb const& x_goal) {
 		if (verbosity == 0) {
 			cout << i << " - " << prev_violation 
 				<< " - " << X_U_[X_U_.size() - 2] * constants.massu() 
-				<< " - " << cv_rate << endl;
+				<< " - " << cv_rate - 1 << endl;
 		} else if (verbosity == 1) {
 			if (i % 5 == 0)
 				cout << i << " - " << prev_violation

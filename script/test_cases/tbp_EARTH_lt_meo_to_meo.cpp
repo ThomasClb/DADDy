@@ -24,7 +24,7 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_meo_to_meo(
 	unsigned int Nineq = 2;
 	unsigned int Nteq = 5;
 	unsigned int Ntineq = 0;
-	bool with_J2 = false;
+	bool with_J2 = true;
 	double cost_to_go_gain = 1e-5;
 	double terminal_cost_gain = 1e5;
 	double mass_leak = 1e-8;
