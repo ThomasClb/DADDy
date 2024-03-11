@@ -21,6 +21,10 @@
 
 #include <dace/dace_s.h>
 
+#include "settings.h"
+#include "constants.h"
+#include "dynamics.h"
+#include "IO.h"
 #include "aul_solver.h"
 #include "pn_solver.h"
 

@@ -39,7 +39,7 @@ if __name__ == "__main__":
     #os.chdir("../../")
     
     # TO DO move to inline parameters
-    test_case = 4
+    test_case = 3
     DDP_type = "_2"
     T2m_ratio = "_5e-4"
     
@@ -65,7 +65,6 @@ if __name__ == "__main__":
     
     # Build name
     file_name = file_name + DDP_type + T2m_ratio + ".dat"
-
 
     # 
     list_2d = ["tbp", "lyapunov", "dro", "leo", "meo"]

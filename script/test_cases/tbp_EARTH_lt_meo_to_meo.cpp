@@ -36,10 +36,9 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_meo_to_meo(
 	double AUL_tol = 1e-6; 
 	double PN_tol = 1e-12;
 	double PN_active_constraint_tol = 1e-13;
-	unsigned int max_iter = 10000;
-	unsigned int DDP_max_iter = 100;
-	unsigned int AUL_max_iter = 100;
-	unsigned int PN_max_iter = 50;
+	unsigned int DDP_max_iter = 200;
+	unsigned int AUL_max_iter = 50;
+	unsigned int PN_max_iter = 100;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
 	vectordb line_search_parameters{1e-8, 10.0, 0.5, 20};

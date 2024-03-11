@@ -36,9 +36,8 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
 	double AUL_tol = 1e-6; 
 	double PN_tol = 1e-10;
 	double PN_active_constraint_tol = 1e-11;
-	unsigned int max_iter = 10000;
 	unsigned int DDP_max_iter = 200;
-	unsigned int AUL_max_iter = max_iter / DDP_max_iter;
+	unsigned int AUL_max_iter = 50;
 	unsigned int PN_max_iter = 200;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
