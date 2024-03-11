@@ -39,6 +39,9 @@ class PNSolver {
 	// Attributes
 protected:
 	AULSolver AULsolver_;
+	SolverParameters solver_parameters_;
+	SpacecraftParameters spacecraft_parameters_;
+	Dynamics dynamics_;
 	std::vector<DACE::vectordb> list_x_; // List of states
 	std::vector<DACE::vectordb> list_u_; // List of controls
 	double cost_; // Output cost [-]

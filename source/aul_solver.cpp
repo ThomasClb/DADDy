@@ -21,6 +21,7 @@ AULSolver::AULSolver() : DDPsolver_(DDPSolver()),
 	list_lambda_(vector<vectordb>(0)), list_mu_(vector<vectordb>(0)),
 	AUL_n_iter_(0), DDP_n_iter_(0),
 	list_x_mem_(vector<vector<vectordb>>(0)), list_u_mem_(vector<vector<vectordb>>(0)) {}
+
 AULSolver::AULSolver(
 	SolverParameters const& solver_parameters,
 	SpacecraftParameters const& spacecraft_parameters,

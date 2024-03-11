@@ -19,9 +19,7 @@
 #include "settings.h"
 #include "constants.h"
 #include "dynamics.h"
-#include "ddp_solver.h"
-#include "aul_solver.h"
-#include "pn_solver.h"
+#include "solver.h"
 #include "IO.h"
 
 // Test cases
@@ -34,11 +32,7 @@ void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv);
 void cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2(int argc, char** argv);
 void cr3bp_EARTH_MOON_lt_dro_to_dro(int argc, char** argv);
 
-// Verification function
-double real_constraints(
-	DACE::vectordb const& x_goal,
-	PNSolver const& PNsolver);
-
+// Runs the selected test case.
 void run_test_cases(int argc, char** argv);
 
 #endif

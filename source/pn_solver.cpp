@@ -15,7 +15,9 @@ using namespace std;
 using namespace std::chrono;
 
 // Empty constructors
-PNSolver::PNSolver() : AULsolver_(AULSolver()),
+PNSolver::PNSolver() : AULsolver_(),
+	solver_parameters_(), dynamics_(),
+	spacecraft_parameters_(),
 	list_x_(vector<vectordb>(0)), list_u_(vector<vectordb>(0)),
 	cost_(0),
 	list_der_cost_(vector<vector<matrixdb>>(0)),
@@ -30,15 +32,17 @@ PNSolver::PNSolver(AULSolver const& AULsolver) : AULsolver_(AULsolver),
 	list_dynamics_(),
 	X_U_(), EQ_INEQ_(), der_EQ_INEQ_(), correction_() {
 	// Unpack
-	DDPSolver ddp_solver = DDPsolver();
-	SolverParameters solver_parameters = ddp_solver.solver_parameters();
-	unsigned int N = solver_parameters.N();
-	unsigned int Nx = solver_parameters.Nx();
-	unsigned int Nu = solver_parameters.Nu();
-	unsigned int Neq = solver_parameters.Neq();
-	unsigned int Nineq = solver_parameters.Nineq();
-	unsigned int Nteq = solver_parameters.Nteq();
-	unsigned int Ntineq = solver_parameters.Ntineq();
+	DDPSolver ddp_solver = AULsolver.DDPsolver();
+	solver_parameters_ = ddp_solver.solver_parameters();
+	spacecraft_parameters_ = ddp_solver.spacecraft_parameters();
+	dynamics_ = ddp_solver.dynamics();
+	unsigned int N = solver_parameters_.N();
+	unsigned int Nx = solver_parameters_.Nx();
+	unsigned int Nu = solver_parameters_.Nu();
+	unsigned int Neq = solver_parameters_.Neq();
+	unsigned int Nineq = solver_parameters_.Nineq();
+	unsigned int Nteq = solver_parameters_.Nteq();
+	unsigned int Ntineq = solver_parameters_.Ntineq();
 	X_U_ = vectordb(N*(Nx + Nu));
 	list_dynamics_ = vector<vectorDA>(N);
 	correction_ = vectordb(N*(Nx + Nu), 0);
@@ -69,6 +73,8 @@ PNSolver::PNSolver(AULSolver const& AULsolver) : AULsolver_(AULsolver),
 // Copy constructor
 PNSolver::PNSolver(
 	PNSolver const& solver) : AULsolver_(solver.AULsolver_),
+	solver_parameters_(solver.solver_parameters_), dynamics_(solver.dynamics_),
+	spacecraft_parameters_(solver.spacecraft_parameters_),
 	list_x_(solver.list_x_), list_u_(solver.list_u_),
 	cost_(solver.cost_),
 	list_dynamics_(solver.list_dynamics_),
@@ -89,11 +95,9 @@ const double PNSolver::cost() const { return cost_; }
 // Setters
 void PNSolver::set_list_x_u() {
 	// Unpack
-	DDPSolver ddp_solver = DDPsolver();
-	SolverParameters solver_parameters = ddp_solver.solver_parameters();
-	unsigned int N = solver_parameters.N();
-	unsigned int Nx = solver_parameters.Nx();
-	unsigned int Nu = solver_parameters.Nu();
+	unsigned int N = solver_parameters_.N();
+	unsigned int Nx = solver_parameters_.Nx();
+	unsigned int Nu = solver_parameters_.Nu();
 
 	// Loop for x
 	for (size_t i=1; i< N + 1; i++) {
@@ -115,20 +119,18 @@ void PNSolver::set_list_x_u() {
 // See: https://github.com/RoboticExplorationLab/Altro.jl
 void PNSolver::solve(vectordb const& x_goal) {
 	// Unpack
-	DDPSolver ddp_solver = DDPsolver();
-	SolverParameters solver_parameters = ddp_solver.solver_parameters();
-	unsigned int N = solver_parameters.N();
-	unsigned int Nx = solver_parameters.Nx();
-	unsigned int Nu = solver_parameters.Nu();
-	unsigned int Neq = solver_parameters.Neq();
-	unsigned int Nineq = solver_parameters.Nineq();
-	unsigned int Nteq = solver_parameters.Nteq();
-	unsigned int Ntineq = solver_parameters.Ntineq();
-	size_t max_iter = solver_parameters.PN_max_iter();
-	double constraint_tol = solver_parameters.PN_tol();
-	double cv_rate_threshold = solver_parameters.PN_cv_rate_threshold();
-	unsigned int verbosity = solver_parameters.verbosity();
-	Constants constants = ddp_solver.dynamics().constants();
+	unsigned int N = solver_parameters_.N();
+	unsigned int Nx = solver_parameters_.Nx();
+	unsigned int Nu = solver_parameters_.Nu();
+	unsigned int Neq = solver_parameters_.Neq();
+	unsigned int Nineq = solver_parameters_.Nineq();
+	unsigned int Nteq = solver_parameters_.Nteq();
+	unsigned int Ntineq = solver_parameters_.Ntineq();
+	size_t max_iter = solver_parameters_.PN_max_iter();
+	double constraint_tol = solver_parameters_.PN_tol();
+	double cv_rate_threshold = solver_parameters_.PN_cv_rate_threshold();
+	unsigned int verbosity = solver_parameters_.verbosity();
+	Constants constants = dynamics_.constants();
 
 	// Output
 	if (verbosity < 1) {
@@ -212,15 +214,13 @@ double PNSolver::line_search_(
 	vectordb const& d_0,
 	double const& violation_0) {
 	// Unpack
-	DDPSolver ddp_solver = DDPsolver();
-	SolverParameters solver_parameters = ddp_solver.solver_parameters();
-	double constraint_tol = solver_parameters.PN_tol();
-	size_t max_iter = solver_parameters.PN_max_iter();
-	double alpha = solver_parameters.PN_alpha();
-	double gamma = solver_parameters.PN_gamma();
-	unsigned int N = solver_parameters.N();
-	unsigned int Nx = solver_parameters.Nx();
-	unsigned int Nu = solver_parameters.Nu();
+	double constraint_tol = solver_parameters_.PN_tol();
+	size_t max_iter = solver_parameters_.PN_max_iter();
+	double alpha = solver_parameters_.PN_alpha();
+	double gamma = solver_parameters_.PN_gamma();
+	unsigned int N = solver_parameters_.N();
+	unsigned int Nx = solver_parameters_.Nx();
+	unsigned int Nu = solver_parameters_.Nu();
 	matrixdb mat_z(d_0.size(), 1);
 
 	// Init loop
@@ -287,14 +287,12 @@ double PNSolver::line_search_(
 double PNSolver::get_max_constraint_(
 	DACE::vectordb const& EQ_INEQ) {
 	// Unpack parameters
-	DDPSolver ddp_solver = DDPsolver();
-	SolverParameters solver_parameters = ddp_solver.solver_parameters();
-	unsigned int N = solver_parameters.N();
-	unsigned int Nx = solver_parameters.Nx();
-	unsigned int Neq = solver_parameters.Neq();
-	unsigned int Nineq = solver_parameters.Nineq();
-	unsigned int Nteq = solver_parameters.Nteq();
-	unsigned int Ntineq = solver_parameters.Ntineq();
+	unsigned int N = solver_parameters_.N();
+	unsigned int Nx = solver_parameters_.Nx();
+	unsigned int Neq = solver_parameters_.Neq();
+	unsigned int Nineq = solver_parameters_.Nineq();
+	unsigned int Nteq = solver_parameters_.Nteq();
+	unsigned int Ntineq = solver_parameters_.Ntineq();
 
 	// Loop on all steps
 	double maximum = -1e15;
@@ -325,18 +323,15 @@ void PNSolver::update_constraints_(
 	vectordb const& x_goal,
 	bool const& force_DA) {
 	// Unpack
-	DDPSolver ddp_solver = DDPsolver();
-	SolverParameters solver_parameters = ddp_solver.solver_parameters();
-	SpacecraftParameters spacecraft_parameters = ddp_solver.spacecraft_parameters();
-	Dynamics dynamics = ddp_solver.dynamics();
-	double tol = solver_parameters.PN_tol()/10;
-	unsigned int N = solver_parameters.N();
-	unsigned int Nx = solver_parameters.Nx();
-	unsigned int Nu = solver_parameters.Nu();
-	unsigned int Neq = solver_parameters.Neq();
-	unsigned int Nineq = solver_parameters.Nineq();
-	unsigned int Nteq = solver_parameters.Nteq();
-	unsigned int Ntineq = solver_parameters.Ntineq();
+	Constants constants = dynamics_.constants();
+	double tol = solver_parameters_.PN_tol()/10;
+	unsigned int N = solver_parameters_.N();
+	unsigned int Nx = solver_parameters_.Nx();
+	unsigned int Nu = solver_parameters_.Nu();
+	unsigned int Neq = solver_parameters_.Neq();
+	unsigned int Nineq = solver_parameters_.Nineq();
+	unsigned int Nteq = solver_parameters_.Nteq();
+	unsigned int Ntineq = solver_parameters_.Ntineq();
 
 	// Make id matrix
 	matrixdb id_Nx(Neq + Nx, Nx, 0.0), null_Nx(Nineq, Nx, 0.0);
@@ -378,17 +373,17 @@ void PNSolver::update_constraints_(
 			0, Nx, Nu + Nx);
 
 		// Constraints evaluations
-		vectorDA eq_eval = dynamics.equality_constraints()(
-			x_DA, u_DA, spacecraft_parameters, dynamics.constants(), solver_parameters);
-		vectorDA ineq_eval = dynamics.inequality_constraints()(
-			x_DA, u_DA, spacecraft_parameters, dynamics.constants(), solver_parameters);
+		vectorDA eq_eval = dynamics_.equality_constraints()(
+			x_DA, u_DA, spacecraft_parameters_, constants, solver_parameters_);
+		vectorDA ineq_eval = dynamics_.inequality_constraints()(
+			x_DA, u_DA, spacecraft_parameters_, constants, solver_parameters_);
 
 		// Continuity constraints
 		vectorDA x_kp1_eval;
 		if (force_DA) {
-			x_kp1_eval = dynamics.dynamic()(
+			x_kp1_eval = dynamics_.dynamic()(
 				x_DA, u_DA,
-				spacecraft_parameters, dynamics.constants(), solver_parameters);
+				spacecraft_parameters_, constants, solver_parameters_);
 		} else {
 			// Get conv radius
 			vectorDA dynamics_eval = list_dynamics_[i];
@@ -402,9 +397,9 @@ void PNSolver::update_constraints_(
 
 			// Compute from scratch	
 			else {
-				x_kp1_eval = dynamics.dynamic()(
+				x_kp1_eval = dynamics_.dynamic()(
 					x_DA, u_DA,
-					spacecraft_parameters, dynamics.constants(), solver_parameters);
+					spacecraft_parameters_, constants, solver_parameters_);
 			}
 		}
 		list_dynamics_[i] = x_kp1_eval;
@@ -449,10 +444,10 @@ void PNSolver::update_constraints_(
 		0, 0, Nx - 1);
 
 	// Constraints evaluations
-	vectorDA teq_eval = dynamics.terminal_equality_constraints()(
-		x_DA, x_goal, spacecraft_parameters, dynamics.constants(), solver_parameters);
-	vectorDA tineq_eval = dynamics.terminal_inequality_constraints()(
-		x_DA, x_goal, spacecraft_parameters, dynamics.constants(), solver_parameters);
+	vectorDA teq_eval = dynamics_.terminal_equality_constraints()(
+		x_DA, x_goal, spacecraft_parameters_, constants, solver_parameters_);
+	vectorDA tineq_eval = dynamics_.terminal_inequality_constraints()(
+		x_DA, x_goal, spacecraft_parameters_, constants, solver_parameters_);
 
 	// Get derivatives
 	vector<matrixdb> der_teq = deriv_xu(
@@ -478,18 +473,15 @@ vectordb PNSolver::update_constraints_double_(
 	vectordb const& X_U,
 	vectordb const& correction) {
 	// Unpack
-	DDPSolver ddp_solver = DDPsolver();
-	SolverParameters solver_parameters = ddp_solver.solver_parameters();
-	SpacecraftParameters spacecraft_parameters = ddp_solver.spacecraft_parameters();
-	Dynamics dynamics = ddp_solver.dynamics();
-	double tol = solver_parameters.PN_tol()/10;
-	unsigned int N = solver_parameters.N();
-	unsigned int Nx = solver_parameters.Nx();
-	unsigned int Nu = solver_parameters.Nu();
-	unsigned int Neq = solver_parameters.Neq();
-	unsigned int Nineq = solver_parameters.Nineq();
-	unsigned int Nteq = solver_parameters.Nteq();
-	unsigned int Ntineq = solver_parameters.Ntineq();
+	Constants constants = dynamics_.constants();
+	double tol = solver_parameters_.PN_tol()/10;
+	unsigned int N = solver_parameters_.N();
+	unsigned int Nx = solver_parameters_.Nx();
+	unsigned int Nu = solver_parameters_.Nu();
+	unsigned int Neq = solver_parameters_.Neq();
+	unsigned int Nineq = solver_parameters_.Nineq();
+	unsigned int Nteq = solver_parameters_.Nteq();
+	unsigned int Ntineq = solver_parameters_.Ntineq();
 	vectordb corr = correction_ - correction;
 
 	// Init lists
@@ -520,10 +512,10 @@ vectordb PNSolver::update_constraints_double_(
 		for (size_t j=0; j<Nx; j++) {xp1[j] = X_U[i*(Nu + Nx) + Nu + j];}
 	
 		// Constraints evaluations
-		vectordb eq_eval = dynamics.equality_constraints_db()(
-			x, u, spacecraft_parameters, dynamics.constants(), solver_parameters);
-		vectordb ineq_eval = dynamics.inequality_constraints_db()(
-			x, u, spacecraft_parameters, dynamics.constants(), solver_parameters);
+		vectordb eq_eval = dynamics_.equality_constraints_db()(
+			x, u, spacecraft_parameters_, constants, solver_parameters_);
+		vectordb ineq_eval = dynamics_.inequality_constraints_db()(
+			x, u, spacecraft_parameters_, constants, solver_parameters_);
 		eq_eval.reserve(Nx);
 
 		// Continuity constraints
@@ -538,8 +530,8 @@ vectordb PNSolver::update_constraints_double_(
 		if (norm < radius)
 			x_kp1_eval += dynamics_eval.eval(dx_u);			
 		else
-			x_kp1_eval += dynamics.dynamic_db()(
-				x, u, spacecraft_parameters, dynamics.constants(), solver_parameters);
+			x_kp1_eval += dynamics_.dynamic_db()(
+				x, u, spacecraft_parameters_, constants, solver_parameters_);
 
 		// Assign
 		for (size_t k = 0; k < Neq; k++) {
@@ -556,10 +548,10 @@ vectordb PNSolver::update_constraints_double_(
 	for (size_t j=0; j<Nx; j++) {x[j] = X_U[(N - 1)*(Nu + Nx) + Nu + j];}
 
 	// Constraints evaluations
-	vectordb teq_eval = dynamics.terminal_equality_constraints_db()(
-		x, x_goal, spacecraft_parameters, dynamics.constants(), solver_parameters);
-	vectordb tineq_eval = dynamics.terminal_inequality_constraints_db()(
-		x, x_goal, spacecraft_parameters, dynamics.constants(), solver_parameters);
+	vectordb teq_eval = dynamics_.terminal_equality_constraints_db()(
+		x, x_goal, spacecraft_parameters_, constants, solver_parameters_);
+	vectordb tineq_eval = dynamics_.terminal_inequality_constraints_db()(
+		x, x_goal, spacecraft_parameters_, constants, solver_parameters_);
 
 	// Assign
 	for (size_t k = 0; k < Nteq; k++) {
@@ -575,18 +567,14 @@ vectordb PNSolver::update_constraints_double_(
 // third is the list of the index of active constraints.
 linearised_constraints PNSolver::get_linearised_constraints_() {
 	// Unpack
-	DDPSolver ddp_solver = DDPsolver();
-	SolverParameters solver_parameters = ddp_solver.solver_parameters();
-	SpacecraftParameters spacecraft_parameters = ddp_solver.spacecraft_parameters();
-	Dynamics dynamics = ddp_solver.dynamics();
-	unsigned int N = solver_parameters.N();
-	unsigned int Nx = solver_parameters.Nx();
-	unsigned int Nu = solver_parameters.Nu();
-	unsigned int Neq = solver_parameters.Neq();
-	unsigned int Nineq = solver_parameters.Nineq();
-	unsigned int Nteq = solver_parameters.Nteq();
-	unsigned int Ntineq = solver_parameters.Ntineq();
-	double active_constraint_tol = solver_parameters.PN_active_constraint_tol();
+	unsigned int N = solver_parameters_.N();
+	unsigned int Nx = solver_parameters_.Nx();
+	unsigned int Nu = solver_parameters_.Nu();
+	unsigned int Neq = solver_parameters_.Neq();
+	unsigned int Nineq = solver_parameters_.Nineq();
+	unsigned int Nteq = solver_parameters_.Nteq();
+	unsigned int Ntineq = solver_parameters_.Ntineq();
+	double active_constraint_tol = solver_parameters_.PN_active_constraint_tol();
 
 	// Init the output
 	vectordb d; vector<matrixdb> block_D;
@@ -789,11 +777,9 @@ sym_tridiag_matrixdb PNSolver::get_block_sigma_sq_(
 	vector<matrixdb> const& block_Delta,
 	vector<vector<size_t>> const& list_active_index) {
 	// Unpack
-	DDPSolver ddp_solver = DDPsolver();
-	SolverParameters solver_parameters = ddp_solver.solver_parameters();
-	unsigned int N = solver_parameters.N();
-	unsigned int Nx = solver_parameters.Nx();
-	unsigned int Nu = solver_parameters.Nu();
+	unsigned int N = solver_parameters_.N();
+	unsigned int Nx = solver_parameters_.Nx();
+	unsigned int Nu = solver_parameters_.Nu();
 
 	//  Init lists
 	vector<matrixdb> list_diag, list_subdiag;

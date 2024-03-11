@@ -37,7 +37,7 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
 	double PN_tol = 1e-10;
 	double PN_active_constraint_tol = 1e-11;
 	unsigned int max_iter = 10000;
-	unsigned int DDP_max_iter = 100;
+	unsigned int DDP_max_iter = 200;
 	unsigned int AUL_max_iter = max_iter / DDP_max_iter;
 	unsigned int PN_max_iter = 200;
 	vectordb lambda_parameters{0.0, 1e8};
@@ -123,23 +123,19 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	unsigned int Nx = solver_parameters.Nx();
 	unsigned int Nu = solver_parameters.Nu();
 
-	// Init DACE
-	DA::init(2, Nx + Nu);
-	DA::setEps(1e-90);
-
 	// Initial conditions [Equinoctial elements, MASSU, TU]
 	ToF = ToF / SEC2DAYS / tu; // [TU]
 	double dt = ToF / N; // [TU]
-	double altitude = 4000;
+	double altitude = 400;
 	double r_p = R_EARTH + altitude;
 	vectordb x_departure{ // Kep coordinates
 		(lu + r_p) / 2.0 / lu, (lu - r_p) / (lu + r_p),
-		0 * DEG_2_RAD, 150 * DEG_2_RAD,
+		0 * DEG_2_RAD, 135 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
 		spacecraft_parameters.initial_mass(), 2 * PI * sqrt(pow((lu + r_p) / 2.0, 3) / mu) / tu};
 	vectordb x_arrival{ // Kep coordinates
 		lu / lu, 0,
-		0 * DEG_2_RAD, 150 * DEG_2_RAD,
+		0 * DEG_2_RAD, 135 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
 		spacecraft_parameters.dry_mass(), 2 * PI * sqrt(pow(lu, 3) / mu) / tu };
 	x_departure = kep_2_equi(x_departure); // Equinoctial coordinates
@@ -157,55 +153,13 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	cout.precision(5);
 
 	// AULSolver
-	AULSolver solver(solver_parameters, spacecraft_parameters, dynamics);
+	DADDy solver(solver_parameters, spacecraft_parameters, dynamics);
+	solver.solve(x0, list_u_init, x_goal, fuel_optimal, pn_solving);
 
-	// Run DDP
-	auto start = high_resolution_clock::now();
-	vectordb homotopy_sequence = solver_parameters.homotopy_coefficient_sequence();
-	vectordb huber_loss_coefficient_sequence = solver_parameters.huber_loss_coefficient_sequence();
-	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
-		solver.set_homotopy_coefficient(homotopy_sequence[i]);
-		solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
-		if (i == 0 && homotopy_sequence[i] == 0)
-			solver.solve(x0, list_u_init, x_goal);
-		else
-			solver.solve(x0, solver.list_u(), x_goal);
-
-		if (!fuel_optimal)
-			break;
-	}
-
-	// PN test
-	auto start_inter = high_resolution_clock::now();
-	PNSolver pn_solver(solver);
-	if (pn_solving)
-		pn_solver.solve(x_goal);
-	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
-	auto duration_AUL = duration_cast<microseconds>(start_inter - start);
-	auto duration_PN = duration_cast<microseconds>(stop - start_inter);
-
-	// Get data
-	vector<vectordb> list_x(pn_solver.list_x()), list_u(pn_solver.list_u());
-	double cost(pn_solver.cost());
-
-	// Compute errors
-	vectordb loss = (list_x[N] - x_goal).extract(0, 5);
-
-	// Get final mass
-	double final_mass = list_x[N][6]; // [kg]
-
-	// Output
-	if (verbosity <= 1) {
-		cout << endl;
-		cout << "Optimised" << endl;
-		cout << "	Total runtime : " + to_string(static_cast<double>(duration.count()) / 1e6) + "s" << endl;
-		cout << "	AUL solver runtime : " + to_string(static_cast<double>(duration_AUL.count()) / 1e6) + "s" << endl;
-		cout << "	PN solver runtime : " + to_string(static_cast<double>(duration_PN.count()) / 1e6) + "s" << endl;
-		cout << "	FINAL MASS [kg] : " << massu * final_mass << endl;
-		cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
-	}
-
+	// Unpack
+	vector<vectordb> list_x = solver.list_x();
+	vector<vectordb> list_u = solver.list_u();
+	
 	// Print datasets
 	if (save_results) {
 		// Convert to cart

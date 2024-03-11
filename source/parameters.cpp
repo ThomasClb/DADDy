@@ -187,6 +187,10 @@ SolverParameters::SolverParameters() :
 	size_t size_path(Neq_ + Nineq_);
 	size_t size_terminal(Nteq_ + Ntineq_);
 
+	// Init DACE
+	DA::init(2, Nx_ + Nu_);
+	DA::setEps(1e-90);
+
 	// Reserve space
 	list_lambda_.reserve(N_ + 1);
 	list_mu_.reserve(N_ + 1);
@@ -254,6 +258,10 @@ SolverParameters::SolverParameters(
 	size_t size_path(Neq_ + Nineq_);
 	size_t size_terminal(Nteq_ + Ntineq_);
 
+	// Init DACE
+	DA::init(2, Nx_ + Nu_);
+	DA::setEps(1e-90);
+
 	// Reserve space
 	list_lambda_.reserve(N_ + 1);
 	list_mu_.reserve(N_ + 1);
@@ -296,7 +304,12 @@ SolverParameters::SolverParameters(SolverParameters const& param) :
 	PN_active_constraint_tol_(param.PN_active_constraint_tol_),
 	PN_cv_rate_threshold_(param.PN_cv_rate_threshold_),
 	PN_alpha_(param.PN_alpha_), PN_gamma_(param.PN_gamma_),
-	verbosity_(param.verbosity_), saving_iterations_(param.saving_iterations_) {}
+	verbosity_(param.verbosity_), saving_iterations_(param.saving_iterations_) {
+
+	// Init DACE
+	DA::init(2, Nx_ + Nu_);
+	DA::setEps(1e-90);
+}
 
 // Destructor
 SolverParameters::~SolverParameters() {}

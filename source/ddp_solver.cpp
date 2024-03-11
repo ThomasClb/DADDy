@@ -15,8 +15,8 @@ using namespace std;
 
 
 // Empty constructor
-DDPSolver::DDPSolver() : solver_parameters_(SolverParameters()),
-	spacecraft_parameters_(SpacecraftParameters(Constants())), dynamics_(Dynamics()),
+DDPSolver::DDPSolver() : solver_parameters_(),
+	spacecraft_parameters_(Constants()), dynamics_(),
 	list_x_(vector<vectordb>(0)), list_u_(vector<vectordb>(0)), cost_(0),
 	list_eq_(vector<vectordb>(0)), list_ineq_(vector<vectordb>(0)),
 	rho_(0.0), d_rho_(0.0),

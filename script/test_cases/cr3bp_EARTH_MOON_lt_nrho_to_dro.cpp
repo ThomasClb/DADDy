@@ -127,10 +127,6 @@ void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv) {
 	unsigned int Nx = solver_parameters.Nx();
 	unsigned int Nu = solver_parameters.Nu();
 
-	// Init DACE
-	DA::init(2, Nx + Nu);
-	DA::setEps(1e-90);
-
 	// Initial conditions [3*LU, 3*VU, MASSU, TU]
 	// From [Boone MacMahon 2024]
 	ToF = ToF / SEC2DAYS / tu; // [TU]
@@ -154,54 +150,8 @@ void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv) {
 	vector<vectordb> list_u_init(N, u_init);
 
 	// AULSolver
-	AULSolver solver(solver_parameters, spacecraft_parameters, dynamics);
-
-	// Run DDP
-	auto start = high_resolution_clock::now();
-	vectordb homotopy_sequence = solver_parameters.homotopy_coefficient_sequence();
-	vectordb huber_loss_coefficient_sequence = solver_parameters.huber_loss_coefficient_sequence();
-	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
-		solver.set_homotopy_coefficient(homotopy_sequence[i]);
-		solver.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
-		if (i == 0 && homotopy_sequence[i] == 0)
-			solver.solve(x0, list_u_init, x_goal);
-		else
-			solver.solve(x0, solver.list_u(), x_goal);
-
-		if (!fuel_optimal)
-			break;
-	}
-
-	// PN test
-	auto start_inter = high_resolution_clock::now();
-	PNSolver pn_solver(solver);
-	if (pn_solving)
-		pn_solver.solve(x_goal);
-	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
-	auto duration_AUL = duration_cast<microseconds>(start_inter - start);
-	auto duration_PN = duration_cast<microseconds>(stop - start_inter);
-
-	// Get data
-	vector<vectordb> list_x(pn_solver.list_x()), list_u(pn_solver.list_u());
-	double cost(pn_solver.cost());
-
-	// Compute errors
-	vectordb loss = (list_x[N] - x_goal).extract(0, 5);
-
-	// Get final mass
-	double final_mass = list_x[N][6]; // [kg]
-
-	// Output
-	if (verbosity <= 1) {
-		cout << endl;
-		cout << "Optimised" << endl;
-		cout << "	Total runtime : " + to_string(static_cast<double>(duration.count()) / 1e6) + "s" << endl;
-		cout << "	AUL solver runtime : " + to_string(static_cast<double>(duration_AUL.count()) / 1e6) + "s" << endl;
-		cout << "	PN solver runtime : " + to_string(static_cast<double>(duration_PN.count()) / 1e6) + "s" << endl;
-		cout << "	FINAL MASS [kg] : " << massu * final_mass << endl;
-		cout << "	FINAL ERROR [-] : " << real_constraints(x_goal, pn_solver) << endl;
-	}
+	DADDy solver(solver_parameters, spacecraft_parameters, dynamics);
+	solver.solve(x0, list_u_init, x_goal, fuel_optimal, pn_solving);
 
 	// Print datasets
 	if (save_results) {
@@ -209,7 +159,7 @@ void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv) {
 		string system_name = "CR3BP EARTH-MOON CARTESIAN LT";
 		print_transfer_dataset(
 			file_name, system_name,
-			list_x, list_u,
+			solver.list_x(), solver.list_u(),
 			x_departure, x_arrival,
 			dynamics, spacecraft_parameters, constants, solver_parameters);
 	}
