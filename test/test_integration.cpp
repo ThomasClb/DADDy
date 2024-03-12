@@ -27,7 +27,6 @@ TEST(TestIntegration, MinMaxNorm) {
 	EXPECT_EQ(max(a, b), a);
 	EXPECT_EQ(normtmp(vect.size(), vect), abs(b));
 }
-
 TEST(TestIntegration, RK4) {
 	// Init
 	vectordb x0(SIZE_VECTOR + 2, 1.0);
@@ -41,7 +40,6 @@ TEST(TestIntegration, RK4) {
 	// Tests
 	EXPECT_EQ(xf.size(), x0.size());
 }
-
 TEST(TestIntegration, RK78) {
 	// Init DACE
 	size_t nb_variables = 3;

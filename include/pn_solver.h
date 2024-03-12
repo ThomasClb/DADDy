@@ -78,7 +78,6 @@ public:
 	// Setters
 	void set_list_x_u();
 
-
 	// Solves the optimisation problem with a projected Newton method
 	// Inspired from ALTRO (Julia).
 	// See: https://github.com/RoboticExplorationLab/Altro.jl
@@ -123,6 +122,5 @@ public:
 		std::vector<DACE::matrixdb> const& block_Delta,
 		std::vector<std::vector<std::size_t>> const& list_active_index);
 };
-
 
 #endif
