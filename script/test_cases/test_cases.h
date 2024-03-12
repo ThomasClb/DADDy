@@ -16,7 +16,7 @@
 #include <dace/dace_s.h>
 #include <chrono>
 
-#include "solver.h"
+#include "daddy.h"
 
 // Test cases
 void tbp_SUN_lt_earth_to_mars(int argc, char** argv);
