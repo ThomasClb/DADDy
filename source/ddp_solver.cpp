@@ -12,7 +12,7 @@
 
 using namespace DACE;
 using namespace std;
-
+using namespace std::chrono;
 
 // Empty constructor
 DDPSolver::DDPSolver() : solver_parameters_(),
@@ -1373,12 +1373,12 @@ void DDPSolver::solve(
 	list_eq_ = vector<vectordb>(); list_ineq_ = vector<vectordb>();
 
 	// Reserve
-	
 	list_ctg_eval_.reserve(N);
 	list_eq_.reserve(N);
 	list_ineq_.reserve(N);
 
 	// Separte dynamic
+	auto start = high_resolution_clock::now();
 	if (recompute_dynamics_) {
 		list_x_ = vector<vectordb>();
 		list_dynamic_eval_ = vector<vectorDA>();
@@ -1447,8 +1447,11 @@ void DDPSolver::solve(
 	double ctg = (cost_ - tc_eval_.cons());
 
 	// Output
+	auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(stop - start);
 	if (verbosity < 1)
-		cout << "    " << 0 << " - " << cost_ << ", " << ctg << ", " << tc << endl;
+		cout << "    " << 0 << " - " << cost_ << ", " << ctg << ", " << tc 
+		<< ", "<< to_string(static_cast<double>(duration.count()) / 1e6) << endl;
 	
 	// DDP solving
 	double cost_last = 0.0;
@@ -1460,6 +1463,9 @@ void DDPSolver::solve(
 		cost_last = cost_;
 
 		int nb_method = 3;
+
+		// Get times
+		auto start = high_resolution_clock::now();
 
 		// Backward sweep (< nb_method =  classic method from ALTRO)
 		if (DDP_type < nb_method)
@@ -1505,10 +1511,14 @@ void DDPSolver::solve(
 
 		// Update states and control
 		list_x = list_x_; list_u = list_u_;
-
+		
 		// Output
+		auto stop = high_resolution_clock::now();
+		auto duration = duration_cast<microseconds>(stop - start);
 		if (verbosity < 1)
-			cout << "    " << n_iter_ << " - " << cost_ << ", " << ctg << ", " << tc << endl;
+			cout << "    " << n_iter_ 
+				<< " - " << cost_ << ", " << ctg
+				<< ", " << tc << ", "<< to_string(static_cast<double>(duration.count()) / 1e6) << endl;
 	}
 }
 

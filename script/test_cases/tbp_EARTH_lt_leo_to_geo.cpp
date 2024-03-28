@@ -30,8 +30,8 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
 	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-3;
-	vectordb homotopy_sequence{0, 0.9, 0.999};
-	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 1e-3};
+	vectordb homotopy_sequence{0, 0.5, 0.99};
+	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 5e-3};
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6; 
 	double PN_tol = 1e-10;
@@ -131,12 +131,12 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 		(lu + r_p) / 2.0 / lu, (lu - r_p) / (lu + r_p),
 		0 * DEG_2_RAD, 135 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
-		spacecraft_parameters.initial_mass(), 2 * PI * sqrt(pow((lu + r_p) / 2.0, 3) / mu) / tu};
+		spacecraft_parameters.initial_mass(), 2 * PI};
 	vectordb x_arrival{ // Kep coordinates
 		lu / lu, 0,
 		0 * DEG_2_RAD, 135 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
-		spacecraft_parameters.dry_mass(), 2 * PI * sqrt(pow(lu, 3) / mu) / tu };
+		spacecraft_parameters.dry_mass(), 2*PI};
 	x_departure = kep_2_equi(x_departure); // Equinoctial coordinates
 	x_arrival = kep_2_equi(x_arrival);
 	vectordb x0 = x_departure; x0[Nx - 1] = dt; // Time step

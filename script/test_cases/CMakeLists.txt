@@ -35,5 +35,5 @@ set_target_properties(test_cases PROPERTIES
 	
 # Link
 target_link_libraries(
-	test_cases
+    test_cases
     dace)

@@ -17,6 +17,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <chrono>
 
 #include <dace/dace_s.h>
 
