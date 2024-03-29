@@ -16,7 +16,9 @@ using namespace std;
 
 SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
 	unsigned int const& N, unsigned int const& DDP_type,
-	unsigned int verbosity) {
+	unsigned int verbosity,
+	double const& last_homotopy,
+	double const& last_huber) {
 	// Solver parameters
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
@@ -30,14 +32,14 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
 	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-3;
-	vectordb homotopy_sequence{0, 0.5, 0.99};
-	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 5e-3};
+	vectordb homotopy_sequence{0, 0.5, last_homotopy};
+	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, last_huber};
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6; 
 	double PN_tol = 1e-10;
 	double PN_active_constraint_tol = 1e-11;
 	unsigned int DDP_max_iter = 200;
-	unsigned int AUL_max_iter = 50;
+	unsigned int AUL_max_iter = 200;
 	unsigned int PN_max_iter = 200;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
@@ -71,7 +73,7 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
 
 void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	// Input check
-	if (argc < 10) {
+	if (argc < 12) {
 		cout << "Wrong number of arguments." << endl;
 		cout << "Requested number : 9" << endl;
 		cout << "0 - Test case number." << endl;
@@ -83,6 +85,8 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 		cout << "6 - Perform projected Newton solving [0/1]." << endl;
 		cout << "7 - Save results [0/1]." << endl;
 		cout << "8 - Verbosity [0-2]." << endl;
+		cout << "9 - Last homotopy [0,1]." << endl;
+		cout << "10 - Last huber loss [0,1]." << endl;
 		return;
 	}
 
@@ -95,9 +99,14 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	bool pn_solving = false;
 	bool save_results = false;
 	int verbosity = atoi(argv[9]);
+	double last_homotopy = atof(argv[10]);
+	double last_huber = atof(argv[11]);
 	if (atoi(argv[6]) == 1) { fuel_optimal = true; }
 	if (atoi(argv[7]) == 1) { pn_solving = true; }
 	if (atoi(argv[8]) == 1) { save_results = true; }
+
+	cout << last_homotopy << endl;
+	cout << last_huber << endl;
 
 	// Set dynamics
 	Dynamics dynamics = get_tbp_EARTH_lt_dynamics();
@@ -116,7 +125,7 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 
 	// Init solver parameters
 	SolverParameters solver_parameters = get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
-		N, DDP_type, verbosity);
+		N, DDP_type, verbosity, last_homotopy, last_huber);
 
 	// Solver parameters
 	unsigned int Nx = solver_parameters.Nx();

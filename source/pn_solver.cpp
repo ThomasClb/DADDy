@@ -151,16 +151,30 @@ void PNSolver::solve(vectordb const& x_goal) {
 	// Init loop
 	double violation(prev_violation);
 	double cv_rate = 1e15;
+	double duration = 0.0;
+	auto start = high_resolution_clock::now();
+	auto stop = high_resolution_clock::now();
 	for (size_t i = 0; i < max_iter; i++) {
 		// Output
 		if (verbosity == 0) {
+			stop = high_resolution_clock::now();
+			auto duration = duration_cast<microseconds>(stop - start);
+			string duration_str = to_string(static_cast<double>(duration.count()) / 1e6);
+			start = high_resolution_clock::now();
 			cout << i << " - " << prev_violation 
 				<< " - " << X_U_[X_U_.size() - 2] * constants.massu() 
-				<< " - " << cv_rate - 1 << endl;
+				<< " - " << cv_rate - 1 
+				<< " - " << duration_str<< endl;
 		} else if (verbosity == 1) {
-			if (i % 5 == 0)
+			if (i % 5 == 0) {
+				stop = high_resolution_clock::now();
+				auto duration = duration_cast<microseconds>(stop - start);
+				string duration_str = to_string(static_cast<double>(duration.count()) / 1e6);
+				start = high_resolution_clock::now();
 				cout << i << " - " << prev_violation
-					<< " - " << X_U_[X_U_.size() - 2] * constants.massu() << endl;
+					<< " - " << X_U_[X_U_.size() - 2] * constants.massu() 
+					<< " - " << duration_str << endl;
+			}
 		}
 
 		// Check termination constraints
