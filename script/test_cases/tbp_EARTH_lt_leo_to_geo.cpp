@@ -188,7 +188,7 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 		}
 		list_x[list_u.size()] = kep_2_cart(equi_2_kep(list_x[list_u.size()]), mu);
 
-		string file_name = "./data/datasets/tbp_EARTH_lt_leo_to_geo" + to_string(last_homotopy) + "_" + last_huber(last_huber);
+		string file_name = "./data/datasets/tbp_EARTH_lt_leo_to_geo" + to_string(last_homotopy) + "_" + to_string(last_huber);
 		string system_name = "TBP EARTH EQUINOCTIAL LT";
 		print_transfer_dataset(
 			file_name, system_name,
