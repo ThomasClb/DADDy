@@ -32,8 +32,8 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
 	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-3;
-	vectordb homotopy_sequence{0, 0.5, last_homotopy};
-	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, last_huber};
+	vectordb homotopy_sequence{0, 0.5, 0.9, last_homotopy};
+	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 5e-3, last_huber};
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6; 
 	double PN_tol = 1e-10;
@@ -188,7 +188,7 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 		}
 		list_x[list_u.size()] = kep_2_cart(equi_2_kep(list_x[list_u.size()]), mu);
 
-		string file_name = "./data/datasets/tbp_EARTH_lt_leo_to_geo";
+		string file_name = "./data/datasets/tbp_EARTH_lt_leo_to_geo" + to_string(last_homotopy) + "_" + last_huber(last_huber);
 		string system_name = "TBP EARTH EQUINOCTIAL LT";
 		print_transfer_dataset(
 			file_name, system_name,
