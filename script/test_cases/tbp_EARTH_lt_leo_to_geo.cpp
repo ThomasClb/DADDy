@@ -18,7 +18,7 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
 	unsigned int const& N, unsigned int const& DDP_type,
 	unsigned int verbosity,
 	double const& last_homotopy,
-	double const& last_huber) {
+	double const& last_huber, int bypass_low, int bypass_up) {
 	// Solver parameters
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
@@ -57,8 +57,8 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
 		Nteq, Ntineq, with_J2,
 		cost_to_go_gain, terminal_cost_gain, mass_leak,
 		homotopy_coefficient, huber_loss_coefficient,
-		homotopy_sequence,
-		huber_loss_coefficient_sequence,
+		homotopy_sequence.extract(bypass_low, bypass_up),
+		huber_loss_coefficient_sequence.extract(bypass_low, bypass_up),
 		DDP_type,
 		DDP_tol, AUL_tol, PN_tol,
 		DDP_max_iter, AUL_max_iter, PN_max_iter,
@@ -73,7 +73,7 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
 
 void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	// Input check
-	if (argc < 12) {
+	if (argc < 16) {
 		cout << "Wrong number of arguments." << endl;
 		cout << "Requested number : 9" << endl;
 		cout << "0 - Test case number." << endl;
@@ -87,6 +87,10 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 		cout << "8 - Verbosity [0-2]." << endl;
 		cout << "9 - Last homotopy [0,1]." << endl;
 		cout << "10 - Last huber loss [0,1]." << endl;
+		cout << "11 - Control mem load." << endl;
+		cout << "12 - Control mem save." << endl;
+		cout << "13 - Bypass low." << endl;
+		cout << "14 - Bypass up." << endl;
 		return;
 	}
 
@@ -101,12 +105,20 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	int verbosity = atoi(argv[9]);
 	double last_homotopy = atof(argv[10]);
 	double last_huber = atof(argv[11]);
+	int control_mem_load = atoi(argv[12]);
+	int control_mem_save = atoi(argv[13]);
+	int bypass_low = atoi(argv[14]);
+	int bypass_up = atoi(argv[15]);
 	if (atoi(argv[6]) == 1) { fuel_optimal = true; }
 	if (atoi(argv[7]) == 1) { pn_solving = true; }
 	if (atoi(argv[8]) == 1) { save_results = true; }
 
 	cout << last_homotopy << endl;
 	cout << last_huber << endl;
+	cout << control_mem_load << endl;
+	cout << control_mem_save << endl;
+	cout << bypass_low << endl;
+	cout << bypass_up << endl;
 
 	// Set dynamics
 	Dynamics dynamics = get_tbp_EARTH_lt_dynamics();
@@ -125,7 +137,7 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 
 	// Init solver parameters
 	SolverParameters solver_parameters = get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
-		N, DDP_type, verbosity, last_homotopy, last_huber);
+		N, DDP_type, verbosity, last_homotopy, last_huber, bypass_low, bypass_up);
 
 	// Solver parameters
 	unsigned int Nx = solver_parameters.Nx();
@@ -154,7 +166,9 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	// First guess command
 	vectordb u_init(Nu, 1e-6 / thrustu); // [VU]
 	vector<vectordb> list_u_init(N, u_init);
-
+	if (control_mem_load > 0) {
+		list_u_init = load_control("./data/control/tbp_EARTH_lt_leo_to_geo_" + to_string(control_mem_load));
+	}
 	
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
@@ -163,6 +177,8 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	// AULSolver
 	DADDy solver(solver_parameters, spacecraft_parameters, dynamics);
 	solver.solve(x0, list_u_init, x_goal, fuel_optimal, pn_solving);
+
+	save_control("./data/control/tbp_EARTH_lt_leo_to_geo_" + to_string(control_mem_save), solver.list_u());
 
 	// Unpack
 	vector<vectordb> list_x = solver.list_x();

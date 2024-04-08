@@ -145,7 +145,11 @@ void tbp_SUN_lt_earth_to_mars(int argc, char** argv) {
 	vectordb u_init(Nu, 1e-6 / thrustu); // [VU]
 	vector<vectordb> list_u_init(N, u_init);
 
-		// AULSolver
+	// Set double precision
+	typedef std::numeric_limits<double> dbl;
+	cout.precision(5);
+
+	// AULSolver
 	DADDy solver(solver_parameters, spacecraft_parameters, dynamics);
 	solver.solve(x0, list_u_init, x_goal, fuel_optimal, pn_solving);
 	

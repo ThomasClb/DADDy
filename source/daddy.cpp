@@ -142,7 +142,7 @@ void DADDy::solve(
 	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
 		AULsolver_.set_homotopy_coefficient(homotopy_sequence[i]);
 		AULsolver_.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
-		if (i == 0 && homotopy_sequence[i] == 0)
+		if (i == 0)
 			AULsolver_.solve(x0, list_u_init, x_goal);
 		else
 			AULsolver_.solve(x0, AULsolver_.list_u(), x_goal);

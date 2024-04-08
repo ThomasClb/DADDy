@@ -28,6 +28,12 @@ void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv);
 void cr3bp_EARTH_MOON_lt_lyapunovL1_to_lyapunovL2(int argc, char** argv);
 void cr3bp_EARTH_MOON_lt_dro_to_dro(int argc, char** argv);
 
+// Misc
+void save_control(
+	std::string const& file_name,
+	std::vector<DACE::vectordb> const& list_u);
+std::vector<DACE::vectordb> load_control(std::string const& file_name);
+
 // Runs the selected test case.
 void run_test_cases(int argc, char** argv);
 
