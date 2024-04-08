@@ -11,6 +11,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.interpolate as interpolate
 
 from misc import get_Lagrange_point
 from classes import Dataset
@@ -225,7 +226,11 @@ def plot_2d(dataset):
     
     # Normalisation
     denormalise = False
-    
+
+    # Interpolation
+    interpolation = True
+    interpolation_rate = 15
+
     # Legend
     show_legend = False
     legend_loc = "lower right"
@@ -256,6 +261,12 @@ def plot_2d(dataset):
             "LU", "km")
         list_names_state[axis_1 + 1] = list_names_state[axis_1 + 1].replace(
             "LU", "km")
+
+    if interpolation:
+        t_old = np.linspace(0, 1, len(coord_0))  
+        t_new = np.linspace(0, 1, interpolation_rate*len(coord_0))  
+        coord_0 = interpolate.interp1d(t_old, coord_0, kind='cubic')(t_new)
+        coord_1 = interpolate.interp1d(t_old, coord_1, kind='cubic')(t_new)
 
     # Create plot
     fig = plt.figure(dpi=dpi)

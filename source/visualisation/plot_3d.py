@@ -11,6 +11,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.interpolate as interpolate
 
 from misc import get_Lagrange_point
 from classes import Dataset
@@ -234,6 +235,10 @@ def plot_3d(dataset):
     
     # Normalisation
     denormalise = False
+
+    # Interpolation
+    interpolation = False
+    interpolation_rate = 5
     
     # Legend
     show_legend = False
@@ -266,6 +271,13 @@ def plot_3d(dataset):
         list_names_state[1] = list_names_state[1].replace("LU", "km")
         list_names_state[2] = list_names_state[2].replace("LU", "km")
         list_names_state[3] = list_names_state[3].replace("LU", "km")
+
+    if interpolation:
+        t_old = np.linspace(0, 1, len(x))  
+        t_new = np.linspace(0, 1, interpolation_rate*len(x))  
+        x = interpolate.interp1d(t_old, x, kind='cubic')(t_new)
+        y = interpolate.interp1d(t_old, y, kind='cubic')(t_new)
+        z = interpolate.interp1d(t_old, z, kind='cubic')(t_new)
 
     # Create 3D plot
     fig = plt.figure()
