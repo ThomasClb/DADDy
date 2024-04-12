@@ -168,7 +168,13 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	vector<vectordb> list_u_init(N, u_init);
 	if (control_mem_load > 0) {
 		list_u_init = load_control("./data/control/tbp_EARTH_lt_leo_to_geo_" + to_string(control_mem_load));
+
+		for (size_t i=0; i<list_u_init.size(); i++) {
+			list_u_init[i] = list_u_init[i] + pow(solver_parameters.DDP_tol(), 2);
+		}
 	}
+
+
 	
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
