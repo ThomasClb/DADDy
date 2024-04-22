@@ -22,7 +22,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro(
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
 	unsigned int Neq = 0;
-	unsigned int Nineq = 2;
+	unsigned int Nineq = 4;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
 	bool with_J2 = false;
@@ -31,8 +31,8 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro(
 	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 1e-4;
-	vectordb homotopy_sequence{0, 0.5, 0.95, 1 };
-	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 1e-3, 1e-3 };
+	vectordb homotopy_sequence{0, 0.5, 0.95, 0.999 };
+	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 5e-3, 1e-3 };
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-4;
 	double PN_tol = 1e-10;
@@ -40,7 +40,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro(
 	unsigned int max_iter = 10000;
 	unsigned int DDP_max_iter = 100;
 	unsigned int AUL_max_iter = max_iter / DDP_max_iter;
-	unsigned int PN_max_iter = 50;
+	unsigned int PN_max_iter = 200;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
 	vectordb line_search_parameters{1e-8, 10.0, 0.5, 20};

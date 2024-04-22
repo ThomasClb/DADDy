@@ -46,6 +46,11 @@
 // https://en.wikipedia.org/wiki/Earth_radius
 #define R_EARTH (6378)
 
+// Moon Radius [km]
+// From Wikipedia
+// https://en.wikipedia.org/wiki/Moon
+#define R_MOON (1736)
+
 // Thrust
 #define G_0 (9.81) // Earth gravity field [m.s^-1]
 

@@ -134,18 +134,22 @@ void DADDy::solve(
 	unsigned int verbosity = solver_parameters_.verbosity();
 	unsigned int Nx = solver_parameters_.Nx();
 	unsigned int Nu = solver_parameters_.Nu();
+	double tol = solver_parameters_.AUL_tol();
 
 	// Run DDP
 	auto start = high_resolution_clock::now();
 	vectordb homotopy_sequence = solver_parameters_.homotopy_coefficient_sequence();
 	vectordb huber_loss_coefficient_sequence = solver_parameters_.huber_loss_coefficient_sequence();
+	vector<vectordb> list_u_init_ = list_u_init;
 	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
 		AULsolver_.set_homotopy_coefficient(homotopy_sequence[i]);
 		AULsolver_.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
-		if (i == 0)
-			AULsolver_.solve(x0, list_u_init, x_goal);
-		else
-			AULsolver_.solve(x0, AULsolver_.list_u(), x_goal);
+		if (i != 0) {
+			for (size_t i=0; i<list_u_init.size(); i++) {
+				list_u_init_[i] = AULsolver_.list_u()[i]*(1- tol); // Small perturbation
+			}
+		}
+		AULsolver_.solve(x0, list_u_init_, x_goal);
 
 		if (!fuel_optimal)
 			break;

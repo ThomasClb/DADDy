@@ -560,15 +560,18 @@ DACE::AlgebraicVector<T> inequality_constraints_tbp_lt(
 // For low-thrust cr3bp
 // Nineq = 2
 template<typename T>
-DACE::AlgebraicVector<T> inequality_constraints_cr3bp_lt(
+DACE::AlgebraicVector<T> inequality_constraints_cr3bp_EARTH_MOON_lt(
 	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T> const& u,
 	SpacecraftParameters const& spacecraft_parameters,
 	Constants const& constants,
 	SolverParameters const& solver_parameters) {
 	// Unpack parameters
+	double mu = constants.mu(); // [MU]
+	double lu = constants.lu(); // [lu]
 	double T_max = spacecraft_parameters.thrust(); // [THRUSTU]
 	double dry_mass = spacecraft_parameters.dry_mass(); // [MASSU]
 	double initial_mass = spacecraft_parameters.initial_mass(); // [MASSU]
+	T x_0(x[0]), x_1(x[1]), x_2(x[2]);
 
 	// Init
 	DACE::AlgebraicVector<T> output; output.reserve(1 + 1);
@@ -577,10 +580,15 @@ DACE::AlgebraicVector<T> inequality_constraints_cr3bp_lt(
 	T T_const = u.dot(u) - T_max*T_max; // [THRUSTU²]
 	output.push_back(T_const);
 
+	// Primaries (2)
+	T x_1p2_sqr(DACE::sqr(x_1) + DACE::sqr(x_2));
+	T r_1_sqr = DACE::sqr(x_0 - mu) + x_1p2_sqr;
+	T r_2_sqr = DACE::sqr(x_0  + 1 - mu) + x_1p2_sqr;
+	output.push_back(R_EARTH/lu - r_1_sqr); // Earth
+	output.push_back(R_MOON/lu - r_2_sqr); // Moon
+
 	// Mass (1)
 	output.push_back(dry_mass - x[SIZE_VECTOR]); // Mass
-
-	// TO DO 2 primaries
 	
 	return output;
 }

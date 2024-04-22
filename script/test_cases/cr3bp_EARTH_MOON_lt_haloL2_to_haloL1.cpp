@@ -22,7 +22,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
 	unsigned int Neq = 0;
-	unsigned int Nineq = 2;
+	unsigned int Nineq = 4;
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
 	bool with_J2 = false;
@@ -31,8 +31,8 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(
 	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-4;
-	vectordb homotopy_sequence{0, 0.75, 0.9, 0.999, 0.9999 };
-	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 1e-3, 1e-3, 5e-4 };
+	vectordb homotopy_sequence{0, 0.75, 0.9, 0.999};
+	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 1e-3, 5e-4};
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6;
 	double PN_tol = 1e-10;
