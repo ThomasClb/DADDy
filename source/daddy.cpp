@@ -41,6 +41,13 @@ const PNSolver DADDy::PNsolver() const { return PNsolver_; }
 const vector<vectordb> DADDy::list_x() const { return PNsolver_.list_x(); }
 const vector<vectordb> DADDy::list_u() const { return PNsolver_.list_u(); }
 const double DADDy::cost() const { return PNsolver_.cost(); }
+const double DADDy::runtime() const { return runtime_; }
+const double DADDy::PN_runtime() const { return PN_runtime_; }
+const double DADDy::AUL_runtime() const { return AUL_runtime_; }
+const size_t DADDy::PN_n_iter() const { return PN_n_iter_; }
+const size_t DADDy::AUL_n_iter() const { return AUL_n_iter_; }
+const size_t DADDy::DDP_n_iter() const { return DDP_n_iter_; }
+
 
 
 // Computes the constraints with propagated dynamics.
@@ -141,6 +148,8 @@ void DADDy::solve(
 	vectordb homotopy_sequence = solver_parameters_.homotopy_coefficient_sequence();
 	vectordb huber_loss_coefficient_sequence = solver_parameters_.huber_loss_coefficient_sequence();
 	vector<vectordb> list_u_init_ = list_u_init;
+	AUL_n_iter_ = 0;
+	DDP_n_iter_ = 0;
 	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
 		AULsolver_.set_homotopy_coefficient(homotopy_sequence[i]);
 		AULsolver_.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
@@ -150,6 +159,8 @@ void DADDy::solve(
 			}
 		}
 		AULsolver_.solve(x0, list_u_init_, x_goal);
+		DDP_n_iter_ += AULsolver_.DDP_n_iter();
+		AUL_n_iter_ += AULsolver_.AUL_n_iter();
 
 		if (!fuel_optimal)
 			break;
@@ -164,14 +175,18 @@ void DADDy::solve(
 	auto duration = duration_cast<microseconds>(stop - start);
 	auto duration_AUL = duration_cast<microseconds>(start_inter - start);
 	auto duration_PN = duration_cast<microseconds>(stop - start_inter);
+	PN_runtime_ = static_cast<double>(duration_PN.count()) / 1e6;
+	AUL_runtime_ = static_cast<double>(duration_AUL.count()) / 1e6;
+	runtime_ = static_cast<double>(duration.count()) / 1e6;
+	PN_n_iter_ = PNsolver_.n_iter();
 
 	// Output
 	if (verbosity <= 1) {
 		cout << endl;
 		cout << "Optimised" << endl;
-		cout << "	Total runtime : " + to_string(static_cast<double>(duration.count()) / 1e6) + "s" << endl;
-		cout << "	AUL solver runtime : " + to_string(static_cast<double>(duration_AUL.count()) / 1e6) + "s" << endl;
-		cout << "	PN solver runtime : " + to_string(static_cast<double>(duration_PN.count()) / 1e6) + "s" << endl;
+		cout << "	Total runtime : " + to_string(runtime_) + "s" << endl;
+		cout << "	AUL solver runtime : " + to_string(AUL_runtime_) + "s" << endl;
+		cout << "	PN solver runtime : " + to_string(PN_runtime_) + "s" << endl;
 		cout << "	FINAL COST [-] : " << PNsolver_.cost() << endl;
 		cout << "	FINAL ERROR [-] : " << real_constraints(x_goal) << endl;
 	}

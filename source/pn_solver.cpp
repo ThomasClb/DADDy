@@ -91,6 +91,7 @@ const DDPSolver PNSolver::DDPsolver() const { return AULsolver_.DDPsolver(); }
 const vector<vectordb> PNSolver::list_x() const { return list_x_; }
 const vector<vectordb> PNSolver::list_u() const { return list_u_; }
 const double PNSolver::cost() const { return cost_; }
+const size_t PNSolver::n_iter() const { return n_iter_; }
 
 // Setters
 void PNSolver::set_list_x_u() {
@@ -152,9 +153,12 @@ void PNSolver::solve(vectordb const& x_goal) {
 	double violation(prev_violation);
 	double cv_rate = 1e15;
 	double duration = 0.0;
+	n_iter_ = 0;
 	auto start = high_resolution_clock::now();
 	auto stop = high_resolution_clock::now();
 	for (size_t i = 0; i < max_iter; i++) {
+		n_iter_ ++;
+
 		// Output
 		if (verbosity == 0) {
 			stop = high_resolution_clock::now();

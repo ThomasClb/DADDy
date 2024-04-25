@@ -47,6 +47,8 @@ protected:
 	double cost_; // Output cost [-]
 	std::vector<std::vector<DACE::matrixdb>> list_der_cost_; // Output cost derivatives [-]
 	std::vector<DACE::vectorDA> list_dynamics_; // List of dynamics evaluations
+	std::size_t n_iter_; // Number of iterations
+
 
 	// Looping attributes
 	DACE::vectordb  X_U_; // Concatenated states and controls
@@ -74,6 +76,7 @@ public:
 	const std::vector<DACE::vectordb> list_x() const;
 	const std::vector<DACE::vectordb> list_u() const;
 	const double cost() const;
+	const std::size_t n_iter() const;
 
 	// Setters
 	void set_list_x_u();

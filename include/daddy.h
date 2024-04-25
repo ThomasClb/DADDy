@@ -38,6 +38,14 @@ protected:
 	Dynamics dynamics_;
 	PNSolver PNsolver_; // Projected Newton solver
 
+	// Iterations
+	double PN_runtime_; // Runtime of PN
+	double AUL_runtime_; // Runtime of AUL
+	double runtime_; // Runtime
+	std::size_t PN_n_iter_; // Number of PN iterations
+	std::size_t AUL_n_iter_; // Number of AUL iterations
+	std::size_t DDP_n_iter_; // Total number of DDP iterations
+
 // Methods
 public:
 	// Empty constructor
@@ -61,6 +69,12 @@ public:
 	const std::vector<DACE::vectordb> list_x() const;
 	const std::vector<DACE::vectordb> list_u() const;
 	const double cost() const;
+	const double PN_runtime() const;
+	const double AUL_runtime() const;
+	const double runtime() const;
+	const std::size_t PN_n_iter() const;
+	const std::size_t DDP_n_iter() const;
+	const std::size_t AUL_n_iter() const;
 
 	// Computes the constraints with propagated dynamics.
 	double real_constraints(

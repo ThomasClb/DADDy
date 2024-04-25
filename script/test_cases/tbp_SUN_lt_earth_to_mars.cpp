@@ -16,7 +16,7 @@ using namespace std;
 
 SolverParameters get_SolverParameters_tbp_SUN_lt_earth_to_mars(
 	unsigned int const& N, unsigned int const& DDP_type,
-	unsigned int verbosity) {
+	unsigned int verbosity, double const& T2m_ratio) {
 	// Solver parameters
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
@@ -30,8 +30,8 @@ SolverParameters get_SolverParameters_tbp_SUN_lt_earth_to_mars(
 	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-3;
-	vectordb homotopy_sequence{0, 0.5, 0.9, 0.999 };
-	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 2e-3, 1e-3 };
+	vectordb homotopy_sequence{0, 0.5, 0.9, 0.999};
+	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 2e-3, 1e-3};
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6; 
 	double PN_tol = 1e-10;
@@ -120,7 +120,7 @@ void tbp_SUN_lt_earth_to_mars(int argc, char** argv) {
 
 	// Init solver parameters
 	SolverParameters solver_parameters = get_SolverParameters_tbp_SUN_lt_earth_to_mars(
-		N, DDP_type, verbosity);
+		N, DDP_type, verbosity, spacecraft_parameters.thrust()*thrustu/(spacecraft_parameters.initial_mass()*massu));
 
 	// Solver parameters
 	unsigned int Nx = solver_parameters.Nx();
@@ -151,21 +151,30 @@ void tbp_SUN_lt_earth_to_mars(int argc, char** argv) {
 
 	// Solver
 	DADDy solver(solver_parameters, spacecraft_parameters, dynamics);
-	auto start = high_resolution_clock::now();
 	solver.solve(x0, list_u_init, x_goal, fuel_optimal, pn_solving);
-	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
 	
 	// Main outputs
 	if (verbosity == 3) {
-		cout << atoi(argv[1]) << " - ";
-		cout << DDP_type << " - ";
-		cout << spacecraft_parameters.thrust()*thrustu/(spacecraft_parameters.initial_mass()*massu) << " - ";
+		// ID
+		cout << atoi(argv[1]) << ", ";
+		cout << DDP_type << ", ";
+		cout << spacecraft_parameters.thrust()*thrustu/(spacecraft_parameters.initial_mass()*massu) << ", ";
 		cout << ToF*tu*SEC2DAYS << " - ";
+
+		// Data
+
+		// Results
 		cout << solver.list_x()[N][SIZE_VECTOR]*massu << " - ";
 		cout << solver.list_x()[N][SIZE_VECTOR]/spacecraft_parameters.initial_mass() << " - ";
 		cout << solver.real_constraints(x_goal) << " - ";
-		cout << to_string(static_cast<double>(duration.count()) / 1e6) << endl;
+
+		// Convergence metrics
+		cout << solver.AUL_runtime() << " - ";
+		cout << solver.PN_runtime() << " - ";
+		cout << solver.runtime() << " - ";
+		cout << solver.DDP_n_iter() << " - ";
+		cout << solver.AUL_n_iter() << " - ";
+		cout << solver.PN_n_iter() << endl;
 	}
 	
 	// Print datasets
