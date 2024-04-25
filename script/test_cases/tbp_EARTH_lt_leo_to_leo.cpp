@@ -30,10 +30,8 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_leo(
 	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-3;
-	vectordb homotopy_sequence{0.99};
-	vectordb huber_loss_coefficient_sequence{5e-3};
-	// vectordb homotopy_sequence{0, 0.5, 0.75, 0.9 };
-	// vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 1e-2, 1e-2};
+	vectordb homotopy_sequence{0, 0.5, 0.75, 0.9, 0.99 };
+	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 1e-2, 1e-2, 5e-3};
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6;
 	double PN_tol = 1e-12;
@@ -152,20 +150,25 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 	vectordb u_init(Nu, 1e-6 / thrustu); // [VU]
 	vector<vectordb> list_u_init(N, u_init);
 
-	list_u_init = load_control(
-		"./data/control/tbp_EARTH_lt_leo_to_leo_3");
-
-	for (size_t i=0; i<list_u_init.size(); i++) {
-		list_u_init[i] = list_u_init[i] + solver_parameters.AUL_tol(); // Small perturbation
+	// Solver
+	DADDy solver(solver_parameters, spacecraft_parameters, dynamics);
+	auto start = high_resolution_clock::now();
+	solver.solve(x0, list_u_init, x_goal, fuel_optimal, pn_solving);
+	auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(stop - start);
+	
+	// Main outputs
+	if (verbosity == 3) {
+		cout << atoi(argv[1]) << " - ";
+		cout << DDP_type << " - ";
+		cout << spacecraft_parameters.thrust()*thrustu/(spacecraft_parameters.initial_mass()*massu) << " - ";
+		cout << ToF*tu*SEC2DAYS << " - ";
+		cout << solver.list_x()[N][SIZE_VECTOR]*massu << " - ";
+		cout << solver.list_x()[N][SIZE_VECTOR]/spacecraft_parameters.initial_mass() << " - ";
+		cout << solver.real_constraints(x_goal) << " - ";
+		cout << to_string(static_cast<double>(duration.count()) / 1e6) << endl;
 	}
 
-	// AULSolver
-	DADDy solver(solver_parameters, spacecraft_parameters, dynamics);
-	solver.solve(x0, list_u_init, x_goal, fuel_optimal, pn_solving);
-
-	save_control(
-		"./data/control/tbp_EARTH_lt_leo_to_leo_4", solver.list_u());
-	
 	// Unpack
 	vector<vectordb> list_x = solver.list_x();
 	vector<vectordb> list_u = solver.list_u();

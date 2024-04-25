@@ -150,9 +150,24 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	typedef std::numeric_limits<double> dbl;
 	cout.precision(5);
 
-	// AULSolver
+	// Solver
 	DADDy solver(solver_parameters, spacecraft_parameters, dynamics);
+	auto start = high_resolution_clock::now();
 	solver.solve(x0, list_u_init, x_goal, fuel_optimal, pn_solving);
+	auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(stop - start);
+	
+	// Main outputs
+	if (verbosity == 3) {
+		cout << atoi(argv[1]) << " - ";
+		cout << DDP_type << " - ";
+		cout << spacecraft_parameters.thrust()*thrustu/(spacecraft_parameters.initial_mass()*massu) << " - ";
+		cout << ToF*tu*SEC2DAYS << " - ";
+		cout << solver.list_x()[N][SIZE_VECTOR]*massu << " - ";
+		cout << solver.list_x()[N][SIZE_VECTOR]/spacecraft_parameters.initial_mass() << " - ";
+		cout << solver.real_constraints(x_goal) << " - ";
+		cout << to_string(static_cast<double>(duration.count()) / 1e6) << endl;
+	}
 
 	// Unpack
 	vector<vectordb> list_x = solver.list_x();
