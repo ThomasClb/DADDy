@@ -30,8 +30,10 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_leo(
 	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-3;
-	vectordb homotopy_sequence{0, 0.99 };
-	vectordb huber_loss_coefficient_sequence{1e-2, 5e-3};
+	vectordb homotopy_sequence{0.99};
+	vectordb huber_loss_coefficient_sequence{5e-3};
+	// vectordb homotopy_sequence{0, 0.5, 0.75, 0.9 };
+	// vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 1e-2, 1e-2};
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6;
 	double PN_tol = 1e-12;
@@ -150,9 +152,19 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 	vectordb u_init(Nu, 1e-6 / thrustu); // [VU]
 	vector<vectordb> list_u_init(N, u_init);
 
+	list_u_init = load_control(
+		"./data/control/tbp_EARTH_lt_leo_to_leo_3");
+
+	for (size_t i=0; i<list_u_init.size(); i++) {
+		list_u_init[i] = list_u_init[i] + solver_parameters.AUL_tol(); // Small perturbation
+	}
+
 	// AULSolver
 	DADDy solver(solver_parameters, spacecraft_parameters, dynamics);
 	solver.solve(x0, list_u_init, x_goal, fuel_optimal, pn_solving);
+
+	save_control(
+		"./data/control/tbp_EARTH_lt_leo_to_leo_4", solver.list_u());
 	
 	// Unpack
 	vector<vectordb> list_x = solver.list_x();

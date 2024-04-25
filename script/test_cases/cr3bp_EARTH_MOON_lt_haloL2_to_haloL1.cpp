@@ -32,7 +32,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-4;
 	vectordb homotopy_sequence{0, 0.75, 0.9, 0.999};
-	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 1e-3, 5e-4};
+	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 1e-3, 1e-4};
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6;
 	double PN_tol = 1e-10;

@@ -145,8 +145,8 @@ void DADDy::solve(
 		AULsolver_.set_homotopy_coefficient(homotopy_sequence[i]);
 		AULsolver_.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
 		if (i != 0) {
-			for (size_t i=0; i<list_u_init.size(); i++) {
-				list_u_init_[i] = AULsolver_.list_u()[i]*(1- tol); // Small perturbation
+			for (size_t j=0; j<list_u_init.size(); j++) {
+				list_u_init_[j] = AULsolver_.list_u()[j]*(1 - tol); // Small perturbation
 			}
 		}
 		AULsolver_.solve(x0, list_u_init_, x_goal);

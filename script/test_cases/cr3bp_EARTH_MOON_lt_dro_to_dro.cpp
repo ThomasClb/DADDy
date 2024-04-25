@@ -17,7 +17,7 @@ using namespace std;
 
 SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro(
 	unsigned int const& N, unsigned int const& DDP_type,
-	unsigned int verbosity) {
+	unsigned int verbosity, double const& T2m_ratio, double const& ToF) {
 	// Solver parameters
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
@@ -27,19 +27,17 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro(
 	unsigned int Ntineq = 0;
 	bool with_J2 = false;
 	double cost_to_go_gain = 1e-1;
-	double terminal_cost_gain = 1e3;
+	double terminal_cost_gain = 1e4;
 	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 1e-4;
-	vectordb homotopy_sequence{0, 0.5, 0.95, 0.999 };
-	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 5e-3, 1e-3 };
 	double DDP_tol = 1e-4;
-	double AUL_tol = 1e-4;
+	double AUL_tol = 1e-6;
 	double PN_tol = 1e-10;
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int max_iter = 10000;
-	unsigned int DDP_max_iter = 100;
-	unsigned int AUL_max_iter = max_iter / DDP_max_iter;
+	unsigned int DDP_max_iter = 200;
+	unsigned int AUL_max_iter = 200;
 	unsigned int PN_max_iter = 200;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
@@ -50,6 +48,48 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro(
 	double PN_cv_rate_threshold(1.1);
 	double PN_alpha(1.0); double PN_gamma(0.5);
 	unsigned int saving_iterations = 0;
+	vectordb homotopy_sequence{0, 1};
+	vectordb huber_loss_coefficient_sequence{1e-2, 1e-3};
+
+	// Split cases
+	if (T2m_ratio == 5e-4) {  // OK
+		if (ToF >= 37.5) { // OK 3 revs
+			DDP_max_iter = 400;
+			cost_to_go_gain = 1e-2;
+			AUL_tol = 1e-8;
+			DDP_tol = 1e-4;
+			homotopy_sequence = vectordb{0, 0.5, 0.95, 0.999};
+			huber_loss_coefficient_sequence = vectordb{1e-2, 5e-3, 1e-3, 1e-4};
+		}
+		if (ToF == 33) { // OK 2 revs 
+			homotopy_sequence = vectordb{0, 0.75, 0.95, 0.999};
+			huber_loss_coefficient_sequence = vectordb{1e-2, 1e-3, 5e-4, 1e-4};
+		}
+		else if (ToF == 17.5) { // OK 1 revs 
+			homotopy_sequence = vectordb{0, 0.85, 1};
+			huber_loss_coefficient_sequence = vectordb{1e-2, 1e-3, 1e-4};
+		}
+	}
+	if (T2m_ratio == 1e-4) { // OK
+
+		if (ToF >= 37.5) { // OK 3 revs
+			DDP_max_iter = 400;
+			AUL_max_iter = 50;
+			cost_to_go_gain = 1e-7;
+			AUL_tol = 1e-8;
+			DDP_tol = 1e-4;
+			homotopy_sequence = vectordb{0, 0.5, 0.75, 0.95, 0.999};
+			huber_loss_coefficient_sequence = vectordb{1e-2, 1e-2, 5e-3, 1e-3, 5e-4};
+		}
+		else if (ToF == 33) { // OK 2 revs
+			homotopy_sequence = vectordb{0, 0.5, 0.99};
+			huber_loss_coefficient_sequence = vectordb{1e-2, 1e-3, 5e-4};
+		}
+		else if (ToF == 17.5) { // OK 1 revs
+			homotopy_sequence = vectordb{0, 0.85, 0.999};
+			huber_loss_coefficient_sequence = vectordb{1e-2, 1e-3, 1e-4};
+		}
+	}
 
 	return SolverParameters(
 		N, Nx, Nu,
@@ -152,7 +192,7 @@ void cr3bp_EARTH_MOON_lt_dro_to_dro(int argc, char** argv) {
 
 	// Init solver parameters
 	SolverParameters solver_parameters = get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro(
-		N, DDP_type, verbosity);
+		N, DDP_type, verbosity, spacecraft_parameters.thrust()*thrustu/(spacecraft_parameters.initial_mass()*massu), ToF);
 
 	// Solver parameters
 	unsigned int Nx = solver_parameters.Nx();

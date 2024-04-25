@@ -1095,7 +1095,7 @@ void DDPSolver::forward_pass_ls_DA_(
 	vector<vectordb> const& list_x, vector<vectordb> const& list_u, vectordb const& x_goal) {
 	// Unpack parameters
 	double tol = solver_parameters_.DDP_tol();
-	double tol_DA = solver_parameters_.DDP_tol(); // TEST
+	double tol_DA = solver_parameters_.AUL_tol(); // TEST
 	unsigned int N = solver_parameters_.N();
 	unsigned int Nx = solver_parameters_.Nx();
 	unsigned int Nu = solver_parameters_.Nu();

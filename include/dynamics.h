@@ -548,8 +548,6 @@ DACE::AlgebraicVector<T> inequality_constraints_tbp_lt(
 
 	// Mass (1)
 	output.push_back(dry_mass - x[SIZE_VECTOR]); // Mass
-
-	// TO DO 1 primary
 	
 	return output;
 }
