@@ -46,6 +46,7 @@ void print_transfer_dataset(
 	std::vector<DACE::vectordb> const& list_x,
 	std::vector<DACE::vectordb> const& list_u,
 	DACE::vectordb const& x_0, DACE::vectordb const& x_f,
+	double const& ToF,
 	Dynamics const& dynamics,
 	SpacecraftParameters const& spacecraft_parameters,
 	Constants const& constants,
