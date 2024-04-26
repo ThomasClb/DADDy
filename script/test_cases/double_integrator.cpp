@@ -146,22 +146,22 @@ void double_integrator(int argc, char** argv) {
 		cout << atoi(argv[1]) << ", ";
 		cout << DDP_type << ", ";
 		cout << "1" << ", ";
-		cout << N << " - ";
+		cout << N << ", ";
 
 		// Data
 
 		// Results
 
-		cout << solver.cost() << " - ";
-		cout << solver.cost() << " - ";
-		cout << solver.real_constraints(x_goal) << " - ";
+		cout << solver.cost() << ", ";
+		cout << solver.cost() << ", ";
+		cout << solver.real_constraints(x_goal) << ", ";
 
 		// Convergence metrics
-		cout << solver.AUL_runtime() << " - ";
-		cout << solver.PN_runtime() << " - ";
-		cout << solver.runtime() << " - ";
-		cout << solver.DDP_n_iter() << " - ";
-		cout << solver.AUL_n_iter() << " - ";
+		cout << solver.AUL_runtime() << ", ";
+		cout << solver.PN_runtime() << ", ";
+		cout << solver.runtime() << ", ";
+		cout << solver.DDP_n_iter() << ", ";
+		cout << solver.AUL_n_iter() << ", ";
 		cout << solver.PN_n_iter() << endl;
 	}
 	

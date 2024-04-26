@@ -103,6 +103,3 @@ if __name__ == "__main__":
         if ("tbp" in file_name):
             #plot_keplerian(dataset)
             plot_keplerians(dataset)
-
-
-

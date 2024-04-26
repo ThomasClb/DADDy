@@ -158,23 +158,23 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 	if (verbosity == 3) {
 		// ID
 		cout << atoi(argv[1]) << ", ";
-		cout << DDP_type << ", ";
 		cout << spacecraft_parameters.thrust()*thrustu/(spacecraft_parameters.initial_mass()*massu) << ", ";
-		cout << ToF*tu*SEC2DAYS << " - ";
+		cout << ToF*tu*SEC2DAYS << ", ";
+		cout << DDP_type << ", ";
 
 		// Data
 
 		// Results
-		cout << solver.list_x()[N][SIZE_VECTOR]*massu << " - ";
-		cout << solver.list_x()[N][SIZE_VECTOR]/spacecraft_parameters.initial_mass() << " - ";
-		cout << solver.real_constraints(x_goal) << " - ";
+		cout << solver.list_x()[N][SIZE_VECTOR]*massu << ", ";
+		cout << solver.list_x()[N][SIZE_VECTOR]/spacecraft_parameters.initial_mass() << ", ";
+		cout << solver.real_constraints(x_goal) << ", ";
 
 		// Convergence metrics
-		cout << solver.AUL_runtime() << " - ";
-		cout << solver.PN_runtime() << " - ";
-		cout << solver.runtime() << " - ";
-		cout << solver.DDP_n_iter() << " - ";
-		cout << solver.AUL_n_iter() << " - ";
+		cout << solver.AUL_runtime() << ", ";
+		cout << solver.PN_runtime() << ", ";
+		cout << solver.runtime() << ", ";
+		cout << solver.DDP_n_iter() << ", ";
+		cout << solver.AUL_n_iter() << ", ";
 		cout << solver.PN_n_iter() << endl;
 	}
 
