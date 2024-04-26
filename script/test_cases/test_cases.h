@@ -19,6 +19,7 @@
 #include "daddy.h"
 
 // Test cases
+void double_integrator(int argc, char** argv);
 void tbp_SUN_lt_earth_to_mars(int argc, char** argv);
 void tbp_EARTH_lt_leo_to_geo(int argc, char** argv);
 void tbp_EARTH_lt_leo_to_leo(int argc, char** argv);

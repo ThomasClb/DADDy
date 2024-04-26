@@ -16,7 +16,7 @@ using namespace std;
 
 SolverParameters get_SolverParameters_tbp_SUN_lt_earth_to_mars(
 	unsigned int const& N, unsigned int const& DDP_type,
-	unsigned int verbosity, double const& T2m_ratio) {
+	unsigned int verbosity) {
 	// Solver parameters
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
@@ -120,7 +120,7 @@ void tbp_SUN_lt_earth_to_mars(int argc, char** argv) {
 
 	// Init solver parameters
 	SolverParameters solver_parameters = get_SolverParameters_tbp_SUN_lt_earth_to_mars(
-		N, DDP_type, verbosity, spacecraft_parameters.thrust()*thrustu/(spacecraft_parameters.initial_mass()*massu));
+		N, DDP_type, verbosity);
 
 	// Solver parameters
 	unsigned int Nx = solver_parameters.Nx();
@@ -184,7 +184,7 @@ void tbp_SUN_lt_earth_to_mars(int argc, char** argv) {
 		print_transfer_dataset(
 			file_name, system_name,
 			solver.list_x(), solver.list_u(),
-			x_departure, x_arrival,
+			x_departure, x_arrival, ToF,
 			dynamics, spacecraft_parameters, constants, solver_parameters);
 	}
 }

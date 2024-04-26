@@ -207,7 +207,7 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 		print_transfer_dataset(
 			file_name, system_name,
 			list_x, list_u,
-			x_departure, x_arrival,
+			x_departure, x_arrival, ToF,
 			dynamics, spacecraft_parameters, constants, solver_parameters);
 	}
 

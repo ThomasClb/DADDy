@@ -429,6 +429,27 @@ DACE::AlgebraicVector<T>  acceleration_cr3bp_lt(
 
 // Returns the next state given
 // the current state, the control and the parameters.
+// For a double integrator system.
+template<typename T>
+DACE::AlgebraicVector<T> dynamic_double_integrator(
+	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T>const& u,
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
+	SolverParameters const& solver_parameters) {
+	// Init output
+	DACE::AlgebraicVector<T> output(x.size(), 0.0);
+	output[0] = x[0] + x[3];
+	output[1] = x[1] + x[4];
+	output[2] = x[2] + x[5];
+	output[3] = x[3] + u[0];
+	output[4] = x[4] + u[1];
+	output[5] = x[5] + u[2];
+
+	return output;
+}
+
+// Returns the next state given
+// the current state, the control and the parameters.
 // With acceleration acceleration_tbp_SUN_lt.
 template<typename T>
 DACE::AlgebraicVector<T> dynamic_tbp_SUN_lt(
@@ -467,6 +488,18 @@ DACE::AlgebraicVector<T> dynamic_cr3bp_lt(
 	return RK78(
 		acceleration_cr3bp_lt, x, u, 0, 1.0,
 		spacecraft_parameters, constants, solver_parameters);
+}
+
+// Returns the cost-to-go given
+// the current state, the control and the parameters.
+// Double integrator system.
+template<typename T>
+T cost_to_go_double_integrator(
+	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T> const& u,
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
+	SolverParameters const& solver_parameters) {
+	return u.dot(u);
 }
 
 // Returns the cost-to-go given
@@ -515,11 +548,23 @@ T cost_to_go(
 // the current state, the control and the parameters.
 // Null.
 template<typename T>
-DACE::AlgebraicVector<T> equality_constraints(
+DACE::AlgebraicVector<T> equality_constraints_null(
 	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T> const& u,
 	SpacecraftParameters const& spacecraft_parameters,
 	Constants const& constants,
 	SolverParameters const& solver_parameters) {
+	return DACE::AlgebraicVector<T>(0);
+}
+
+// Returns the path inequality contraints given
+// the current state, the control and the parameters.
+// Null.
+template<typename T>
+DACE::AlgebraicVector<T> inequality_constraints_null(
+	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T> const& u,
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
+	SolverParameters const& solver_parameters) {	
 	return DACE::AlgebraicVector<T>(0);
 }
 
@@ -595,6 +640,26 @@ DACE::AlgebraicVector<T> inequality_constraints_cr3bp_EARTH_MOON_lt(
 // the current state, the target state and the parameters.
 // Final difference.
 template<typename T>
+T terminal_cost_double_integrator(
+	DACE::AlgebraicVector<T> const& x, DACE::vectordb const& x_goal,
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
+	SolverParameters const& solver_parameters) {
+	// Get vectors
+	DACE::AlgebraicVector<T> x_(x.extract(0, 2));
+	DACE::vectordb x_goal_(x_goal.extract(0, 2));
+
+	// Compute error
+	DACE::AlgebraicVector<T> loss = x_ - x_goal_;
+	T output = loss.dot(loss);
+	return output*1e6;
+}
+
+
+// Returns the terminal cost given
+// the current state, the target state and the parameters.
+// Final difference.
+template<typename T>
 T terminal_cost(
 	DACE::AlgebraicVector<T> const& x, DACE::vectordb const& x_goal,
 	SpacecraftParameters const& spacecraft_parameters,
@@ -641,6 +706,20 @@ T terminal_cost_equinoctial(
 // the current state, the target state and the parameters.
 // Final difference.
 template<typename T>
+DACE::AlgebraicVector<T> terminal_equality_constraints_null(
+	DACE::AlgebraicVector<T> const& x, DACE::vectordb const& x_goal,
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
+	SolverParameters const& solver_parameters) {
+
+	// Return error
+	return DACE::AlgebraicVector<T>(0);
+}
+
+// Returns the terminal equality constraints given
+// the current state, the target state and the parameters.
+// Final difference.
+template<typename T>
 DACE::AlgebraicVector<T> terminal_equality_constraints(
 	DACE::AlgebraicVector<T> const& x, DACE::vectordb const& x_goal,
 	SpacecraftParameters const& spacecraft_parameters,
@@ -675,7 +754,7 @@ DACE::AlgebraicVector<T> terminal_equality_constraints_equinoctial(
 // the current state, the target state and the parameters.
 // Null.
 template<typename T>
-DACE::AlgebraicVector<T> terminal_inequality_constraints(
+DACE::AlgebraicVector<T> terminal_inequality_constraints_null(
 	DACE::AlgebraicVector<T> const& x, DACE::vectordb  const& x_goal,
 	SpacecraftParameters const& spacecraft_parameters,
 	Constants const& constants,
@@ -701,8 +780,9 @@ DACE::vectordb RTN_2_cart(
 	DACE::vectordb const& RTN_vector,
 	DACE::vectordb const& cart_state_vector);
 
-// Returns dynamics with acceleration_2b_SUN as accelerations.
+// Returns dynamics withaccelerations.
 // Terminal constraints and thrust constraints.
+Dynamics get_double_integrator_dynamics();
 Dynamics get_tbp_SUN_lt_dynamics();
 Dynamics get_tbp_EARTH_lt_dynamics();
 Dynamics get_cr3bp_EARTH_MOON_lt_dynamics();

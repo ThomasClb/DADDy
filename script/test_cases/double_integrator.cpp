@@ -1,11 +1,11 @@
 /**
-	tbp_EARTH_lt_leo_to_geo.cpp
+	double_integrator.cpp
 
-	Purpose: Low-thrust LEO to GEO transfer execution script.
+	Purpose: Double_integrator execution script.
 
 	@author Thomas Caleb
 
-	@version 1.0 23/01/2023
+	@version 1.0 26/04/2023
 */
 
 #include "test_cases.h"
@@ -14,31 +14,32 @@ using namespace DACE;
 using namespace std::chrono;
 using namespace std;
 
-SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
+SolverParameters get_SolverParameters_double_integrator(
 	unsigned int const& N, unsigned int const& DDP_type,
 	unsigned int verbosity) {
 	// Solver parameters
-	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
-	unsigned int Nu = SIZE_VECTOR / 2;
+	unsigned int Nx = 7;
+	unsigned int Nu = 3;
 	unsigned int Neq = 0;
-	unsigned int Nineq = 2;
-	unsigned int Nteq = 5;
+	unsigned int Nineq = 0;
+	unsigned int Nteq = 0;
 	unsigned int Ntineq = 0;
 	bool with_J2 = false;
-	double cost_to_go_gain = 1e-5;
-	double terminal_cost_gain = 1e5;
+	double cost_to_go_gain = 1e-2;
+	double terminal_cost_gain = 1e4;
 	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-3;
-	vectordb homotopy_sequence{0, 0.5, 0.9, 0.99};
-	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 5e-3, 1e-3};
-	double DDP_tol = 1e-4;
-	double AUL_tol = 1e-6; 
-	double PN_tol = 1e-10;
-	double PN_active_constraint_tol = 1e-11;
-	unsigned int DDP_max_iter = 200;
-	unsigned int AUL_max_iter = 200;
-	unsigned int PN_max_iter = 200;
+	vectordb homotopy_sequence{0};
+	vectordb huber_loss_coefficient_sequence{1e-2};
+	double DDP_tol = 1e-6;
+	double AUL_tol = 1e-8; 
+	double PN_tol = 1e-12;
+	double PN_active_constraint_tol = 1e-13;
+	unsigned int max_iter = 10000;
+	unsigned int DDP_max_iter = 100;
+	unsigned int AUL_max_iter = max_iter / DDP_max_iter;
+	unsigned int PN_max_iter = 50;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
 	vectordb line_search_parameters{1e-8, 10.0, 0.5, 20};
@@ -69,7 +70,7 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
 		verbosity, saving_iterations);
 }
 
-void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
+void double_integrator(int argc, char** argv) {
 	// Input check
 	if (argc < 10) {
 		cout << "Wrong number of arguments." << endl;
@@ -98,54 +99,39 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	if (atoi(argv[6]) == 1) { fuel_optimal = true; }
 	if (atoi(argv[7]) == 1) { pn_solving = true; }
 	if (atoi(argv[8]) == 1) { save_results = true; }
+	
+	// Set double precision
+	typedef std::numeric_limits<double> dbl;
+	cout.precision(5);
 
 	// Set dynamics
-	Dynamics dynamics = get_tbp_EARTH_lt_dynamics();
+	Dynamics dynamics = get_double_integrator_dynamics();
 	
 	// Normalisation constants
 	Constants constants(dynamics.constants());
-	double lu = constants.lu();
-	double mu = constants.mu();
-	double massu = constants.massu();
-	double tu = constants.tu();
-	double thrustu = constants.thrustu();
-	double vu = constants.vu();
 
 	// Spacecraft parameters
 	SpacecraftParameters spacecraft_parameters(spacecraft_parameters_file);
 
 	// Init solver parameters
-	SolverParameters solver_parameters = get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
+	SolverParameters solver_parameters = get_SolverParameters_double_integrator(
 		N, DDP_type, verbosity);
 
 	// Solver parameters
 	unsigned int Nx = solver_parameters.Nx();
 	unsigned int Nu = solver_parameters.Nu();
+	N = solver_parameters.N();
 
-	// Initial conditions [Equinoctial elements, MASSU, TU]
-	ToF = ToF / SEC2DAYS / tu; // [TU]
-	double dt = ToF / N; // [TU]
-	double altitude = 400;
-	double r_p = R_EARTH + altitude;
-	vectordb x_departure{ // Kep coordinates
-		(lu + r_p) / 2.0 / lu, (lu - r_p) / (lu + r_p),
-		0 * DEG_2_RAD, 135 * DEG_2_RAD,
-		0 * DEG_2_RAD, 0 * DEG_2_RAD,
-		spacecraft_parameters.initial_mass(), 2 * PI};
-	vectordb x_arrival{ // Kep coordinates
-		lu / lu, 0,
-		0 * DEG_2_RAD, 135 * DEG_2_RAD,
-		0 * DEG_2_RAD, 0 * DEG_2_RAD,
-		spacecraft_parameters.dry_mass(), 2*PI};
-	x_departure = kep_2_equi(x_departure); // Equinoctial coordinates
-	x_arrival = kep_2_equi(x_arrival);
-	vectordb x0 = x_departure; x0[Nx - 1] = dt; // Time step
-	vectordb x_goal = x_arrival; x_goal[Nx - 1] = ToF; // ToF
+	// Initial conditions [3*LU, 3*VU, MASSU, TU]
+	vectordb x_departure{ 1.0, 1.0, 1.0, 1, 1, 1, 0};
+	vectordb x_arrival{1.0, -1.0, 0.0, 0, 0, 0, 0};
+	vectordb x0 = x_departure;
+	vectordb x_goal = x_arrival;
 
 	// First guess command
-	vectordb u_init(Nu, 1e-6 / thrustu); // [VU]
+	vectordb u_init(Nu, 2e-5); // [VU]
 	vector<vectordb> list_u_init(N, u_init);
-	
+
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
 	cout.precision(5);
@@ -159,14 +145,15 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 		// ID
 		cout << atoi(argv[1]) << ", ";
 		cout << DDP_type << ", ";
-		cout << spacecraft_parameters.thrust()*thrustu/(spacecraft_parameters.initial_mass()*massu) << ", ";
-		cout << ToF*tu*SEC2DAYS << " - ";
+		cout << "1" << ", ";
+		cout << N << " - ";
 
 		// Data
 
 		// Results
-		cout << solver.list_x()[N][SIZE_VECTOR]*massu << " - ";
-		cout << solver.list_x()[N][SIZE_VECTOR]/spacecraft_parameters.initial_mass() << " - ";
+
+		cout << solver.cost() << " - ";
+		cout << solver.cost() << " - ";
 		cout << solver.real_constraints(x_goal) << " - ";
 
 		// Convergence metrics
@@ -177,38 +164,15 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 		cout << solver.AUL_n_iter() << " - ";
 		cout << solver.PN_n_iter() << endl;
 	}
-
-	// Unpack
-	vector<vectordb> list_x = solver.list_x();
-	vector<vectordb> list_u = solver.list_u();
 	
 	// Print datasets
 	if (save_results) {
-		// Convert to cart
-		mu = MU_EARTH / constants.mu();
-		for (size_t i = 0; i < list_u.size(); i++) {
-			// Unpack
-			vectordb x_i = list_x[i];
-			vectordb u_i = list_u[i];
-
-			// Convert to cartesian
-			x_i = equi_2_kep(x_i); // Convert to Keplerian
-			x_i = kep_2_cart(x_i, mu); // Convert to Cartesian
-			u_i = RTN_2_cart(u_i, x_i);
-
-			// Assign
-			list_u[i] = u_i;
-			list_x[i] = x_i;
-		}
-		list_x[list_u.size()] = kep_2_cart(equi_2_kep(list_x[list_u.size()]), mu);
-
-		string file_name = "./data/datasets/tbp_EARTH_lt_leo_to_geo";
-		string system_name = "TBP EARTH EQUINOCTIAL LT";
+		string file_name = "./data/datasets/double_integrator";
+		string system_name = "DOUBLE INTEGRATOR";
 		print_transfer_dataset(
 			file_name, system_name,
-			list_x, list_u,
-			x_departure, x_arrival, ToF,
+			solver.list_x(), solver.list_u(),
+			x_departure, x_arrival,
 			dynamics, spacecraft_parameters, constants, solver_parameters);
 	}
-
 }

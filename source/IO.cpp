@@ -103,6 +103,7 @@ void print_transfer_dataset(
 	string const& system_name,
 	vector<vectordb> const& list_x, vector<vectordb> const& list_u,
 	vectordb const& x_0, vectordb const& x_f,
+	double const& ToF,
 	Dynamics const& dynamics,
 	SpacecraftParameters const& spacecraft_parameters,
 	Constants const& constants,
@@ -179,8 +180,10 @@ void print_transfer_dataset(
 	int mantisse = static_cast<int>(thrust_mass) / static_cast<int>(pow(10, exposant));
 	string str_T2m = to_string(mantisse) + "e" + to_string(exposant - power);
 	string file_name_ = file_name + "_"
-		+ to_string(solver_parameters.DDP_type()) + "_"
-		+ str_T2m + ".dat";
+		+ str_T2m + "_"
+		+ to_string((int)(ToF*spacecraft_parameters.constants().tu()*SEC2DAYS)) + "_"
+		+ to_string(solver_parameters.DDP_type())
+		+ ".dat";
 
 	print_dataset(
 		file_name_, system_name,

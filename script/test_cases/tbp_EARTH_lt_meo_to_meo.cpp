@@ -33,12 +33,12 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_meo_to_meo(
 	vectordb homotopy_sequence{0, 0.5, 0.99};
 	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 5e-3};
 	double DDP_tol = 1e-4;
-	double AUL_tol = 1e-6; 
+	double AUL_tol = 1e-6;
 	double PN_tol = 1e-12;
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int DDP_max_iter = 200;
 	unsigned int AUL_max_iter = 200;
-	unsigned int PN_max_iter = 200;
+	unsigned int PN_max_iter = 400;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
 	vectordb line_search_parameters{1e-8, 10.0, 0.5, 20};
@@ -210,7 +210,7 @@ void tbp_EARTH_lt_meo_to_meo(int argc, char** argv) {
 		print_transfer_dataset(
 			file_name, system_name,
 			list_x, list_u,
-			x_departure, x_arrival,
+			x_departure, x_arrival, ToF,
 			dynamics, spacecraft_parameters, constants, solver_parameters);
 	}
 }

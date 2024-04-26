@@ -75,7 +75,9 @@ void run_test_cases(int argc, char** argv) {
 	// Excute correct test case
 
 	// Double integrator
-	if (test_case == 0) {}
+	if (test_case == 0) {
+		double_integrator(argc, argv);
+	}
 
 	// TBP
 	
