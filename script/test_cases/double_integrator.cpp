@@ -172,7 +172,7 @@ void double_integrator(int argc, char** argv) {
 		print_transfer_dataset(
 			file_name, system_name,
 			solver.list_x(), solver.list_u(),
-			x_departure, x_arrival,
+			x_departure, x_arrival, ToF,
 			dynamics, spacecraft_parameters, constants, solver_parameters);
 	}
 }
