@@ -5,6 +5,7 @@ project(RUNTIME_ANALYSIS CXX)
 # Gathering source files
 file(GLOB_RECURSE source_files ../../source/*)
 file(GLOB_RECURSE test_files
+	../../script/test_cases/double_integrator.cpp
 	../../script/test_cases/tbp*.cpp
 	../../script/test_cases/cr3bp*.cpp
 	../../script/test_cases/test*.cpp)

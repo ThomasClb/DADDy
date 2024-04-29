@@ -146,7 +146,7 @@ void cr3bp_EARTH_MOON_lt_nrho_to_dro(int argc, char** argv) {
 	vectordb x_goal = x_arrival; x_goal[Nx - 1] = ToF; // ToF
 
 	// First guess command
-	vectordb u_init(Nu, 1e-6); // [VU]
+	vectordb u_init(Nu, 1e-4); // [VU]
 	vector<vectordb> list_u_init(N, u_init);
 
 	// Solver

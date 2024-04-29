@@ -144,9 +144,9 @@ void double_integrator(int argc, char** argv) {
 	if (verbosity == 3) {
 		// ID
 		cout << atoi(argv[1]) << ", ";
-		cout << DDP_type << ", ";
 		cout << "1" << ", ";
 		cout << N << ", ";
+		cout << DDP_type << ", ";
 
 		// Data
 
