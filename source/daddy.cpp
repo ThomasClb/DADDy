@@ -155,7 +155,7 @@ void DADDy::solve(
 		AULsolver_.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
 		if (i != 0) {
 			for (size_t j=0; j<list_u_init.size(); j++) {
-				list_u_init_[j] = AULsolver_.list_u()[j]*(1 - tol); // Small perturbation
+				list_u_init_[j] = AULsolver_.list_u()[j]*(1 + tol); // Small perturbation
 			}
 		}
 		AULsolver_.solve(x0, list_u_init_, x_goal);
