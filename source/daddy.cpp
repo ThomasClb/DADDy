@@ -141,7 +141,8 @@ void DADDy::solve(
 	unsigned int verbosity = solver_parameters_.verbosity();
 	unsigned int Nx = solver_parameters_.Nx();
 	unsigned int Nu = solver_parameters_.Nu();
-	double tol = solver_parameters_.AUL_tol();
+	double AUL_tol = solver_parameters_.AUL_tol();
+	double DDP_tol = solver_parameters_.DDP_tol();
 
 	// Run DDP
 	auto start = high_resolution_clock::now();
@@ -155,7 +156,7 @@ void DADDy::solve(
 		AULsolver_.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);
 		if (i != 0) {
 			for (size_t j=0; j<list_u_init.size(); j++) {
-				list_u_init_[j] = AULsolver_.list_u()[j] + tol; // Small perturbation
+				list_u_init_[j] = AULsolver_.list_u()[j] + DDP_tol*DDP_tol; // Small perturbation
 			}
 		}
 		AULsolver_.solve(x0, list_u_init_, x_goal);
