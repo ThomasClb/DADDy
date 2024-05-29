@@ -256,7 +256,7 @@ DACE::AlgebraicVector<T> acceleration_tbp_SUN_lt(
 	DACE::AlgebraicVector<T> acc_kep = -mu * r * pow(r_2, -1.5);
 
 	// Thrust
-	T inv_mass = 1 / x[6];
+	T inv_mass = 1.0 / x[6];
 	DACE::AlgebraicVector<T> acc_thrust = inv_mass * u;
 
 	// Assign
@@ -413,8 +413,7 @@ DACE::AlgebraicVector<T>  acceleration_cr3bp_lt(
 	T inv_r_2_3 = mu * pow(pow(x - (1 - mu), 2) + d_y_z_2, -1.5);
 
 	// Thrust
-	T inv_mass = 1 / (mass);
-	DACE::AlgebraicVector<T> acc_thrust = inv_mass * u;
+	DACE::AlgebraicVector<T> acc_thrust = u / mass;
 
 	// Acceleration
 	output[3] = 2 * y_p + x - (x + mu) * inv_r_1_3 - (x - (1 - mu)) * inv_r_2_3 + acc_thrust[0];
@@ -423,7 +422,7 @@ DACE::AlgebraicVector<T>  acceleration_cr3bp_lt(
 
 	// dm [MASSU/TU]
 	T thrust_norm = u.vnorm(); // [-]
-	output[6] = thrust_norm *pow(-1.0*v_e, -1);
+	output[6] = (-1.0/ v_e) * thrust_norm;
 	return s * output;
 }
 
@@ -623,15 +622,15 @@ DACE::AlgebraicVector<T> inequality_constraints_cr3bp_EARTH_MOON_lt(
 	T T_const = u.dot(u) - T_max*T_max; // [THRUSTU²]
 	output.push_back(T_const);
 
+	// Mass (1)
+	output.push_back(dry_mass - x[SIZE_VECTOR]); // Mass
+
 	// Primaries (2)
 	T x_1p2_sqr(DACE::sqr(x_1) + DACE::sqr(x_2));
 	T r_1_sqr = DACE::sqr(x_0 - mu) + x_1p2_sqr;
 	T r_2_sqr = DACE::sqr(x_0  + 1 - mu) + x_1p2_sqr;
 	output.push_back(R_EARTH/lu - r_1_sqr); // Earth
 	output.push_back(R_MOON/lu - r_2_sqr); // Moon
-
-	// Mass (1)
-	output.push_back(dry_mass - x[SIZE_VECTOR]); // Mass
 	
 	return output;
 }

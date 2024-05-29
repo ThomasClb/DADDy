@@ -27,7 +27,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro(
 	unsigned int Ntineq = 0;
 	bool with_J2 = false;
 	double cost_to_go_gain = 1e-4;
-	double terminal_cost_gain = 1e7;
+	double terminal_cost_gain = 1e6;
 	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-4;
