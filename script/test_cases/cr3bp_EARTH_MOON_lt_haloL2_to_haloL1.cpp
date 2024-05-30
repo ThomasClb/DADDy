@@ -17,7 +17,7 @@ using namespace std;
 
 SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(
 	unsigned int const& N, unsigned int const& DDP_type,
-	unsigned int verbosity) {
+	unsigned int verbosity, double const& ToF) {
 	// Solver parameters
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
@@ -33,6 +33,12 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(
 	double huber_loss_coefficient = 5e-4;
 	vectordb homotopy_sequence{0, 0.75, 0.9, 0.999};
 	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 1e-3, 1e-4};
+	if (ToF > 30) {
+		cost_to_go_gain = 1e-3;
+		terminal_cost_gain = 1e7;
+		homotopy_sequence = vectordb{ 0, 0.8, 0.95, 0.999};
+		huber_loss_coefficient_sequence = vectordb{ 1e-2, 1e-2, 5e-3, 5e-4};
+	}
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6;
 	double PN_tol = 1e-10;
@@ -40,7 +46,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(
 	unsigned int max_iter = 10000;
 	unsigned int DDP_max_iter = 100;
 	unsigned int AUL_max_iter = 100;
-	unsigned int PN_max_iter = 50;
+	unsigned int PN_max_iter = 200;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
 	vectordb line_search_parameters{1e-8, 10.0, 0.5, 20};
@@ -121,7 +127,7 @@ void cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(int argc, char** argv) {
 
 	// Init solver parameters
 	SolverParameters solver_parameters = get_SolverParameters_cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(
-		N, DDP_type, verbosity);
+		N, DDP_type, verbosity, ToF);
 
 	// Solver parameters
 	unsigned int Nx = solver_parameters.Nx();
