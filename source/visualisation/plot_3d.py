@@ -11,6 +11,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 import scipy.interpolate as interpolate
 
 from misc import get_Lagrange_point

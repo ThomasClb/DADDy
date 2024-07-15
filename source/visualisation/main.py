@@ -37,10 +37,11 @@ def get_dataset(file_name):
 """
 if __name__ == "__main__":
     # Change directory to DADDy (for windows)
-    #os.chdir("../../")
+    os.chdir("../../")
+    list_arguments = ["2", "5e-4", "94", "2"]
     
     # Get arguments
-    list_arguments = sys.argv[1:]
+    #list_arguments = sys.argv[1:]
     test_case = int(list_arguments[0])
     T2m_ratio = list_arguments[1]
     ToF = int(list_arguments[2])
