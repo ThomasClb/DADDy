@@ -40,7 +40,7 @@ if __name__ == "__main__":
     # os.chdir("../../")
     
     # Get arguments
-    #list_arguments = sys.argv[1:]
+    list_arguments = sys.argv[1:]
     test_case = int(list_arguments[0])
     T2m_ratio = list_arguments[1]
     ToF = int(list_arguments[2])
