@@ -37,7 +37,7 @@ def get_dataset(file_name):
 """
 if __name__ == "__main__":
     # Change directory to DADDy (for windows)
-    // os.chdir("../../")
+    # os.chdir("../../")
     
     # Get arguments
     #list_arguments = sys.argv[1:]
