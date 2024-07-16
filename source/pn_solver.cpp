@@ -241,35 +241,36 @@ double PNSolver::line_search_(
 	unsigned int Nu = solver_parameters_.Nu();
 	matrixdb mat_z(d_0.size(), 1);
 
-	// Init loop
-	double violation(violation_0); vectordb d(d_0);
-	for (size_t i = 0; i < 20; i++) {
-		// Solve Sigma * z = d <=> L * L^t * z = d using
-		// block tridiagonal Cholesky factorisation.
-		vectordb z = solve_cholesky_(L, d);
-		mat_z.setcol(0, z);	
-		vectordb correction(N * (Nu + Nx));
- 
-		// Compute correction
-		size_t counter_z = 0; size_t counter_corr = 0;
-		for (size_t j = 0; j < block_D.size(); j++) {
-			vectordb z_j;
-			matrixdb D_j = block_D[j];
-			size_t N_j = D_j.nrows();
-			
-			if (N_j != 0)
-				z_j = z.extract(counter_z, N_j + counter_z - 1);
-				
-			matrixdb mat_z_j(z_j.size(), 1); mat_z_j.setcol(0, z_j);
-			vectordb corr_j = (mat_z_j.transpose() * D_j ).getrow(0);
+	// Solve Sigma * z = d <=> L * L^t * z = d using
+	// block tridiagonal Cholesky factorisation.
+	vectordb z = solve_cholesky_(L, d_0);
+	mat_z.setcol(0, z);
+	vectordb correction(N * (Nu + Nx));
 
-			// Assign
-			for (size_t k = 0; k < corr_j.size(); k++) {
-				correction[counter_corr + k] += alpha * corr_j[k];
-			}
-			counter_z += N_j;
-			counter_corr += corr_j.size() - Nx;
+	// Compute correction
+	size_t counter_z = 0; size_t counter_corr = 0;
+	for (size_t j = 0; j < block_D.size(); j++) {
+		vectordb z_j;
+		matrixdb D_j = block_D[j];
+		size_t N_j = D_j.nrows();
+
+		if (N_j != 0)
+			z_j = z.extract(counter_z, N_j + counter_z - 1);
+
+		matrixdb mat_z_j(z_j.size(), 1); mat_z_j.setcol(0, z_j);
+		vectordb corr_j = (mat_z_j.transpose() * D_j).getrow(0);
+
+		// Assign
+		for (size_t k = 0; k < corr_j.size(); k++) {
+			correction[counter_corr + k] += alpha * corr_j[k];
 		}
+		counter_z += N_j;
+		counter_corr += corr_j.size() - Nx;
+	}
+
+	// Init loop
+	double violation(violation_0);
+	for (size_t i = 0; i < 20; i++) {
 
 		// Comoute X_U
 		vectordb X_U = X_U_ - correction;
@@ -292,11 +293,8 @@ double PNSolver::line_search_(
 		else {
 			// Restore constraints
 			violation = violation_0;
-			d = d_0;
+			correction *= gamma;
 		}
-
-		// Update
-		alpha *= gamma;
 	}
 	return violation;
 }
