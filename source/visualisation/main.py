@@ -51,6 +51,8 @@ if __name__ == "__main__":
     file_name = ""
     if test_case == 0:
         file_name = './data/datasets/double_integrator'
+    elif test_case == 10:
+        file_name = './data/datasets/tbp_SUN_lt_earth_to_mars_NRJ'
     elif test_case == 1:
         file_name = './data/datasets/tbp_SUN_lt_earth_to_mars'
     elif test_case == 2:
@@ -101,5 +103,4 @@ if __name__ == "__main__":
                 break
 
         if ("tbp" in file_name):
-            #plot_keplerian(dataset)
             plot_keplerians(dataset)

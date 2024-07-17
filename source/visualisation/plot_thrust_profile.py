@@ -11,7 +11,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-plt.switch_backend('agg')
+#plt.switch_backend('agg')
 from classes import Dataset
 
 """
@@ -43,7 +43,7 @@ def plot_stairs_profile(dt, u, ax, label, color,
 def plot_thrust_profile(dataset):
     # Settings
     
-    dpi = 200
+    dpi = 100
     
     # Thrust norm
     color_thrust_norm = "black"
