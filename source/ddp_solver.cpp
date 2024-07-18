@@ -19,8 +19,7 @@ DDPSolver::DDPSolver() : solver_parameters_(),
 	spacecraft_parameters_(Constants()), dynamics_(),
 	list_x_(vector<vectordb>(0)), list_u_(vector<vectordb>(0)), cost_(0),
 	list_eq_(vector<vectordb>(0)), list_ineq_(vector<vectordb>(0)),
-	rho_(0.0), d_rho_(0.0),
-	list_x_mem_(vector<vector<vectordb>>(0)), list_u_mem_(vector<vector<vectordb>>(0)) {}
+	rho_(0.0), d_rho_(0.0) {}
 
 // Constructor
 DDPSolver::DDPSolver(
@@ -30,8 +29,7 @@ DDPSolver::DDPSolver(
 	spacecraft_parameters_(spacecraft_parameters), dynamics_(dynamics),
 	list_x_(vector<vectordb>(0)), list_u_(vector<vectordb>(0)), cost_(0),
 	list_eq_(vector<vectordb>(0)), list_ineq_(vector<vectordb>(0)),
-	rho_(0.0), d_rho_(0.0), alpha_(1.0),
-	list_x_mem_(vector<vector<vectordb>>(0)), list_u_mem_(vector<vector<vectordb>>(0)) {}
+	rho_(0.0), d_rho_(0.0), alpha_(1.0) {}
 
 // Copy constructor
 DDPSolver::DDPSolver(
@@ -39,8 +37,7 @@ DDPSolver::DDPSolver(
 	spacecraft_parameters_(solver.spacecraft_parameters()), dynamics_(solver.dynamics()),
 	list_x_(solver.list_x_), list_u_(solver.list_u_), cost_(solver.cost_),
 	list_eq_(solver.list_eq_), list_ineq_(solver.list_ineq_),
-	rho_(0.0), d_rho_(0.0), alpha_(1.0),
-	list_x_mem_(solver.list_x_mem_), list_u_mem_(solver.list_u_mem_) {}
+	rho_(0.0), d_rho_(0.0), alpha_(1.0)  {}
 
 // Destructors
 DDPSolver::~DDPSolver() {}
@@ -60,8 +57,6 @@ const vectordb DDPSolver::tineq() const { return tineq_; }
 const double DDPSolver::cost() const { return cost_; }
 const DA DDPSolver::tc_eval() const { return tc_eval_; }
 const unsigned int DDPSolver::n_iter() const { return n_iter_; }
-const vector<vector<vectordb>> DDPSolver::list_x_mem() const { return list_x_mem_; }
-const vector<vector<vectordb>> DDPSolver::list_u_mem() const { return list_u_mem_; }
 
 // Setters
 void DDPSolver::set_list_lambda(vector<vectordb> const& list_lambda) {
@@ -85,6 +80,7 @@ void DDPSolver::set_recompute_dynamics(bool const& recompute_dynamics) {
 
 // Returns the Augmented lagrangian cost-to-go:
 // AUL_ctg = ctg + Lambda^T * c(x) + 0.5 * c(x)^T * I_mu * c(x)
+// DA version
 vectorDA DDPSolver::get_AUL_cost_to_go(
 	vectorDA const& x_star_DA, vectorDA const& u_star_DA, size_t const& index) {
 	// Unpack parameters
@@ -140,66 +136,9 @@ vectorDA DDPSolver::get_AUL_cost_to_go(
 	return constraints_eval;
 }
 
-// Returns the Augmented lagrangian terminal cost:
-// AUL_tc = tc + Lambda^T * c(x) + 0.5 * c(x)^T * I_mu * c(x)
-vectorDA DDPSolver::get_AUL_terminal_cost(
-	vectorDA const& x_star_DA, vectordb const& x_goal) {
-	// Unpack parameters
-	unsigned int N = solver_parameters_.N();
-	unsigned int Nx = solver_parameters_.Nx();
-	unsigned int Nu = solver_parameters_.Nu();
-	unsigned int Nteq = solver_parameters_.Nteq();
-	unsigned int Ntineq = solver_parameters_.Ntineq();
-	vectordb lambda = solver_parameters_.list_lambda()[N];
-	vectordb mu = solver_parameters_.list_mu()[N];
-
-	// Init output
-	vectorDA constraints_eval;
-	constraints_eval.reserve(Nteq + Ntineq + 1);
-
-	// Evaluate terminal cost
-	DA tc_eval = dynamics_.terminal_cost()(
-		x_star_DA, x_goal,
-		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
-
-	// Constraints evaluations
-	vectorDA teq_eval = dynamics_.terminal_equality_constraints()(
-		x_star_DA, x_goal,
-		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
-	vectorDA tineq_eval = dynamics_.terminal_inequality_constraints()(
-		x_star_DA, x_goal,
-		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
-	
-	// Assign to output
-	for (size_t i = 0; i < Nteq; i++) {
-		constraints_eval.push_back(teq_eval[i]);
-	}
-	for (size_t i = 0; i < Ntineq; i++) {
-		constraints_eval.push_back(tineq_eval[i]);
-	}
-
-	// Set mu=0 for inactive constraints
-	for (size_t i = Nteq; i < Nteq + Ntineq; i++) {
-		if (constraints_eval[i].cons() < 0 && lambda[i] <= 0)
-			mu[i] *= 0.0;
-	}
-
-	// AUL formulation
-	// Lambda^T * c(x) + 0.5 * c(x)^T * I_mu * c(x)
-	for (size_t i = 0; i < Nteq + Ntineq; i++) {
-		DA constraints_eval_i = constraints_eval[i];
-		tc_eval += constraints_eval_i * (lambda[i] + (0.5 * mu[i]) * constraints_eval_i);
-	}
-
-	// Assign
-	constraints_eval.push_back(tc_eval);
-
-	return constraints_eval;
-}
-
 // Returns the Augmented lagrangian cost-to-go:
 // AUL_ctg = ctg + Lambda^T * c(x) + 0.5 * c(x)^T * I_mu * c(x)
-// Double version
+// Double version (faster but no derivatives)
 vectordb DDPSolver::get_AUL_cost_to_go(
 	vectordb const& x_star_DA, vectordb const& u_star_DA, size_t const& index) {
 	// Unpack parameters
@@ -256,8 +195,66 @@ vectordb DDPSolver::get_AUL_cost_to_go(
 }
 
 // Returns the Augmented lagrangian terminal cost:
-// AUL_tc = tc + Lambda^T * c(x) + 0.5 * c(x)^T * I_mu * c(x)
-// Double version
+// AUL_tc = tc + Lambda^T * ct(x) + 0.5 * ct(x)^T * I_mu * ct(x)
+// Double version (faster but no derivatives)
+vectorDA DDPSolver::get_AUL_terminal_cost(
+	vectorDA const& x_star_DA, vectordb const& x_goal) {
+	// Unpack parameters
+	unsigned int N = solver_parameters_.N();
+	unsigned int Nx = solver_parameters_.Nx();
+	unsigned int Nu = solver_parameters_.Nu();
+	unsigned int Nteq = solver_parameters_.Nteq();
+	unsigned int Ntineq = solver_parameters_.Ntineq();
+	vectordb lambda = solver_parameters_.list_lambda()[N];
+	vectordb mu = solver_parameters_.list_mu()[N];
+
+	// Init output
+	vectorDA constraints_eval;
+	constraints_eval.reserve(Nteq + Ntineq + 1);
+
+	// Evaluate terminal cost
+	DA tc_eval = dynamics_.terminal_cost()(
+		x_star_DA, x_goal,
+		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
+
+	// Constraints evaluations
+	vectorDA teq_eval = dynamics_.terminal_equality_constraints()(
+		x_star_DA, x_goal,
+		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
+	vectorDA tineq_eval = dynamics_.terminal_inequality_constraints()(
+		x_star_DA, x_goal,
+		spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
+	
+	// Assign to output
+	for (size_t i = 0; i < Nteq; i++) {
+		constraints_eval.push_back(teq_eval[i]);
+	}
+	for (size_t i = 0; i < Ntineq; i++) {
+		constraints_eval.push_back(tineq_eval[i]);
+	}
+
+	// Set mu=0 for inactive constraints
+	for (size_t i = Nteq; i < Nteq + Ntineq; i++) {
+		if (constraints_eval[i].cons() < 0 && lambda[i] <= 0)
+			mu[i] *= 0.0;
+	}
+
+	// AUL formulation
+	// Lambda^T * c(x) + 0.5 * c(x)^T * I_mu * c(x)
+	for (size_t i = 0; i < Nteq + Ntineq; i++) {
+		DA constraints_eval_i = constraints_eval[i];
+		tc_eval += constraints_eval_i * (lambda[i] + (0.5 * mu[i]) * constraints_eval_i);
+	}
+
+	// Assign
+	constraints_eval.push_back(tc_eval);
+
+	return constraints_eval;
+}
+
+// Returns the Augmented lagrangian terminal cost:
+// AUL_tc = tc + Lambda^T * ct(x) + 0.5 * ct(x)^T * I_mu * ct(x)
+// DA version
 vectordb DDPSolver::get_AUL_terminal_cost(
 	vectordb const& x_star_DA, vectordb const& x_goal) {
 	// Unpack parameters
@@ -315,12 +312,9 @@ vectordb DDPSolver::get_AUL_terminal_cost(
 
 // Increases the regulation to ensure Quu + rho*I
 // is symeteric positive definite.
-// Inspired from ALTRO (Julia).
-// See: https://github.com/RoboticExplorationLab/Altro.jl
 void DDPSolver::increase_regularisation_() {
 	// Unpack
 	vectordb rho_parameters = solver_parameters_.backward_sweep_regulation_parameters();
-	double rho_init = rho_parameters[0];
 	double rho_min = rho_parameters[1];
 	double rho_max = rho_parameters[2];
 	double rho_factor = rho_parameters[3];
@@ -332,13 +326,10 @@ void DDPSolver::increase_regularisation_() {
 
 // Increases the regulation to ensure Quu + rho*I
 // is symeteric positive definite.
-// Inspired from ALTRO (Julia).
 // With a safe guard.
-// See: https://github.com/RoboticExplorationLab/Altro.jl
 void DDPSolver::increase_regularisation_(matrixdb const& Quu) {
 	// Unpack
 	vectordb rho_parameters = solver_parameters_.backward_sweep_regulation_parameters();
-	double rho_init = rho_parameters[0];
 	double rho_min = rho_parameters[1];
 	double rho_max = rho_parameters[2];
 	double rho_factor = rho_parameters[3];
@@ -360,14 +351,10 @@ void DDPSolver::increase_regularisation_(matrixdb const& Quu) {
 	}
 }
 
-// Decreases the regulation to ensure Quu + rho*I
-// is symeteric positive definite.
-// Inspired from ALTRO (Julia).
-// See: https://github.com/RoboticExplorationLab/Altro.jl
+// Decreases the regulation.
 void DDPSolver::decrease_regularisation_() {
 	// Unpack
 	vectordb rho_parameters = solver_parameters_.backward_sweep_regulation_parameters();
-	double rho_init = rho_parameters[0];
 	double rho_min = rho_parameters[1];
 	double rho_max = rho_parameters[2];
 	double rho_factor = rho_parameters[3];
@@ -378,8 +365,6 @@ void DDPSolver::decrease_regularisation_() {
 }
 
 // Computes the expected cost after backward sweep for linesearch.
-// Inspired from ALTRO (Julia).
-// See: https://github.com/RoboticExplorationLab/Altro.jl
 double DDPSolver::expected_cost_(
 	double const& alpha) {
 	// Unpack parameters
@@ -394,18 +379,18 @@ double DDPSolver::expected_cost_(
 		matrixdb k_i = list_k_[N - 1 - i];
 		matrixdb Qu_i = list_Qu_[N - 1 - i];
 		dv_1 += (Qu_i * k_i).at(0, 0);
-		dv_2 += 0.5*(k_i.transpose() * Qu_i.transpose()).at(0, 0);
+		dv_2 += 0.5*(Qu_i * k_i).at(0, 0);
 	}
-	return -1.0* alpha * (dv_1 + alpha * dv_2);
+	return -1.0 * alpha * (dv_1 + alpha * dv_2);
 }
 
-// Evaluates the convergence of DDP optimisation
+// Evaluates the convergence of DDP optimisation.
 bool DDPSolver::evaluate_convergence_(double const& d_cost) {
 	// Unpack parameters
 	double tol = solver_parameters_.DDP_tol();
 	unsigned int max_iter = solver_parameters_.DDP_max_iter();
 
-	// Converged
+	// Convergence conditions
 	if ((d_cost < tol && d_cost >= 0.0 && (n_iter_ >= 3 || d_cost==0))
 		|| n_iter_ >= max_iter)
 		return true;
@@ -552,9 +537,7 @@ void DDPSolver::backward_sweep_() {
 }
 
 // Performs the DDP backward sweep, that consists in the computation
-// of the gains corrections, with hessian.
-// Inspired from ALTRO (Julia).
-// See: https://github.com/RoboticExplorationLab/Altro.jl
+// of the gains corrections, with hessians.
 void DDPSolver::backward_sweep_hessian_() {
 	// Unpack parameters
 	unsigned int N = solver_parameters_.N();
@@ -609,11 +592,10 @@ void DDPSolver::backward_sweep_hessian_() {
 			matrixdb Qux(der_cost_to_go[4] + der_dynamic_1_t * Vxx * der_dynamic_0);
 
 			// Add hessians
-			/**/
 			for (size_t k=0; k < Nx; k++) {
 				matrixdb fxx_k = der_dynamic[2 + k];
 				matrixdb fuu_k = der_dynamic[2 + k + Nx];
-				matrixdb fux_k = der_dynamic[2 + k + Nx*2];
+				matrixdb fux_k = der_dynamic[2 + k + 2*Nx];
 				double Vx_k = Vx.at(k, 0);
 				Qxx = Qxx + Vx_k * fxx_k;
 				Quu = Quu + Vx_k * fuu_k;
@@ -657,9 +639,7 @@ void DDPSolver::backward_sweep_hessian_() {
 
 // Performs the DDP backward sweep, that consists in the computation
 // of the gains corrections, Q is evaluated using DA, thus, with hessian.
-// Inspired from ALTRO (Julia).
-// See: https://github.com/RoboticExplorationLab/Altro.jl
-void DDPSolver::backward_sweep_DA_Q_() {
+void DDPSolver::backward_sweep_Q_() {
 	// Unpack parameters
 	unsigned int N = solver_parameters_.N();
 	unsigned int Nx = solver_parameters_.Nx();
@@ -742,8 +722,8 @@ void DDPSolver::backward_sweep_DA_Q_() {
 
 // Performs the DDP forward pass, that consists in the computation
 // of the new states and control after correction.
-// Inspired from ALTRO (Julia).
 // DA only for automatic differentiation.
+// Inspired from ALTRO (Julia).
 // See: https://github.com/RoboticExplorationLab/Altro.jl
 void DDPSolver::forward_pass_(
 	vector<vectordb> const& list_x, vector<vectordb> const& list_u, vectordb const& x_goal) {
@@ -843,7 +823,7 @@ void DDPSolver::forward_pass_(
 		double expected_cost = expected_cost_(alpha);
 
 		// If step too small
-		if (expected_cost < tol*tol) { // Hard coded: TO DO
+		if (expected_cost < tol*tol) {
 			list_x_ = list_x;
 			list_u_ = list_u;
 			increase_regularisation_();
@@ -912,190 +892,13 @@ void DDPSolver::forward_pass_(
 }
 
 // Performs the DDP forward pass, that consists in the computation
-// of the new states and control after correction.
-// Inspired from ALTRO (Julia).
-// DA only for automatic differentiation.
-// // The linesearch is tweaked to implement a memory from one iteration to the other.
-// See: https://github.com/RoboticExplorationLab/Altro.jl
-void DDPSolver::forward_pass_ls_(
-	vector<vectordb> const& list_x, vector<vectordb> const& list_u, vectordb const& x_goal) {
-	// Unpack parameters
-	double tol = solver_parameters_.DDP_tol();
-	unsigned int N = solver_parameters_.N();
-	unsigned int Nx = solver_parameters_.Nx();
-	unsigned int Nu = solver_parameters_.Nu();
-	unsigned int Neq = solver_parameters_.Neq();
-	unsigned int Nineq = solver_parameters_.Nineq();
-	unsigned int Nteq = solver_parameters_.Nteq();
-	unsigned int Ntineq = solver_parameters_.Ntineq();
-	vectordb alpha_parameters = solver_parameters_.line_search_parameters();
-	double z_min = alpha_parameters[0];
-	double z_max = alpha_parameters[1];
-	double alpha_factor = alpha_parameters[2];
-	int max_iter = alpha_parameters[3];
-	matrixdb error_mat(Nx, 1);
-
-	// Init loop variables
-	bool success = false; size_t counter = 0;
-	while (!success) {
-
-		// Init lists
-		vector<vectordb> list_x_star(list_x_), list_u_star(list_u_);
-		vector<vectordb> list_eq_eval, list_ineq_eval;
-		vectordb teq_eval, tineq_eval;
-
-		// Reserve space
-		list_x_star.reserve(N);
-		list_u_star.reserve(N);
-		list_eq_eval.reserve(N);
-		list_ineq_eval.reserve(N);
-
-		// Rollout
-		double cost = 0; double z = 1e15;
-		for (size_t i = 0; i < N; i++) {
-
-			// Get state error
-			vectordb error = list_x_star[i] - list_x[i];
-			error_mat.setcol(0, error);
-
-			// Retrieve gains
-			matrixdb k = list_k_[N - 1 - i];
-			matrixdb K = list_K_[N - 1 - i];
-
-			// Get control correction
-			vectordb correction = vectordb((alpha_ * k + K * error_mat).getcol(0));
-			list_u_star.push_back(list_u[i] + correction);
-
-			// Identity vector building
-			vectordb x_star = list_x_star[i];
-			vectordb u_star = list_u_star[i];
-
-			// Evaluate dynamics
-			vectordb dynamic_eval = dynamics_.dynamic_db()(
-				x_star, u_star,
-				spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
-
-			// Evaluate AUL ctg and store constraints
-			vectordb constraints = get_AUL_cost_to_go(
-				x_star, u_star, i);
-			if (Neq == 0)
-				list_eq_eval.emplace_back();
-			else
-				list_eq_eval.emplace_back(constraints.extract(0, Neq - 1));
-			if (Nineq == 0)
-				list_ineq_eval.emplace_back();
-			else
-				list_ineq_eval.emplace_back(constraints.extract(Neq, Neq + Nineq - 1));
-			double ctg_eval = constraints[Neq + Nineq];
-
-			// Update cost and append list_x_star
-			list_x_star.emplace_back(dynamic_eval);
-			cost += ctg_eval;
-		}
-
-		// AUL terminal cost and store constraints
-		vectordb x_star = list_x_star[N];
-		vectordb constraints = get_AUL_terminal_cost(
-			x_star, x_goal);
-		if (Nteq == 0)
-			teq_eval = vectordb(0);
-		else
-			teq_eval = constraints.extract(0, Nteq - 1);
-		if (Ntineq == 0)
-			tineq_eval = vectordb(0);
-		else
-			tineq_eval = constraints.extract(Nteq, Nteq + Ntineq - 1);
-		double terminal_cost_eval = constraints[Nteq + Ntineq];
-
-		// Update cost 
-		cost += terminal_cost_eval;
-
-		// Get expected cost
-		double expected_cost = expected_cost_(alpha_);
-
-		// If step too small
-		if (expected_cost < tol * tol) {
-			list_x_ = list_x;
-			list_u_ = list_u;
-			increase_regularisation_();
-			break;
-		}
-		else {
-			z = (cost_ - cost) / expected_cost;
-
-			// Check z \in interval
-			if (z > z_min && z < z_max) {
-				// Save all double lists
-				list_x_ = list_x_star;
-				list_u_ = list_u_star;
-				list_eq_ = list_eq_eval;
-				list_ineq_ = list_ineq_eval;
-				teq_ = teq_eval;
-				tineq_ = tineq_eval;
-				cost_ = cost;
-
-				// Recompute DA dynamics, ctg, and tc
-				// Make DA lists
-				for (size_t i = 0; i < N; i++) {
-
-					// Declare variables
-					vectorDA x_star_DA, u_star_DA;
-
-					// Identity vectors building
-					x_star_DA = id_vector(list_x_star[i], 0, 0, Nx - 1);
-					u_star_DA = id_vector(list_u_star[i], 0, Nx, Nu + Nx);
-
-					// Evaluate dynamics from sractch
-					list_dynamic_eval_[i] = dynamics_.dynamic()(
-						x_star_DA, u_star_DA,
-						spacecraft_parameters_, dynamics_.constants(),
-						solver_parameters_);
-
-					// Get constraints
-					vectorDA constraints(get_AUL_cost_to_go(
-						x_star_DA, u_star_DA, i));
-					DA ctg_eval = constraints[Neq + Nineq];
-					list_ctg_eval_[i] = ctg_eval;
-				}
-
-				// AUL terminal cost and store constraints
-				vectorDA x_star_DA = id_vector(list_x_[N], 0, 0, Nx - 1);
-				vectorDA constraints = get_AUL_terminal_cost(
-					x_star_DA, x_goal);
-				tc_eval_ = constraints[Nteq + Ntineq];
-
-				// Update linesearch parameter
-				alpha_ = min(alpha_ / alpha_factor, 1.0);
-				break;
-			}
-			else {
-				// Decrease line search parameter
-				alpha_ *= alpha_factor;
-
-				// Check iteration number
-				if (counter > max_iter) {
-					list_x_ = list_x;
-					list_u_ = list_u;
-					break;
-				}
-			}
-		}
-		counter++;
-	}
-}
-
-// Performs the DDP forward pass, that consists in the computation
 // of the new states and control after correction using the DA mapping
 // The linesearch is tweaked to implement a memory from one iteration to the other.
-// The linesearch computation are done with floats (in DA vectors), the DA mappings are computed
-// only when the linesearch is ended.
-// Inspired from ALTRO (Julia).
-// See: https://github.com/RoboticExplorationLab/Altro.jl
-void DDPSolver::forward_pass_ls_DA_(
+void DDPSolver::forward_pass_DA_(
 	vector<vectordb> const& list_x, vector<vectordb> const& list_u, vectordb const& x_goal) {
 	// Unpack parameters
 	double tol = solver_parameters_.DDP_tol();
-	double tol_DA = solver_parameters_.AUL_tol(); // TEST
+	double tol_DA = solver_parameters_.AUL_tol();
 	unsigned int N = solver_parameters_.N();
 	unsigned int Nx = solver_parameters_.Nx();
 	unsigned int Nu = solver_parameters_.Nu();
@@ -1462,38 +1265,34 @@ void DDPSolver::solve(
 		n_iter_++;
 		cost_last = cost_;
 
-		int nb_method = 3;
+		int nb_BS_method = 2;
 
 		// Get times
 		auto start = high_resolution_clock::now();
 
-		// Backward sweep (< nb_method =  classic method from ALTRO)
-		if (DDP_type < nb_method)
+		// Backward sweep (0mod 3 => classic method from ALTRO)
+		if (DDP_type % nb_BS_method == 0)
 			backward_sweep_();
 
-		// Backward sweep (< 2*nb_method = classic method from ALTRO, with hessian)
-		else if (DDP_type < 2*nb_method)
+		// Backward sweep (1mod 3 => classic method from ALTRO, with hessian)
+		else if (DDP_type % nb_BS_method == 1)
 			backward_sweep_hessian_();
 
-		// Backward sweep (< 3*nb_method = Qk DA direct evaluation)
+		// Backward sweep (2mod 3 => Qk DA direct evaluation)
 		else
-			backward_sweep_DA_Q_();
+			backward_sweep_Q_();
 
 		// Forward pass init
 		list_x_ = vector<vectordb>(1, x0);
 		list_u_ = vector<vectordb>();
 
-		// Forward pass (0 = classic method from ALTRO)
-		if (DDP_type % nb_method == 0)
+		// Forward pass (<nb_BS_method => classic method from ALTRO)
+		if (DDP_type < nb_BS_method)
 			forward_pass_(list_x, list_u, x_goal);
 
-		// Forward pass (1 = tweaked linesearch)
-		else if (DDP_type % nb_method == 1)
-			forward_pass_ls_(list_x, list_u, x_goal);
-
-		// Forward pass (2 = use of the DA mappings the dynamics + Linesearch)
-		else if (DDP_type % nb_method == 2)
-			forward_pass_ls_DA_(list_x, list_u, x_goal);
+		// Forward pass (>nb_BS_method  => use of the DA mappings of the dynamics + Linesearch)
+		else
+			forward_pass_DA_(list_x, list_u, x_goal);
 
 		// Compute costs
 		tc = tc_eval_.cons();
@@ -1502,12 +1301,6 @@ void DDPSolver::solve(
 		// Evaluate convergence 
 		double d_cost = (cost_last - cost_)/max(abs(cost_last), abs(cost_));
 		loop = !evaluate_convergence_(d_cost);
-
-		// Save iterations
-		if (saving_iterations > 2) {
-			list_x_mem_.push_back(list_x_);
-			list_u_mem_.push_back(list_u_);
-		}
 
 		// Update states and control
 		list_x = list_x_; list_u = list_u_;

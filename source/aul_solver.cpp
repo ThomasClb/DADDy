@@ -19,8 +19,7 @@ AULSolver::AULSolver() : DDPsolver_(DDPSolver()),
 	list_x_(vector<vectordb>(0)), list_u_(vector<vectordb>(0)), cost_(0),
 	list_eq_(vector<vectordb>(0)), list_ineq_(vector<vectordb>(0)),
 	list_lambda_(vector<vectordb>(0)), list_mu_(vector<vectordb>(0)),
-	AUL_n_iter_(0), DDP_n_iter_(0),
-	list_x_mem_(vector<vector<vectordb>>(0)), list_u_mem_(vector<vector<vectordb>>(0)) {}
+	AUL_n_iter_(0), DDP_n_iter_(0) {}
 
 AULSolver::AULSolver(
 	SolverParameters const& solver_parameters,
@@ -30,8 +29,7 @@ AULSolver::AULSolver(
 	list_x_(vector<vectordb>(0)), list_u_(vector<vectordb>(0)), cost_(0),
 	list_eq_(vector<vectordb>(0)), list_ineq_(vector<vectordb>(0)),
 	list_lambda_(solver_parameters.list_lambda()), list_mu_(solver_parameters.list_mu()),
-	AUL_n_iter_(0), DDP_n_iter_(0),
-	list_x_mem_(vector<vector<vectordb>>(0)), list_u_mem_(vector<vector<vectordb>>(0)) {}
+	AUL_n_iter_(0), DDP_n_iter_(0) {}
 
 // Copy constructor
 AULSolver::AULSolver(
@@ -39,8 +37,7 @@ AULSolver::AULSolver(
 	list_x_(solver.list_x_), list_u_(solver.list_u_), cost_(solver.cost_),
 	list_eq_(solver.list_eq_), list_ineq_(solver.list_ineq_),
 	list_lambda_(solver.list_lambda_), list_mu_(solver.list_mu_),
-	AUL_n_iter_(solver.AUL_n_iter_), DDP_n_iter_(solver.DDP_n_iter_),
-	list_x_mem_(solver.list_x_mem_), list_u_mem_(solver.list_u_mem_) {}
+	AUL_n_iter_(solver.AUL_n_iter_), DDP_n_iter_(solver.DDP_n_iter_) {}
 
 // Destructors
 AULSolver::~AULSolver() {}
@@ -58,8 +55,6 @@ const vector<vectordb> AULSolver::list_lambda() const { return list_lambda_; }
 const vector<vectordb> AULSolver::list_mu() const { return list_mu_; }
 const unsigned int AULSolver::AUL_n_iter() const { return AUL_n_iter_; }
 const unsigned int AULSolver::DDP_n_iter() const { return DDP_n_iter_; }
-const vector<vector<vectordb>> AULSolver::list_x_mem() const { return list_x_mem_; }
-const vector<vector<vectordb>> AULSolver::list_u_mem() const { return list_u_mem_; }
 
 
 // Setters
@@ -358,24 +353,7 @@ void AULSolver::solve(
 		bool force_stop_loop = AUL_n_iter_ > AUL_max_iter;
 		loop = !force_stop_loop && force_continue_loop;
 		cost = DDPsolver_.cost();
-		DDP_n_iter_ += DDPsolver_.n_iter();
-		AUL_n_iter_++;
-
-		// Save iterations
-		if (saving_iterations > 2) { // Save all DDP iterations
-			for (size_t k = 0; k < DDPsolver_.list_u_mem().size(); k++) {
-				list_x_mem_.push_back(DDPsolver_.list_x_mem()[k]);
-				list_u_mem_.push_back(DDPsolver_.list_u_mem()[k]);
-			}
-		}
-		else if (saving_iterations > 2) { // Save all AUL iterations
-			list_x_mem_.push_back(list_x_);
-			list_u_mem_.push_back(list_u_);
-		}
-		else if (saving_iterations > 1 && !loop) { // Save last AUL iteration
-			list_x_mem_.push_back(list_x_);
-			list_u_mem_.push_back(list_u_);
-		}
+		DDP_n_iter_ += DDPsolver_.n_iter(); AUL_n_iter_++;
 	}
 
 	// Output

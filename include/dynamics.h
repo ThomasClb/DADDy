@@ -1,5 +1,5 @@
 /**
-	dynamics.cpp
+	dynamics.h
 
 	Purpose: Implementation of the Dynamics class
 	methods.
@@ -232,6 +232,7 @@ public:
 // With 3D continuous thrust.
 // It takes at input [3*LU, 3*VU, MASSU, TU], [3*N], TU, SpacecraftParameters.
 // It returns [3*VU, 3*VU/TU, MASSU/TU, 1].
+// https://en.wikipedia.org/wiki/Two-body_problem
 template<typename T>
 DACE::AlgebraicVector<T> acceleration_tbp_SUN_lt(
 	DACE::AlgebraicVector<T> const& x,
@@ -280,6 +281,9 @@ DACE::AlgebraicVector<T> acceleration_tbp_SUN_lt(
 // With 3D continuous thrust using Gauss planetary equations.
 // It takes at input [3*LU, 3*VU, MASSU, TU], [3*N], TU, SpacecraftParameters.
 // It returns [3*VU, 3*VU/TU, MASSU/TU, 1].
+// https://en.wikipedia.org/wiki/Two-body_problem
+// Same formulation as in [Di Carlo et al. 2021]
+// DOI: https://doi.org/10.1007/s10569-021-10007-x
 template<typename T>
 DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 	DACE::AlgebraicVector<T> const& x,
@@ -381,6 +385,8 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 // With 3D continuous thrust.
 // It takes at input [3*LU, 3*VU, MASSU, TU], [3*N], TU, SpacecraftParameters.
 // It returns [3*VU, 3*VU/TU, MASSU/TU, 1].
+// See [Poincaré 1892]:
+// Les Méthodes Nouvelles de la Mécanique Céleste
 template<typename T>
 DACE::AlgebraicVector<T>  acceleration_cr3bp_lt(
 	DACE::AlgebraicVector<T>  const& state_vector,
@@ -429,6 +435,8 @@ DACE::AlgebraicVector<T>  acceleration_cr3bp_lt(
 // Returns the next state given
 // the current state, the control and the parameters.
 // For a double integrator system.
+// From [Lantoine Russell 2012]
+// DOI: https://doi.org/10.1007/s10957-012-0038-1
 template<typename T>
 DACE::AlgebraicVector<T> dynamic_double_integrator(
 	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T>const& u,
@@ -503,7 +511,7 @@ T cost_to_go_double_integrator(
 
 // Returns the cost-to-go given
 // the current state, the control and the parameters.
-// Homotopy between energy-optimal and fuel-optimal low thrust.
+// Homotopy between energy-optimal and fuel-optimal low-thrust.
 template<typename T>
 T cost_to_go(
 	DACE::AlgebraicVector<T> const& x, DACE::AlgebraicVector<T> const& u,
@@ -680,7 +688,7 @@ T terminal_cost(
 
 // Returns the terminal cost given
 // the current state, the target state and the parameters.
-// Final difference, without equinoctial anomaly.
+// Final difference, without true longitude.
 template<typename T>
 T terminal_cost_equinoctial(
 	DACE::AlgebraicVector<T> const& x, DACE::vectordb const& x_goal,
@@ -703,7 +711,6 @@ T terminal_cost_equinoctial(
 
 // Returns the terminal equality constraints given
 // the current state, the target state and the parameters.
-// Final difference.
 template<typename T>
 DACE::AlgebraicVector<T> terminal_equality_constraints_null(
 	DACE::AlgebraicVector<T> const& x, DACE::vectordb const& x_goal,
@@ -734,7 +741,7 @@ DACE::AlgebraicVector<T> terminal_equality_constraints(
 
 // Returns the terminal equality constraints given
 // the current state, the target state and the parameters.
-// Final difference, without equinoctial anomaly.
+// Final difference, without true longitudes.
 template<typename T>
 DACE::AlgebraicVector<T> terminal_equality_constraints_equinoctial(
 	DACE::AlgebraicVector<T> const& x, DACE::vectordb const& x_goal,
@@ -763,23 +770,23 @@ DACE::AlgebraicVector<T> terminal_inequality_constraints_null(
 
 // Transformations
 
-// Transforms a keplerian state vector into a cartesian one 
+// Transforms a keplerian state vector into an equinoctial one.
+DACE::vectordb kep_2_equi(DACE::vectordb const& kep_state_vector);
+
+// Transforms a equinoctial state vector into an keplerian one.
+DACE::vectordb equi_2_kep(DACE::vectordb const& equi_state_vector);
+
+// Transforms a keplerian state vector into a cartesian one.
 DACE::vectordb kep_2_cart(
 	DACE::vectordb const& kep_state_vector,
 	double const& mu);
 
-// Transforms a keplerian state vector into an equinoctial one 
-DACE::vectordb equi_2_kep(DACE::vectordb const& equi_state_vector);
-
-// Transforms a keplerian state vector into an equinoctial one 
-DACE::vectordb kep_2_equi(DACE::vectordb const& kep_state_vector);
-
-// Transforms coordinates in the RTN reference frame into cartesian coordinates
+// Transforms coordinates in the RTN reference frame into cartesian coordinates.
 DACE::vectordb RTN_2_cart(
 	DACE::vectordb const& RTN_vector,
 	DACE::vectordb const& cart_state_vector);
 
-// Returns dynamics withaccelerations.
+// Returns dynamics with accelerations.
 // Terminal constraints and thrust constraints.
 Dynamics get_double_integrator_dynamics();
 Dynamics get_tbp_SUN_lt_dynamics();

@@ -41,7 +41,7 @@ Leaving the parameters field empty will return an error message that will inform
 These parameters consist of 9 arguments:
 - Test case ID.
 - The address of the SpacecraftParameter. (They consist of the dynamical system, followed by the thrust-to-mass ratio of the spacecraft)
-- The DDP method to use. (recommended 2)
+- The DDP method to use. (recommended 3)
 - The number of trajectory segments N?
 - The time of flight in days.
 - Perform fuel optimal optimisation. (1=True, 0=False)
@@ -52,19 +52,19 @@ These parameters consist of 9 arguments:
 For instance 
 - The double integrator problem from [Lantoine and Russell 2012]:
 	```
-	./build/test_case 0 ./data/spacecraft_parameters/double_integrator_1e3.dat 2 11 0 0 0 1 0
+	./build/test_case 0 ./data/spacecraft_parameters/double_integrator_1e3.dat 3 11 0 0 0 1 0
 	```
 - The energy optimal Earth-Mars transfer from [Lantoine and Russell 2012]:
 	```
-	./build/test_case 1 ./data/spacecraft_parameters/tbp_SUN_5e-4.dat 2 40 348.79 0 1 1 0
+	./build/test_case 1 ./data/spacecraft_parameters/tbp_SUN_5e-4.dat 3 40 348.79 0 1 1 0
 	```
 - The fuel optimal Earth-Mars transfer from [Lantoine and Russell 2012]:
 	```
-	./build/test_case 1 ./data/spacecraft_parameters/tbp_SUN_5e-4.dat 2 40 348.79 1 1 1 0
+	./build/test_case 1 ./data/spacecraft_parameters/tbp_SUN_5e-4.dat 3 40 348.79 1 1 1 0
 	```
 - The fuel optimal Halo L2 to Halo L1 transfer from [Aziz et al. 2019]:
 	```
-	./build/test_case 5 ./data/spacecraft_parameters/cr3bp_EARTH_MOON_5e-4.dat 2 110 20 1 1 1 0
+	./build/test_case 5 ./data/spacecraft_parameters/cr3bp_EARTH_MOON_5e-4.dat 3 110 20 1 1 1 0
 	```
 The results are saved in `./data/datasets`.
 
@@ -83,16 +83,16 @@ Where the parameters are:
 - The DDP method used.
 	
 For instance 
-- The double integrator problem from [Lantoine and Russell 2012] with DDP method 2:
+- The double integrator problem from [Lantoine and Russell 2012] with DDP method 3:
 	```
-	./source/visualisation/main.py 0 1e3 0 2
+	./source/visualisation/main.py 0 1e3 0 3
 	```
-- The fuel optimal Earth-Mars transfer from [Lantoine and Russell 2012] with DDP method 2:
+- The fuel optimal Earth-Mars transfer from [Lantoine and Russell 2012] with DDP method 3:
 	```
-	./source/visualisation/main.py 1 5e-4 348 2
+	./source/visualisation/main.py 1 5e-4 348 3
 	```
-- The fuel optimal Halo L2 to Halo L1 transfer from [Aziz et al. 2019] with DDP method 2:
+- The fuel optimal Halo L2 to Halo L1 transfer from [Aziz et al. 2019] with DDP method 3:
 	```
-	./source/visualisation/main.py 5 5e-4 20 2
+	./source/visualisation/main.py 5 5e-4 20 3
 	```
 The results are saved in `./data/plots`.

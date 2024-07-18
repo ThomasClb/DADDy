@@ -134,6 +134,7 @@ double normtmp(int const& N, vectordb const& X) {
 // Runge - Kutta formulas with stepsize control.
 // The integrated function takes a DA state, a DA control, a time and a SpacecraftParameters
 // as inputs and provides a DA derivative of the same size.
+// Adapted from: https://github.com/dacelib/dace/blob/master/Tutorials/Tutorial1/Example11DARK78.cpp
 vectorDA RK78(
     vectorDA(*f)(
         vectorDA const&, vectorDA const&,
@@ -236,6 +237,7 @@ vectorDA RK78(
 // Runge - Kutta formulas with stepsize control.
 // The integrated function takes a double state, a double control, a time and a SpacecraftParameters
 // as inputs and provides a double derivative of the same size.
+// Adapted from: https://github.com/dacelib/dace/blob/master/Tutorials/Tutorial1/Example11DARK78.cpp
 vectordb RK78(
     vectordb(*f)(
         vectordb const&, vectordb const&,

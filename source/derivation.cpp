@@ -16,7 +16,7 @@ using namespace std;
 
 // DACE vector conversion
 
-// Turns a vectordb into a vectorDA without perturbation
+// Turns a vectordb into a vectorDA without perturbation.
 vectorDA db_2_DA(
 	vectordb const& vector_db) {
 	size_t n = vector_db.size();
@@ -27,7 +27,7 @@ vectorDA db_2_DA(
 	return vector_DA;
 }
 
-// Turns a vectordb into a vectorDA with identity perturbation
+// Turns a vectordb into a vectorDA with identity perturbation.
 vectorDA id_vector(
 	vectordb const& vector_db,
 	unsigned int const& begin_index,
@@ -56,7 +56,7 @@ vectorDA id_vector(
 
 // Differentiation functions
 
-// Differentiates with respect to x, and u
+// Differentiates with respect to x, and u.
 vector<matrixdb> deriv_xu(
 	vectorDA const& f_eval,
 	unsigned int const& Nx, unsigned int const& Nu,
@@ -115,7 +115,7 @@ vector<matrixdb> deriv_xu(
 	}
 }
 
-// Differentiates with respect to x
+// Differentiates with respect to x.
 vector<matrixdb> deriv_x(
 	vectorDA const& f_eval,
 	unsigned int const& Nx,

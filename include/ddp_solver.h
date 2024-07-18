@@ -42,7 +42,7 @@ protected:
 	DACE::vectordb tineq_; // List of terminal inequality constraints
 	double cost_; // Output cost [-]
 
-	// Looping variables
+	// Internal variables
 	unsigned int n_iter_;
 	bool recompute_dynamics_;
 	double rho_;
@@ -54,10 +54,6 @@ protected:
 	std::vector<DACE::matrixdb> list_Qu_;
 	std::vector<DACE::matrixdb> list_k_;
 	std::vector<DACE::matrixdb> list_K_;
-
-	// Iteration saving
-	std::vector<std::vector<DACE::vectordb>> list_x_mem_; // Iterations on the states
-	std::vector<std::vector<DACE::vectordb>> list_u_mem_; // Iterations on the controls
 
 // Methods
 public:
@@ -89,8 +85,6 @@ public:
 	const double cost() const;
 	const DACE::DA tc_eval() const;
 	const unsigned int n_iter() const;
-	const std::vector < std::vector<DACE::vectordb>> list_x_mem() const;
-	const std::vector < std::vector<DACE::vectordb>> list_u_mem() const;
 
 	// Setters
 	void set_list_lambda(std::vector<DACE::vectordb> const& list_lambda);
@@ -106,50 +100,41 @@ public:
 	DACE::vectorDA get_AUL_cost_to_go(
 		DACE::vectorDA const& x_star_DA, DACE::vectorDA const& u_star_DA, std::size_t const& index);
 
+	// Returns the Augmented lagrangian cost-to-go:
+	// AUL_ctg = ctg + Lambda^T * c(x) + 0.5 * c(x)^T * I_mu * c(x)
+	// Double version (faster but no derivatives)
+	DACE::vectordb get_AUL_cost_to_go(
+		DACE::vectordb const& x_star_DA, DACE::vectordb const& u_star_DA, std::size_t const& index);
+
 	// Returns the Augmented lagrangian terminal cost:
-	// AUL_tc = tc + Lambda^T * c(x) + 0.5 * c(x)^T * I_mu * c(x)
-	// Double version
+	// AUL_tc = tc + Lambda^T * ct(x) + 0.5 * ct(x)^T * I_mu * ct(x)
+	// Double version (faster but no derivatives)
 	DACE::vectordb get_AUL_terminal_cost(
 		DACE::vectordb const& x_star_DA, DACE::vectordb const& x_goal);
 
 	// Returns the Augmented lagrangian terminal cost:
-	// AUL_tc = tc + Lambda^T * c(x) + 0.5 * c(x)^T * I_mu * c(x)
+	// AUL_tc = tc + Lambda^T * ct(x) + 0.5 * ct(x)^T * I_mu * ct(x)
 	// DA version
 	DACE::vectorDA get_AUL_terminal_cost(
 		DACE::vectorDA const& x_star_DA, DACE::vectordb const& x_goal);
 
-	// Returns the Augmented lagrangian cost-to-go:
-	// AUL_ctg = ctg + Lambda^T * c(x) + 0.5 * c(x)^T * I_mu * c(x)
-	// Double version
-	DACE::vectordb get_AUL_cost_to_go(
-		DACE::vectordb const& x_star_DA, DACE::vectordb const& u_star_DA, std::size_t const& index);
-
 	// Increases the regulation to ensure Quu + rho*I
 	// is symeteric positive definite.
-	// Inspired from ALTRO (Julia).
-	// See: https://github.com/RoboticExplorationLab/Altro.jl
 	void increase_regularisation_();
 
 	// Increases the regulation to ensure Quu + rho*I
 	// is symeteric positive definite.
-	// Inspired from ALTRO (Julia).
 	// With a safe guard.
-	// See: https://github.com/RoboticExplorationLab/Altro.jl
 	void increase_regularisation_(DACE::matrixdb const& Quu);
 
-	// Decreases the regulation to ensure Quu + rho*I
-	// is symeteric positive definite.
-	// Inspired from ALTRO (Julia).
-	// See: https://github.com/RoboticExplorationLab/Altro.jl
+	// Decreases the regulation.
 	void decrease_regularisation_();
 
 	// Computes the expected cost after backward sweep for linesearch.
-	// Inspired from ALTRO (Julia).
-	// See: https://github.com/RoboticExplorationLab/Altro.jl
 	double expected_cost_(
 		double const& alpha);
 
-	// Evaluates the convergence of DDP optimisation
+	// Evaluates the convergence of DDP optimisation.
 	bool evaluate_convergence_(
 		double const& d_cost);
 
@@ -164,20 +149,16 @@ public:
 
 	// Performs the DDP backward sweep, that consists in the computation
 	// of the gains corrections, with hessians.
-	// Inspired from ALTRO (Julia).
-	// See: https://github.com/RoboticExplorationLab/Altro.jl
 	void backward_sweep_hessian_();
 
 	// Performs the DDP backward sweep, that consists in the computation
 	// of the gains corrections, Q is evaluated using DA, thus, with hessian.
-	// Inspired from ALTRO (Julia).
-	// See: https://github.com/RoboticExplorationLab/Altro.jl
-	void backward_sweep_DA_Q_();
+	void backward_sweep_Q_();
 
 	// Performs the DDP forward pass, that consists in the computation
 	// of the new states and control after correction.
-	// Inspired from ALTRO (Julia).
 	// DA only for automatic differentiation.
+	// Inspired from ALTRO (Julia).
 	// See: https://github.com/RoboticExplorationLab/Altro.jl
 	void forward_pass_(
 		std::vector<DACE::vectordb> const& list_x,
@@ -185,22 +166,9 @@ public:
 		DACE::vectordb const& x_goal);
 
 	// Performs the DDP forward pass, that consists in the computation
-	// of the new states and control after correction.
-	// Inspired from ALTRO (Julia).
-	// The linesearch is tweaked to implement a memory from one iteration to the other.
-	// DA only for automatic differentiation.
-	// See: https://github.com/RoboticExplorationLab/Altro.jl
-	void forward_pass_ls_(
-		std::vector<DACE::vectordb> const& list_x,
-		std::vector<DACE::vectordb> const& list_u,
-		DACE::vectordb const& x_goal);
-
-	// Performs the DDP forward pass, that consists in the computation
 	// of the new states and control after correction using the DA mapping
 	// The linesearch is tweaked to implement a memory from one iteration to the other.
-	// Inspired from ALTRO (Julia).
-	// See: https://github.com/RoboticExplorationLab/Altro.jl
-	void forward_pass_ls_DA_(
+	void forward_pass_DA_(
 		std::vector<DACE::vectordb> const& list_x,
 		std::vector<DACE::vectordb> const& list_u,
 		DACE::vectordb const& x_goal);

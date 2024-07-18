@@ -1,8 +1,7 @@
 /**
 	integration.h
 
-	Purpose: Implementation of the integration
-	methods.
+	Purpose: Implementation of the integration methods.
 
 	@author Thomas Caleb
 
@@ -56,6 +55,7 @@ double normtmp(int const& N, DACE::vectordb const& X);
 // Runge - Kutta formulas with stepsize control.
 // The integrated function takes a DA state, a DA control, a time and a SpacecraftParameters
 // as inputs and provides a DA derivative of the same size.
+// Adapted from: https://github.com/dacelib/dace/blob/master/Tutorials/Tutorial1/Example11DARK78.cpp
 DACE::vectorDA RK78(
 	DACE::vectorDA(*f)(
 		DACE::vectorDA const&, DACE::vectorDA const&,
@@ -73,6 +73,7 @@ DACE::vectorDA RK78(
 // Runge - Kutta formulas with stepsize control.
 // The integrated function takes a double state, a double control, a time and a SpacecraftParameters
 // as inputs and provides a double derivative of the same size.
+// Adapted from: https://github.com/dacelib/dace/blob/master/Tutorials/Tutorial1/Example11DARK78.cpp
 DACE::vectordb RK78(
 	DACE::vectordb(*f)(
 		DACE::vectordb  const&, DACE::vectordb  const&,

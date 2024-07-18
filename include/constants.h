@@ -1,7 +1,7 @@
 /**
 	constants.h
 
-	Purpose: Implementation of the Constants classe.
+	Purpose: Implementation of the Constants class.
 
 	@author Thomas Caleb
 

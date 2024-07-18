@@ -136,8 +136,8 @@ double trace_(matrixdb const& A) {
 	return trace;
 }
 
-// Checks is a given symmetric matrix is positive-definite
-// Using the eigenvalue criterion: Sp(S) > 0 and S in sym <=> S is def pos
+// Checks if a given symmetric matrix is positive-definite
+// Using the eigenvalue criterion: Sp(S) > 0 and S is sym <=> S is sym def pos
 bool is_def_pos_(matrixdb const& S) {
     // Compute eigen values
     vectordb eig = jacobi_eigenvalue_(S).first;

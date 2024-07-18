@@ -39,6 +39,7 @@
 #define EARTH_MOON_DISTANCE (384399)
 
 // J2 implementation [-]
+// https://en.wikipedia.org/wiki/Geopotential_model
 #define J_2 (1.082635854e-3)
 
 // Earth Radius [km]
@@ -52,7 +53,8 @@
 #define R_MOON (1736)
 
 // Thrust
-#define G_0 (9.81) // Earth gravity field [m.s^-1]
+// https://en.wikipedia.org/wiki/Standard_gravity
+#define G_0 (9.81) // Standard gravity [m.s^-1]
 
 // Integration constants
 #define MIN_STEP (1e-6) // Minimum step size [s]

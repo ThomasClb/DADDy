@@ -168,7 +168,7 @@ const tineqFunction_db Dynamics::terminal_inequality_constraints_db() const {
 
 // Transformations
 
-// Transforms a keplerian state vector into an equinoctial one 
+// Transforms a keplerian state vector into an equinoctial one.
 vectordb kep_2_equi(vectordb const& kep_state_vector) {
 	// Unpack
 	double sma(kep_state_vector[0]);
@@ -215,7 +215,7 @@ vectordb kep_2_equi(vectordb const& kep_state_vector) {
 	return output;
 }
 
-// Transforms a keplerian state vector into an equinoctial one 
+// Transforms a equinoctial state vector into an keplerian one.
 vectordb equi_2_kep(vectordb const& equi_state_vector) {
 	// Unpack
 	double sma(equi_state_vector[0]);
@@ -246,7 +246,7 @@ vectordb equi_2_kep(vectordb const& equi_state_vector) {
 	return output;
 }
 
-// Transforms a keplerian state vector into a cartesian one 
+// Transforms a keplerian state vector into a cartesian one.
 vectordb kep_2_cart(vectordb const& kep_state_vector, double const& mu) {
 	// Unpack
 	double sma(kep_state_vector[0]);
@@ -308,7 +308,7 @@ vectordb kep_2_cart(vectordb const& kep_state_vector, double const& mu) {
 	return output;
 }
 
-// Transforms RTN reference frame into cartesian coordinates
+// Transforms RTN reference frame into cartesian coordinates.
 vectordb RTN_2_cart(
 	vectordb const& RTN_vector,
 	vectordb const& cart_state_vector) {

@@ -1,7 +1,7 @@
 ﻿/**
 	IO.cpp
 
-	Purpose: Implementation of the input and outputs of data
+	Purpose: Implementation of the input and outputs of data.
 
 	@author Thomas Caleb
 
@@ -14,7 +14,7 @@ using namespace DACE;
 using namespace std;
 
 // Function to print a dataset at a given name in order to
-// produce python visuals
+// produce python visuals.
 void print_dataset(
 	string const& file_name,
 	string const& system_name,
@@ -65,7 +65,7 @@ void print_dataset(
 	return;
 }
 
-// Function to propagate a vector without control
+// Function to propagate a vector without control.
 vector<vectordb> get_reference_trajectory(
 	vectordb const& x_0,
 	Dynamics const& dynamics,
@@ -97,7 +97,7 @@ vector<vectordb> get_reference_trajectory(
 }
 
 // Prints a transfer dataset on a standardised format
-// with reference orbits
+// with reference orbits.
 void print_transfer_dataset(
 	string const& file_name,
 	string const& system_name,

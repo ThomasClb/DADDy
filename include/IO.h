@@ -1,7 +1,7 @@
 ﻿/**
 	IO.h
 
-	Purpose: Implementation of the input and outputs of data
+	Purpose: Implementation of the input and outputs of data.
 
 	@author Thomas Caleb
 
@@ -21,7 +21,7 @@
 #include "dynamics.h"
 
 // Function to print a dataset at a given name in order to
-// produce python visuals
+// produce python visuals.
 void print_dataset(
 	std::string const& file_name,
 	std::string const& system_name,
@@ -29,7 +29,7 @@ void print_dataset(
 	std::vector<std::vector<std::string>> const& list_title,
 	std::vector<std::vector<DACE::vectordb>> const& list_data);
 
-// Function to propagate a vector without control
+// Function to propagate a vector without control.
 std::vector<DACE::vectordb> get_reference_trajectory(
 	DACE::vectordb const& x_0,
 	Dynamics const& dynamics,
@@ -39,7 +39,7 @@ std::vector<DACE::vectordb> get_reference_trajectory(
 	int const& nb_point);
 
 // Prints a transfer dataset on a standardised format
-// with reference orbits
+// with reference orbits.
 void print_transfer_dataset(
 	std::string const& file_name,
 	std::string const& system_name,

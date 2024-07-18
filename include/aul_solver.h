@@ -42,8 +42,6 @@ protected:
 	// Iterations
 	unsigned int AUL_n_iter_; // Number of AUL iterations
 	unsigned int DDP_n_iter_; // Total number of DDP iterations
-	std::vector<std::vector<DACE::vectordb>> list_x_mem_; // Iterations on the states
-	std::vector<std::vector<DACE::vectordb>> list_u_mem_; // Iterations on the controls
 
 // Methods
 public:
@@ -75,8 +73,6 @@ public:
 	const std::vector<DACE::vectordb> list_mu() const;
 	const unsigned int AUL_n_iter() const;
 	const unsigned int DDP_n_iter() const;
-	const std::vector<std::vector<DACE::vectordb>> list_x_mem() const;
-	const std::vector<std::vector<DACE::vectordb>> list_u_mem() const;
 
 	// Setters
 	void set_ToF(double const& ToF);

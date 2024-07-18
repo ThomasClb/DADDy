@@ -23,11 +23,11 @@
 
 // DACE vector conversion
 
-// Turns a vectordb into a vectorDA without perturbation
+// Turns a vectordb into a vectorDA without perturbation.
 DACE::vectorDA db_2_DA(
 	DACE::vectordb const& vector_db);
 
-// Turns a vectordb into a vectorDA with identity perturbation
+// Turns a vectordb into a vectorDA with identity perturbation.
 DACE::vectorDA id_vector(
 	DACE::vectordb const& vector_db,
 	unsigned int const& begin_index,
@@ -36,13 +36,13 @@ DACE::vectorDA id_vector(
 
 // Differentiation functions
 
-// Differentiates with respect to x, and u
+// Differentiates with respect to x, and u.
 std::vector<DACE::matrixdb> deriv_xu(
 	DACE::vectorDA const& f_eval,
 	unsigned int const& Nx, unsigned int const& Nu,
 	bool const& hessian_computation);
 
-// Differentiates with respect to x
+// Differentiates with respect to x.
 std::vector<DACE::matrixdb> deriv_x(
 	DACE::vectorDA const& f_eval,
 	unsigned int const& Nx,

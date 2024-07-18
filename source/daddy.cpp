@@ -48,8 +48,6 @@ const size_t DADDy::PN_n_iter() const { return PN_n_iter_; }
 const size_t DADDy::AUL_n_iter() const { return AUL_n_iter_; }
 const size_t DADDy::DDP_n_iter() const { return DDP_n_iter_; }
 
-
-
 // Computes the constraints with propagated dynamics.
 double DADDy::real_constraints(
 	vectordb const& x_goal) {
@@ -76,21 +74,18 @@ double DADDy::real_constraints(
 		vectordb u = PNsolver_.list_u()[i];
 
 		// Constraints evaluations
-		vectordb eq_eval = dynamics_.equality_constraints_db()(
+		vectordb eq = dynamics_.equality_constraints_db()(
 			x, u, spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
-		vectordb ineq_eval = dynamics_.inequality_constraints_db()(
+		vectordb ineq = dynamics_.inequality_constraints_db()(
 			x, u, spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
 
 		// Continuity constraints
 		vectordb x_kp1_eval = dynamics_.dynamic_db()(
 			x, u, spacecraft_parameters_, dynamics_.constants(), solver_parameters_) - PNsolver_.list_x()[i + 1];
 		x_kp1_eval[SIZE_VECTOR] /= spacecraft_parameters_.initial_mass(); // Normalize mass
-		eq_eval = eq_eval.concat(x_kp1_eval);
+		eq = eq.concat(x_kp1_eval);
 
-
-		// Assign
-		vectordb eq = eq_eval;
-		vectordb ineq = ineq_eval;
+		// Find max error
 		for (size_t j = 0; j < Neq + Nx; j++) {
 			if (max_norm < abs(eq[j]))
 				max_norm = abs(eq[j]);
@@ -107,14 +102,12 @@ double DADDy::real_constraints(
 	vectordb x = PNsolver_.list_x()[N];
 
 	// Constraints evaluations
-	vectordb teq_eval = dynamics_.terminal_equality_constraints_db()(
+	vectordb teq = dynamics_.terminal_equality_constraints_db()(
 		x, x_goal, spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
-	vectordb tineq_eval = dynamics_.terminal_inequality_constraints_db()(
+	vectordb tineq = dynamics_.terminal_inequality_constraints_db()(
 		x, x_goal, spacecraft_parameters_, dynamics_.constants(), solver_parameters_);
 
-	// Assign
-	vectordb teq = teq_eval;
-	vectordb tineq = tineq_eval;
+	// Find max error
 	for (size_t j = 0; j < Nteq; j++) {
 		if (max_norm < abs(teq[j]))
 			max_norm = abs(teq[j]);
@@ -149,8 +142,7 @@ void DADDy::solve(
 	vectordb homotopy_sequence = solver_parameters_.homotopy_coefficient_sequence();
 	vectordb huber_loss_coefficient_sequence = solver_parameters_.huber_loss_coefficient_sequence();
 	vector<vectordb> list_u_init_ = list_u_init;
-	AUL_n_iter_ = 0;
-	DDP_n_iter_ = 0;
+	AUL_n_iter_ = 0; DDP_n_iter_ = 0;
 	for (size_t i = 0; i < homotopy_sequence.size(); i++) {
 		AULsolver_.set_homotopy_coefficient(homotopy_sequence[i]);
 		AULsolver_.set_huber_loss_coefficient(huber_loss_coefficient_sequence[i]);

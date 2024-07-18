@@ -1,8 +1,7 @@
 /**
 	linalg.cpp
 
-	Purpose: Implementation of the linear algebra
-	methods.
+	Purpose: Implementation of the linear algebra methods.
 
 	@author Thomas Caleb
 
@@ -58,8 +57,8 @@ DACE::matrixdb make_diag_matrix_(DACE::vectordb const& diag);
 // Computes the trace of a matrix
 double trace_(DACE::matrixdb const& A);
 
-// Checks is a given symmetric matrix is positive-definite
-// Using the eigenvalue criterion: Sp(S) > 0 and S in sym <=> S is def pos
+// Checks if a given symmetric matrix is positive-definite
+// Using the eigenvalue criterion: Sp(S) > 0 and S is sym <=> S is sym def pos
 bool is_def_pos_(DACE::matrixdb const& S);
 
 // Computes the Frobenius norm of a matrix
@@ -84,7 +83,7 @@ DACE::matrixdb cholesky_(DACE::matrixdb const& S);
 // See https://en.wikipedia.org/wiki/Cholesky_decompositionsym_tridiag_matrix 
 // This algorithm adapted to triadiagonal matrices was copied from [Cao et al. 2002]
 // DOI: https://doi.org/10.1109/ICPPW.2002.1039748
-sym_tridiag_matrixdb cholesky_(sym_tridiag_matrixdb const& tridiag_S); // tridiag version
+sym_tridiag_matrixdb cholesky_(sym_tridiag_matrixdb const& tridiag_S);
 
 // Perfoms lower triangular system solving 
 DACE::vectordb forward_substitution_(

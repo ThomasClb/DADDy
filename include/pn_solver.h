@@ -81,13 +81,13 @@ public:
 	// Setters
 	void set_list_x_u();
 
-	// Solves the optimisation problem with a projected Newton method
-	// Inspired from ALTRO (Julia).
+	// Solves the optimisation problem with a projected Newton method.
+	// Inspired by ALTRO (Julia).
 	// See: https://github.com/RoboticExplorationLab/Altro.jl
 	void solve(DACE::vectordb const& x_goal);
 	
 	// Iterative line search for PN.
-	// Inspired from ALTRO (Julia).
+	// Inspired by ALTRO (Julia).
 	// See: https://github.com/RoboticExplorationLab/Altro.jl
 	double line_search_(
 		DACE::vectordb const& x_goal,
@@ -96,31 +96,33 @@ public:
 		DACE::vectordb const& d_0,
 		double const& violation_0);
 
-	// Computes the maximum constraints given eq in ineq constraints
+	// Computes the maximum constraints given eq in ineq constraints.
 	double get_max_constraint_(
 		DACE::vectordb const& EQ_INEQ);
 
-	// Computes the new constraints given states and controls
+	// Computes the new constraints given states and controls.
+	// Can recompute all DA maps and the dynamics.
+	// Updates the derivatives.
 	void update_constraints_(
 		DACE::vectordb const& x_goal, bool const& force_DA);
 
-	// Computes the new constraints given states and controls without DA
-	// Return the list of equalities, and inequalities
+	// Computes the new constraints given states and controls.
+	// Uses the DA mapping of the dynamics.
+	// Faster than update_constraints_.
 	DACE::vectordb update_constraints_double_(
 			DACE::vectordb const& x_goal,
 			DACE::vectordb const& X_U,
 			DACE::vectordb const& correction);
 
 	// Returns the vector of active constraints and their gradients
-	// first it the active constraints vector
-	// second is a pair with the list of gradients of constraints first
-	// second.second is the list of active constraints.
+	// - first it the active constraints vector.
+	// - second is a pair with the list of gradients of constraints first.
+	// - third is the list of active constraints.
 	linearised_constraints get_linearised_constraints_();
 
 	// Return the matrix Sigma = D_a * D_a^t 
-	// Where is D_a without the active constraints.
+	// Where D_a is the gradient of the active linearized constraints.
 	// Using tridiagonal symetric block computation.
-	// TO DO: add reference.
 	sym_tridiag_matrixdb get_block_sigma_sq_(
 		std::vector<DACE::matrixdb> const& block_Delta,
 		std::vector<std::vector<std::size_t>> const& list_active_index);

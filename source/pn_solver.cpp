@@ -100,19 +100,16 @@ void PNSolver::set_list_x_u() {
 	unsigned int Nx = solver_parameters_.Nx();
 	unsigned int Nu = solver_parameters_.Nu();
 
-	// Loop for x
-	for (size_t i=1; i< N + 1; i++) {
-		for (size_t j=0; j<Nx; j++)  {
-			list_x_[i][j] = X_U_[(i - 1)*(Nx + Nu) + Nu + j];
-		}
+	// Transfer data to the output lists
+	list_u_[0] = X_U_.extract( 0, Nu - 1);
+	for (size_t i=1; i< N; i++) {
+		list_x_[i] = X_U_.extract(
+			(i - 1) * (Nx + Nu) + Nu, (i - 1) * (Nx + Nu) + Nu + Nx - 1);
+		list_u_[i] = X_U_.extract(
+			i * (Nx + Nu), i * (Nx + Nu) + Nu - 1);
 	}
-
-	// Loop for u
-	for (size_t i=0; i<N; i++) {
-		for (size_t j=0; j<Nu; j++)  {
-			list_u_[i][j] = X_U_[i*(Nx + Nu) + j];
-		}
-	}
+	list_x_[N] = X_U_.extract(
+		(N - 1) * (Nx + Nu) + Nu, (N - 1) * (Nx + Nu) + Nu + Nx - 1);
 }
 
 // Solves the optimisation problem with a projected Newton method
@@ -147,10 +144,9 @@ void PNSolver::solve(vectordb const& x_goal) {
 
 	// Evaluate constraints
 	update_constraints_(x_goal, true);
-	double prev_violation = get_max_constraint_(EQ_INEQ_);
+	double violation = get_max_constraint_(EQ_INEQ_);
 
 	// Init loop
-	double violation(prev_violation);
 	double cv_rate = 1e15;
 	double duration = 0.0;
 	n_iter_ = 0;
@@ -165,7 +161,7 @@ void PNSolver::solve(vectordb const& x_goal) {
 			auto duration = duration_cast<microseconds>(stop - start);
 			string duration_str = to_string(static_cast<double>(duration.count()) / 1e6);
 			start = high_resolution_clock::now();
-			cout << i << " - " << prev_violation 
+			cout << i << " - " << violation
 				<< " - " << X_U_[X_U_.size() - 2] * constants.massu() 
 				<< " - " << cv_rate - 1 
 				<< " - " << duration_str<< endl;
@@ -175,7 +171,7 @@ void PNSolver::solve(vectordb const& x_goal) {
 				auto duration = duration_cast<microseconds>(stop - start);
 				string duration_str = to_string(static_cast<double>(duration.count()) / 1e6);
 				start = high_resolution_clock::now();
-				cout << i << " - " << prev_violation
+				cout << i << " - " << violation
 					<< " - " << X_U_[X_U_.size() - 2] * constants.massu() 
 					<< " - " << duration_str << endl;
 			}
@@ -186,7 +182,7 @@ void PNSolver::solve(vectordb const& x_goal) {
 			break;
 
 		// Update the constraints using DA
-		if (i != 0)
+		else if (i != 0)
 			update_constraints_(x_goal, false);
 
 		// Reset corrections
@@ -204,18 +200,18 @@ void PNSolver::solve(vectordb const& x_goal) {
 		sym_tridiag_matrixdb L = cholesky_(Sigma);
 
 		// Line search loop
-		cv_rate = 1e15; double violation_mem = prev_violation;
+		cv_rate = 1e15; double violation_0 = violation;
 		for (size_t j = 0; j < 10; j++) {
 			// Termination checks
 			if (violation < constraint_tol || cv_rate < cv_rate_threshold)
 				break;
 
 			// Line search
-			violation = line_search_(x_goal, L, block_D, get<0>(constraints), violation);
+			violation = line_search_(x_goal, L, block_D, get<0>(constraints), violation_0);
 
 			// Update cv_rate
-			cv_rate = log(violation) / log(prev_violation);
-			prev_violation = violation;
+			cv_rate = log(violation) / log(violation_0);
+			violation_0 = violation;
 		}
 	}
 	set_list_x_u(); // Print results in list_x, list_u
@@ -232,7 +228,6 @@ double PNSolver::line_search_(
 	vectordb const& d_0,
 	double const& violation_0) {
 	// Unpack
-	double constraint_tol = solver_parameters_.PN_tol();
 	size_t max_iter = solver_parameters_.PN_max_iter();
 	double alpha = solver_parameters_.PN_alpha();
 	double gamma = solver_parameters_.PN_gamma();
@@ -288,7 +283,7 @@ double PNSolver::line_search_(
 			X_U_ = X_U;
 			correction_ -= correction;
 			EQ_INEQ_ = EQ_INEQ;
-			break;
+			return violation;
 		}
 		else {
 			// Restore constraints
@@ -296,7 +291,7 @@ double PNSolver::line_search_(
 			correction *= gamma;
 		}
 	}
-	return violation;
+	return violation_0;
 }
 
 // Computes the maximum constraints given eq in ineq constraints
@@ -334,13 +329,15 @@ double PNSolver::get_max_constraint_(
 	return maximum;
 }
 
-// Computes the new constraints given states and controls
+// Computes the new constraints given states and controls.
+// Can recompute all DA maps and the dynamics.
+// Updates the derivatives.
 void PNSolver::update_constraints_(
 	vectordb const& x_goal,
 	bool const& force_DA) {
 	// Unpack
 	Constants constants = dynamics_.constants();
-	double tol = solver_parameters_.PN_tol()/10;
+	double tol = solver_parameters_.PN_active_constraint_tol();
 	unsigned int N = solver_parameters_.N();
 	unsigned int Nx = solver_parameters_.Nx();
 	unsigned int Nu = solver_parameters_.Nu();
@@ -482,15 +479,16 @@ void PNSolver::update_constraints_(
 	der_EQ_INEQ_[6*N + 3] = der_tineq[1];
 }
 
-// Computes the new constraints given states and controls in double
-// Return the list of equalities, and inequalities
+// Computes the new constraints given states and controls.
+// Uses the DA mapping of the dynamics.
+// Faster than update_constraints_.
 vectordb PNSolver::update_constraints_double_(
 	vectordb const& x_goal,
 	vectordb const& X_U,
 	vectordb const& correction) {
 	// Unpack
 	Constants constants = dynamics_.constants();
-	double tol = solver_parameters_.PN_tol()/10;
+	double tol = solver_parameters_.PN_active_constraint_tol();
 	unsigned int N = solver_parameters_.N();
 	unsigned int Nx = solver_parameters_.Nx();
 	unsigned int Nu = solver_parameters_.Nu();
@@ -510,8 +508,8 @@ vectordb PNSolver::update_constraints_double_(
 	for (size_t i = 0; i < N; i++) {
 
 		// Get x, u, xp1, du, dx
+		u = X_U.extract(i * (Nu + Nx), i * (Nu + Nx) + Nu - 1);
 		for (size_t j=0; j<Nu; j++) {
-			u[j] = X_U[i*(Nu + Nx) + j];
 			dx_u[Nx + j] = corr[i*(Nu + Nx) + j];
 		}
 		if (i == 0) {
@@ -520,12 +518,13 @@ vectordb PNSolver::update_constraints_double_(
 				dx_u[j] = 0.0;
 			}
 		}
-		else
+		else {
+			x = X_U.extract((i - 1) * (Nu + Nx) + Nu, (i - 1) * (Nu + Nx) + Nu + Nx - 1);
 			for (size_t j=0; j<Nx; j++) {
-				x[j] = X_U[(i - 1)*(Nu + Nx) + Nu + j];
 				dx_u[j] = corr[(i - 1)*(Nu + Nx) + Nu + j];
 			}
-		for (size_t j=0; j<Nx; j++) {xp1[j] = X_U[i*(Nu + Nx) + Nu + j];}
+		}
+		xp1 = X_U.extract(i * (Nu + Nx) + Nu, i * (Nu + Nx) + Nu + Nx - 1);
 	
 		// Constraints evaluations
 		vectordb eq_eval = dynamics_.equality_constraints_db()(
@@ -542,12 +541,12 @@ vectordb PNSolver::update_constraints_double_(
 		double norm = dx_u.vnorm();
 
 		// Compiute the next step
-		vectordb x_kp1_eval(-xp1);
+		vectordb x_kp1_eval;
 		if (norm < radius)
-			x_kp1_eval += dynamics_eval.eval(dx_u);			
+			x_kp1_eval = dynamics_eval.eval(dx_u) - xp1;
 		else
-			x_kp1_eval += dynamics_.dynamic_db()(
-				x, u, spacecraft_parameters_, constants, solver_parameters_);
+			x_kp1_eval = dynamics_.dynamic_db()(
+				x, u, spacecraft_parameters_, constants, solver_parameters_) - xp1;
 
 		// Assign
 		for (size_t k = 0; k < Neq; k++) {
@@ -561,7 +560,7 @@ vectordb PNSolver::update_constraints_double_(
 	// Update terminal constraints
 
 	// Get x_f
-	for (size_t j=0; j<Nx; j++) {x[j] = X_U[(N - 1)*(Nu + Nx) + Nu + j];}
+	x = X_U.extract((N - 1) * (Nu + Nx) + Nu, (N - 1) * (Nu + Nx) + Nu + Nx - 1);
 
 	// Constraints evaluations
 	vectordb teq_eval = dynamics_.terminal_equality_constraints_db()(
@@ -577,10 +576,10 @@ vectordb PNSolver::update_constraints_double_(
 	return EQ_INEQ;
 }
 
-// Returns the tuple of active constraints, their gradients, and the index of the active ones
-// first it the active constraints vector
-// second is the list of gradients of constraints
-// third is the list of the index of active constraints.
+// Returns the vector of active constraints and their gradients
+// - first it the active constraints vector.
+// - second is a pair with the list of gradients of constraints first.
+// - third is the list of active constraints.
 linearised_constraints PNSolver::get_linearised_constraints_() {
 	// Unpack
 	unsigned int N = solver_parameters_.N();
@@ -786,9 +785,8 @@ linearised_constraints PNSolver::get_linearised_constraints_() {
 }
 
 // Return the matrix Sigma = D_a * D_a^t 
-// Where is D_a without the active constraints.
+// Where D_a is the gradient of the active linearized constraints.
 // Using tridiagonal symetric block computation.
-// TO DO: add reference.
 sym_tridiag_matrixdb PNSolver::get_block_sigma_sq_(
 	vector<matrixdb> const& block_Delta,
 	vector<vector<size_t>> const& list_active_index) {
