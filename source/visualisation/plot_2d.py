@@ -81,13 +81,13 @@ def plot_system_points(dataset, axis_0, axis_1, ax,
         if list_plots[2]: # Lagrange point 1
             ax.scatter(coord_L1[axis_0], coord_L1[axis_1],
                        color=list_colors[2], marker=list_markers[2])
-            ax.text(coord_L1[axis_0], coord_L1[axis_1],
+            ax.text(coord_L1[axis_0]+0.02, coord_L1[axis_1]-0.075,
                     " $L_1$")
         
         if list_plots[3]: # Lagrange point 2
             ax.scatter(coord_L2[axis_0], coord_L2[axis_1],
                        color=list_colors[3], marker=list_markers[3])  
-            ax.text(coord_L2[axis_0], coord_L2[axis_1],
+            ax.text(coord_L2[axis_0]-0.1, coord_L2[axis_1]-0.075,
                     " $L_2$")
         
 """
@@ -116,7 +116,7 @@ def plot_departure_arrival(dataset, axis_0, axis_1, ax,
     ax.scatter(data_state[axis_0, -1], data_state[axis_1, -1],
                color=list_colors[1], marker=list_markers[1])
     ax.text(data_state[axis_0, -1], data_state[axis_1, -1],
-            " $x_f$")
+            " $x_t$")
     
 """
     Plots the thrust vectors along the trajectory.
@@ -240,7 +240,7 @@ def plot_2d(dataset):
     show_grid = True
     save_figure = True
     saving_format = "pdf"
-    show_plot = True
+    show_plot = False
 
     # Get data
     nb_dataets = len(dataset.list_dataset_names)
@@ -306,6 +306,7 @@ def plot_2d(dataset):
     ax.plot(coord_0, coord_1,
             color=color_trajectory,
             label='Trajectory')
+    fig.tight_layout(pad=0.2)
     
     if show_grid:
         plt.grid()
@@ -325,7 +326,7 @@ def plot_2d(dataset):
             ".dat", signature)
         
         # Save
-        plt.savefig(file_name)    
+        plt.savefig(file_name, bbox_inches='tight')    
        
     if show_plot:   
         plt.show()

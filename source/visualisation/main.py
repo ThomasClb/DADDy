@@ -17,8 +17,8 @@ from plot_2d import plot_2d
 from plot_thrust_profile import plot_thrust_profile
 from plot_keplerians import plot_keplerian, plot_keplerians
 from plot_double_integrator import plot_double_integrator
-
-
+import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 15})
 
 """
     Returns a dataset from a filename.

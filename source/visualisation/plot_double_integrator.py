@@ -41,7 +41,7 @@ def plot_double_integrator_u(dataset):
     show_grid = True
     save_figure = True
     saving_format = "pdf"
-    show_plot = True
+    show_plot = False
 
     # Get data
     nb_dataets = len(dataset.list_dataset_names)
@@ -95,6 +95,7 @@ def plot_double_integrator_u(dataset):
             color=list_colors[2],
             marker=list_markers[2],
             label=list_names_control[3][1:])
+    fig.tight_layout(pad=0.2)
     
     if show_grid:
         ax1.grid()
@@ -113,7 +114,7 @@ def plot_double_integrator_u(dataset):
             ".dat", signature)
         
         # Save
-        plt.savefig(file_name)    
+        plt.savefig(file_name, bbox_inches='tight')    
        
     if show_plot:   
         plt.show()
@@ -138,7 +139,7 @@ def plot_double_integrator_x(dataset):
     show_grid = True
     save_figure = True
     saving_format = "pdf"
-    show_plot = True
+    show_plot = False
 
     # Get data
     nb_dataets = len(dataset.list_dataset_names)
@@ -194,7 +195,8 @@ def plot_double_integrator_x(dataset):
             color=list_colors[2],
             marker=list_markers[2],
             label=list_names_state[3][1:])
-    
+    fig.tight_layout(pad=0.2)
+
     if show_grid:
         ax2.grid()
     
@@ -212,7 +214,7 @@ def plot_double_integrator_x(dataset):
             ".dat", signature)
         
         # Save
-        plt.savefig(file_name)    
+        plt.savefig(file_name, bbox_inches='tight')    
        
     if show_plot:   
         plt.show()
@@ -243,7 +245,7 @@ def plot_double_integrator(dataset):
     show_grid = True
     save_figure = True
     saving_format = "pdf"
-    show_plot = True
+    show_plot = False
 
     # Get data
     nb_dataets = len(dataset.list_dataset_names)
@@ -313,6 +315,7 @@ def plot_double_integrator(dataset):
             color=list_colors[2],
             marker=list_markers[2],
             label=list_names_state[3][1:])
+    fig.tight_layout(pad=0.2)
     
     if show_grid:
         ax1.grid()
@@ -333,7 +336,7 @@ def plot_double_integrator(dataset):
             ".dat", signature)
         
         # Save
-        plt.savefig(file_name)    
+        plt.savefig(file_name, bbox_inches='tight')    
        
     if show_plot:   
         plt.show()

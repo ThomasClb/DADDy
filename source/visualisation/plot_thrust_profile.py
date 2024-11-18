@@ -71,7 +71,7 @@ def plot_thrust_profile(dataset):
     show_grid = True
     save_figure = True
     saving_format = "pdf"
-    show_plot = True
+    show_plot = False
     
     # Retreive data
     nb_dataets = len(dataset.list_dataset_names)
@@ -129,6 +129,7 @@ def plot_thrust_profile(dataset):
     plot_stairs_profile(dt, u*0 + max_trust, ax,
                         label_thrust_max, color_thrust_max,
                         linestyle_thrust_max)
+    fig.tight_layout(pad=0.2)
     
     if show_grid:
         plt.grid()
@@ -147,7 +148,7 @@ def plot_thrust_profile(dataset):
             ".dat", signature)
         
         # Save
-        plt.savefig(file_name)    
+        plt.savefig(file_name, bbox_inches='tight')    
        
     if show_plot:   
         plt.show()

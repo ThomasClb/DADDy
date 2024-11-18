@@ -386,7 +386,7 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 // It takes at input [3*LU, 3*VU, MASSU, TU], [3*N], TU, SpacecraftParameters.
 // It returns [3*VU, 3*VU/TU, MASSU/TU, 1].
 // See [Poincaré 1892]:
-// Les Méthodes Nouvelles de la Mécanique Céleste
+// Les Méthodes Nouvelles de la Mécanique Céleste.
 template<typename T>
 DACE::AlgebraicVector<T>  acceleration_cr3bp_lt(
 	DACE::AlgebraicVector<T>  const& state_vector,
@@ -741,7 +741,7 @@ DACE::AlgebraicVector<T> terminal_equality_constraints(
 
 // Returns the terminal equality constraints given
 // the current state, the target state and the parameters.
-// Final difference, without true longitudes.
+// Final difference, without true longitude.
 template<typename T>
 DACE::AlgebraicVector<T> terminal_equality_constraints_equinoctial(
 	DACE::AlgebraicVector<T> const& x, DACE::vectordb const& x_goal,

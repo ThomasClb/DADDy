@@ -116,7 +116,7 @@ def plot_departure_arrival(dataset, ax,
     ax.scatter(data_state[0, -1], data_state[1, -1], data_state[2, -1],
                color=list_colors[1], marker=list_markers[1])
     ax.text(data_state[0, -1], data_state[1, -1], data_state[2, -1],
-            " $x_f$")
+            " $x_t$")
    
 """
     Plots the thrust vectors along the trajectory.
@@ -249,7 +249,7 @@ def plot_3d(dataset):
     show_grid = True
     save_figure = True
     saving_format = "pdf"
-    show_plot = True
+    show_plot = False
 
     # Get data
     nb_dataets = len(dataset.list_dataset_names)

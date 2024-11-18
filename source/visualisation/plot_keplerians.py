@@ -110,7 +110,7 @@ def plot_keplerian(dataset):
     show_grid = True
     save_figure = True
     saving_format = "pdf"
-    show_plot = True
+    show_plot = False
     
     # Retreive data
     nb_dataets = len(dataset.list_dataset_names)
@@ -196,6 +196,7 @@ def plot_keplerian(dataset):
     ax.plot(t, y, color=color)
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
+    fig.tight_layout(pad=0.3)
 
     if show_grid:
         plt.grid()
@@ -214,7 +215,7 @@ def plot_keplerian(dataset):
             ".dat", signature)
         
         # Save
-        plt.savefig(file_name)    
+        plt.savefig(file_name, bbox_inches='tight')    
        
     if show_plot:   
         plt.show()
@@ -231,7 +232,7 @@ def plot_keplerians(dataset):
     dpi = 200
     
     # Keplerian selection
-    list_coordinate = [0, 1, 2, 3]
+    list_coordinate = [0, 2, 3]
     color = "black"
     
     # Normalisation
@@ -246,7 +247,7 @@ def plot_keplerians(dataset):
     show_grid = True
     save_figure = True
     saving_format = "pdf"
-    show_plot = True
+    show_plot = False
     
     # Retreive data
     nb_dataets = len(dataset.list_dataset_names)
@@ -333,31 +334,37 @@ def plot_keplerians(dataset):
         list_index = [(0)]
         shape = (len(list_coordinate), 1)
         fig, ax = plt.subplots(shape[0], shape[1],dpi=dpi)
+        fig.tight_layout(pad=0.3)
         
     elif len(list_coordinate) == 2:
         list_index = [(0), (1)]
         shape = (len(list_coordinate), 1)
         fig, ax = plt.subplots(shape[0], shape[1],dpi=dpi)
+        fig.tight_layout(pad=0.3)
 
     elif len(list_coordinate) == 3:
         list_index = [(0), (1), (2)]
         shape = (len(list_coordinate), 1)
         fig, ax = plt.subplots(shape[0], shape[1],dpi=dpi)
+        fig.tight_layout(pad=0.3)
         
     elif len(list_coordinate) == 4:
         list_index = [(0, 0), (1, 0), (0, 1), (1, 1)]
         shape = (2, 2)
         fig, ax = plt.subplots(shape[0], shape[1],dpi=dpi)
+        fig.tight_layout(pad=0.3)
         
     elif len(list_coordinate) == 5:
         list_index = [(0, 0), (1, 0), (2, 0), (0, 1), (1, 1)]
         shape = (3, 2)
         fig, ax = plt.subplots(shape[0], shape[1],dpi=dpi)
+        fig.tight_layout(pad=0.3)
         
     elif len(list_coordinate) == 6:
         list_index = [(0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (2, 1)]
         shape = (3, 2)
         fig, ax = plt.subplots(shape[0], shape[1],dpi=dpi)
+        fig.tight_layout(pad=0.3)
 
     # Make plot
     for i, y in enumerate(list_y):
@@ -365,7 +372,8 @@ def plot_keplerians(dataset):
         ax_i.plot(t, y, color=color)
         ax_i.set_xlabel(x_label)
         ax_i.set_ylabel(list_y_label[i])
-    fig.tight_layout()
+    
+
     if show_grid:
         plt.grid()
     
@@ -386,7 +394,7 @@ def plot_keplerians(dataset):
             ".dat", signature)
         
         # Save
-        plt.savefig(file_name)    
+        plt.savefig(file_name,bbox_inches='tight')    
        
     if show_plot:   
         plt.show()
