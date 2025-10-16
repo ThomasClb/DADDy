@@ -36,9 +36,9 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro(
 	double PN_tol = 1e-10;
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int max_iter = 10000;
-	unsigned int DDP_max_iter = 200;
+	unsigned int DDP_max_iter = 500;
 	unsigned int AUL_max_iter = 200;
-	unsigned int PN_max_iter = 200;
+	unsigned int PN_max_iter = 2000;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
 	vectordb line_search_parameters{1e-8, 10.0, 0.5, 20};
@@ -52,43 +52,19 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro(
 	vectordb huber_loss_coefficient_sequence{1e-2, 1e-3};
 
 	// Split cases
-	if (T2m_ratio == 5e-4) {  // OK
-		if (ToF >= 37.5) { // OK 3 revs
-			DDP_max_iter = 400;
-			cost_to_go_gain = 1e-2;
-			AUL_tol = 1e-8;
-			DDP_tol = 1e-4;
-			homotopy_sequence = vectordb{0, 0.5, 0.95, 0.999};
-			huber_loss_coefficient_sequence = vectordb{1e-2, 5e-3, 1e-3, 1e-4};
-		}
-		if (ToF == 33) { // OK 2 revs 
-			homotopy_sequence = vectordb{0, 0.75, 0.95, 0.999};
-			huber_loss_coefficient_sequence = vectordb{1e-2, 1e-3, 5e-4, 1e-4};
-		}
-		else if (ToF == 17.5) { // OK 1 revs 
-			homotopy_sequence = vectordb{0, 0.85, 1};
-			huber_loss_coefficient_sequence = vectordb{1e-2, 1e-3, 1e-4};
-		}
+	if (ToF >= 37.5) { // OK 3 revs
+		terminal_cost_gain = 1e5;
+		cost_to_go_gain = 1e-1;
+		homotopy_sequence = vectordb{0, 0.95, 0.999};
+		huber_loss_coefficient_sequence = vectordb{1e-2, 1e-3, 5e-4};
 	}
-	if (T2m_ratio == 1e-4) { // OK
-
-		if (ToF >= 37.5) { // OK 3 revs
-			DDP_max_iter = 400;
-			AUL_max_iter = 50;
-			cost_to_go_gain = 1e-7;
-			AUL_tol = 1e-8;
-			DDP_tol = 1e-4;
-			homotopy_sequence = vectordb{0, 0.5, 0.75, 0.95, 0.999};
-			huber_loss_coefficient_sequence = vectordb{1e-2, 1e-2, 5e-3, 1e-3, 5e-4};
-		}
-		else if (ToF == 33) { // OK 2 revs
-			homotopy_sequence = vectordb{0, 0.5, 0.99};
-			huber_loss_coefficient_sequence = vectordb{1e-2, 1e-3, 5e-4};
-		}
-		else if (ToF == 17.5) { // OK 1 revs
-			homotopy_sequence = vectordb{0, 0.85, 0.999};
-			huber_loss_coefficient_sequence = vectordb{1e-2, 1e-3, 1e-4};
-		}
+	if (ToF == 33) { // OK 2 revs
+		homotopy_sequence = vectordb{0, 0.75, 0.95, 0.999};
+		huber_loss_coefficient_sequence = vectordb{1e-2, 1e-3, 5e-4, 1e-4};
+	}
+	else if (ToF == 17.5) { // OK 1 revs 
+		homotopy_sequence = vectordb{0, 0.85, 1};
+		huber_loss_coefficient_sequence = vectordb{1e-2, 1e-3, 1e-4};
 	}
 
 	return SolverParameters(

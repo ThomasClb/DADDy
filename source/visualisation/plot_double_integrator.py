@@ -174,7 +174,7 @@ def plot_double_integrator_x(dataset):
 
 
     # Create plot
-    fig, (ax2) = plt.subplots(1, 1, dpi=dpi)
+    fig, ax2 = plt.subplots(1, 1, dpi=dpi)
 
     # Set labels
     ax2.set_xlabel("Stage [-]")

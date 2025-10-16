@@ -29,6 +29,8 @@ void print_dataset(
 	std::vector<std::vector<std::string>> const& list_title,
 	std::vector<std::vector<DACE::vectordb>> const& list_data);
 
+DACE::matrixdb read_dataset(std::ifstream& ifs);
+
 // Function to propagate a vector without control.
 std::vector<DACE::vectordb> get_reference_trajectory(
 	DACE::vectordb const& x_0,

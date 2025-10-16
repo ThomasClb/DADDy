@@ -232,7 +232,7 @@ def plot_keplerians(dataset):
     dpi = 200
     
     # Keplerian selection
-    list_coordinate = [0, 2, 3]
+    list_coordinate = [0, 1, 2]
     color = "black"
     
     # Normalisation

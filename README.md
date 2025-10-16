@@ -1,5 +1,6 @@
 # DADDy
 A constrained Differential Algebra-based Differential Dynamic programming solver.
+Based on the DADDy solver: https://github.com/ThomasClb/DADDy.
 
 ## Requirements
 To use the DADDy code, you need a C++11 compiler.

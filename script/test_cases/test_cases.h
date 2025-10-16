@@ -34,6 +34,13 @@ void save_control(
 	std::string const& file_name,
 	std::vector<DACE::vectordb> const& list_u);
 std::vector<DACE::vectordb> load_control(std::string const& file_name);
+std::pair<std::vector<DACE::vectordb>, std::vector<DACE::vectordb>> load_dataset(
+	std::string const& file_name,
+	double const& ToF,
+	Dynamics const& dynamics,
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
+	SolverParameters const& solver_parameters);
 
 // Runs the selected test case.
 void run_test_cases(int argc, char** argv);

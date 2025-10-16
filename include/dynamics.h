@@ -24,6 +24,7 @@
 
 #include "settings.h"
 #include "constants.h"
+#include "linalg.h"
 #include "parameters.h"
 #include "integration.h"
 
@@ -305,6 +306,7 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 	T u_R = u[0]; 
 	T u_T = u[1];
 	T u_N = u[2];
+	T inv_mass = 1 / x[6];
 
 	// Init output
 	DACE::AlgebraicVector<T> output(SIZE_VECTOR + 2);
@@ -323,9 +325,9 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 	T Q_2_cos_L = Q_2 * cos_L;
 	T Q_2_sin_L = Q_2 * sin_L;
 	T Q_1_cos_L_m_Q_2_sin_L = Q_1_cos_L - Q_2_sin_L;
-	T pert_R = u_R;
-	T pert_T = u_T;
-	T pert_N = u_N;
+	T pert_R = u_R * inv_mass;
+	T pert_T = u_T * inv_mass;
+	T pert_N = u_N * inv_mass;
 
 	// J2
 	if (with_J2) {
@@ -360,10 +362,6 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 	T d_Q_2 = d_Q * cos_L;
 	T d_L = Phi_L * Phi_L * pow(B, -3.0) / sqrt_a_mu  // Mean motion
 		- sma * sqrt_a_mu * B * inv_Phi_L * Q_1_cos_L_m_Q_2_sin_L * pert_N;
-
-	// Thrust
-	T inv_mass = 1 / x[6];
-	DACE::AlgebraicVector<T> acc_thrust = inv_mass * u;
 
 	// dm [MASSU/LU]
 	T thrust_norm = u.vnorm();
@@ -781,9 +779,19 @@ DACE::vectordb kep_2_cart(
 	DACE::vectordb const& kep_state_vector,
 	double const& mu);
 
+// Transforms a cartesian state vector into a keplerian one.
+DACE::vectordb cart_2_kep(
+	DACE::vectordb const& cart_state_vector,
+	double const& mu);
+
 // Transforms coordinates in the RTN reference frame into cartesian coordinates.
 DACE::vectordb RTN_2_cart(
 	DACE::vectordb const& RTN_vector,
+	DACE::vectordb const& cart_state_vector);
+
+// Transforms coordinates cartesian coordinates into the RTN reference frame.
+DACE::vectordb cart_2_RTN(
+	DACE::vectordb const& cart_vector,
 	DACE::vectordb const& cart_state_vector);
 
 // Returns dynamics with accelerations.

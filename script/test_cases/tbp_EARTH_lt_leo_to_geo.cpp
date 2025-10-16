@@ -25,18 +25,22 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
 	unsigned int Nteq = 5;
 	unsigned int Ntineq = 0;
 	bool with_J2 = false;
-	double cost_to_go_gain = 1e-5;
-	double terminal_cost_gain = 1e5;
+	double cost_to_go_gain = 1e-4; // 1e-5
+	double terminal_cost_gain = 1e5; // 1e-5
 	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-3;
 	vectordb homotopy_sequence{0, 0.5, 0.9, 0.99};
 	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 5e-3, 1e-3};
+
+	homotopy_sequence = vectordb{0, 0.5};
+	huber_loss_coefficient_sequence = vectordb{1e-2, 1e-2};
+
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6; 
 	double PN_tol = 1e-10;
 	double PN_active_constraint_tol = 1e-11;
-	unsigned int DDP_max_iter = 200;
+	unsigned int DDP_max_iter = 400;
 	unsigned int AUL_max_iter = 200;
 	unsigned int PN_max_iter = 200;
 	vectordb lambda_parameters{0.0, 1e8};
@@ -126,7 +130,12 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	ToF = ToF / SEC2DAYS / tu; // [TU]
 	double dt = ToF / N; // [TU]
 	double altitude = 400;
+
+
 	double r_p = R_EARTH + altitude;
+
+	r_p = 6846.8;
+
 	vectordb x_departure{ // Kep coordinates
 		(lu + r_p) / 2.0 / lu, (lu - r_p) / (lu + r_p),
 		0 * DEG_2_RAD, 135 * DEG_2_RAD,
@@ -134,9 +143,13 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 		spacecraft_parameters.initial_mass(), 2 * PI};
 	vectordb x_arrival{ // Kep coordinates
 		lu / lu, 0,
-		0 * DEG_2_RAD, 135 * DEG_2_RAD,
+		0 * DEG_2_RAD, 0 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
 		spacecraft_parameters.dry_mass(), 2*PI};
+
+	x_departure[2] = 7 * DEG_2_RAD;
+	x_departure[3] = 0 * DEG_2_RAD;
+
 	x_departure = kep_2_equi(x_departure); // Equinoctial coordinates
 	x_arrival = kep_2_equi(x_arrival);
 	vectordb x0 = x_departure; x0[Nx - 1] = dt; // Time step
@@ -146,6 +159,30 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	vectordb u_init(Nu, 1e-6 / thrustu); // [VU]
 	vector<vectordb> list_u_init(N, u_init);
 	
+	string file_name = "./data/datasets/tbp_EARTH_lt_leo_to_geo";
+	/*
+	pair<vector<vectordb>, vector<vectordb>> traj = load_dataset(
+		file_name, ToF,
+		dynamics, spacecraft_parameters, constants, solver_parameters);
+
+	vector<vectordb> list_x_ = traj.first;
+	vector<vectordb> list_u_ = traj.second;
+	for (size_t i = 0; i < list_u_init.size(); i++) {
+		// Unpack
+		vectordb x_i = list_x_[i];
+		vectordb u_i = list_u_[i];
+
+		// Convert to cartesian
+		x_i = cart_2_kep(x_i, mu); // Convert to Keplerian
+		x_i = kep_2_equi(x_i); // Convert to Equinoctial
+		u_i = cart_2_RTN(u_i, list_x_[i]);
+
+		// Assign
+		list_u_[i] = u_i;
+		list_x_[i] = x_i;
+	}
+	list_u_init = list_u_;*/
+
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
 	cout.precision(5);
@@ -202,7 +239,7 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 		}
 		list_x[list_u.size()] = kep_2_cart(equi_2_kep(list_x[list_u.size()]), mu);
 
-		string file_name = "./data/datasets/tbp_EARTH_lt_leo_to_geo";
+		
 		string system_name = "TBP EARTH EQUINOCTIAL LT";
 		print_transfer_dataset(
 			file_name, system_name,

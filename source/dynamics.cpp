@@ -308,6 +308,83 @@ vectordb kep_2_cart(vectordb const& kep_state_vector, double const& mu) {
 	return output;
 }
 
+// Transforms a cartesian state vector into a keplerian one.
+vectordb cart_2_kep(
+	vectordb const& cart_state_vector,
+	double const& mu) {
+	// Unpack
+	vectordb r(cart_state_vector.extract(0, SIZE_VECTOR/2 - 1));
+	vectordb v(cart_state_vector.extract(SIZE_VECTOR/2, SIZE_VECTOR - 1));
+	
+	// Get moment and n
+	vectordb h(r.cross(v));
+	vectordb k{0, 0, 1};
+	vectordb n(k.cross(h));
+
+	// Compute norms
+	double r_norm = r.vnorm();
+	double v_norm = v.vnorm();
+	double h_norm = h.vnorm();
+	double n_norm = n.vnorm();
+
+	// Specific NRJ spécifique ε = v²/2 – μ/r
+    double epsilon = 0.5*v_norm*v_norm - mu/r_norm;
+
+	// SMA
+	double a = -mu/(2.0*epsilon);
+
+	// Eccentricity
+	double dot_r_v = r.dot(v);
+	vectordb e_vec = (v_norm*v_norm - mu/r_norm)*r/mu - dot_r_v*v;
+    double e = e_vec.vnorm();
+
+	// Inclinaison
+	double i = acos(h[2]/h_norm);
+
+	// RAAN
+	double Omega = 0.0;
+    if (n_norm > 1e-12) {                    
+        Omega = atan2(n[1], n[0]);
+        Omega = wrap_mod(Omega, 2*PI);
+    }
+
+	// omega
+	double omega = 0.0;
+    if (n_norm > 1e-12 && e > 1e-12) {
+        // ω = atan2( (h·(n×e))/h , n·e )
+        vectordb n_cross_e = n.cross(e_vec);
+        double sin_omega = n_cross_e.dot(h) / (h_norm * e);
+        double cos_omega = n.dot(e_vec) / (n_norm * e);
+        omega = atan2(sin_omega, cos_omega);
+        omega = wrap_mod(omega, 2*PI);
+    }
+
+	// True anomaly
+	double nu = 0.0;
+    if (e > 1e-12) {
+        double cos_nu = e_vec.dot(r) / (e * r_norm);
+        double sin_nu = (e_vec.cross(r)).dot(h) / (h_norm * e * r_norm);
+        nu = atan2(sin_nu, cos_nu);
+        nu = wrap_mod(nu, 2*PI);
+    } else {
+        // circular case
+        vectordb r_hat = r / r_norm;
+        vectordb v_hat = v / v_norm;
+        double cos_nu = r_hat.dot(v_hat);
+        double sin_nu = (r_hat.cross(v_hat)).dot(h) / h_norm;
+        nu = atan2(sin_nu, cos_nu);
+        nu = wrap_mod(nu, 2*PI);
+    }
+
+	// Eccetric anomaly
+	double E = 2*atan(sqrt((1-e)/(1+e))*tan(nu/2));
+
+	// Mean anomaly
+	double M = E - e*sin(E);
+
+	return vectordb{a, e, i, Omega, omega, M};
+}
+
 // Transforms RTN reference frame into cartesian coordinates.
 vectordb RTN_2_cart(
 	vectordb const& RTN_vector,
@@ -328,6 +405,29 @@ vectordb RTN_2_cart(
 	matrix.setcol(2, N);
 
 	return matrix * RTN_vector;
+}
+
+// Transforms cartesian coordinates into RTN reference frame.
+vectordb cart_2_RTN(
+	vectordb const& cart_vector,
+	vectordb const& cart_state_vector) {
+
+	// Unpack
+	vectordb r = cart_state_vector.extract(0, 2);
+	vectordb v = cart_state_vector.extract(3, 5);
+
+	// Make RTN triade
+	vectordb N = (r.cross(v)).normalize(); // Angular momentum
+	vectordb T = v.normalize();
+	vectordb R = (T.cross(N)).normalize();
+
+	// Make matrix
+	matrixdb matrix(R.size());
+	matrix.setcol(0, R);
+	matrix.setcol(1, T);
+	matrix.setcol(2, N);
+
+	return matrix.transpose() * cart_vector;
 }
 
 // Returns dynamics of double integrator problem.

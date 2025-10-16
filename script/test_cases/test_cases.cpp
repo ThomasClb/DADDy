@@ -58,6 +58,57 @@ vector<vectordb> load_control(std::string const& file_name) {
 	return list_u;
 }
 
+pair<vector<vectordb>, vector<vectordb>> load_dataset(
+	string const& file_name,
+	double const& ToF,
+	Dynamics const& dynamics,
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
+	SolverParameters const& solver_parameters) {
+
+	// Make file name
+	int power = 9;
+	double thrust_mass = ((spacecraft_parameters.thrust() * spacecraft_parameters.constants().thrustu()
+		/ (spacecraft_parameters.initial_mass() * spacecraft_parameters.constants().massu())
+		) * pow(10.0, power));
+	int exposant = log10(thrust_mass);
+	int mantisse = static_cast<int>(thrust_mass) / static_cast<int>(pow(10, exposant));
+	string str_T2m = to_string(mantisse) + "e" + to_string(exposant - power);
+	string file_name_ = file_name + "_"
+		+ str_T2m + "_"
+		+ to_string((int)(ToF*spacecraft_parameters.constants().tu()*SEC2DAYS)) + "_"
+		+ to_string(solver_parameters.DDP_type())
+		+ ".dat";
+
+	cout << file_name_ << endl;
+
+	// Open file
+	ifstream ifs(file_name_);
+
+	// Skip preamble
+	string buffer_str;
+	for (size_t i=0; i<13; i++) {getline(ifs, buffer_str);}
+
+	// Skip states
+	matrixdb buff_mat;
+	vector<vectordb> list_x, list_u;
+
+	// Read state
+	buff_mat = read_dataset(ifs);
+	for (size_t i=0; i<buff_mat.nrows(); i++) {
+		list_x.emplace_back(buff_mat.getrow(i));
+	}
+
+	// Read control
+	buff_mat = read_dataset(ifs);
+	for (size_t i=0; i<buff_mat.nrows(); i++) {
+		list_u.emplace_back(buff_mat.getrow(i));
+	}
+
+	ifs.close();
+	return pair<vector<vectordb>, vector<vectordb>>(list_x, list_u);
+}
+
 // Runs the selected test case.
 void run_test_cases(int argc, char** argv) {
 

@@ -13,6 +13,21 @@
 using namespace DACE;
 using namespace std;
 
+// Splits a string into substring.
+vector<string> split(string s, string delimiter) {
+    size_t pos_start = 0, pos_end, delim_len = delimiter.length();
+    string token;
+    vector<string> res;
+    while ((pos_end = s.find(delimiter, pos_start)) != string::npos) {
+        token = s.substr (pos_start, pos_end - pos_start);
+        pos_start = pos_end + delim_len;
+        res.push_back (token);
+    }
+    res.push_back (s.substr (pos_start));
+    return res;
+}
+
+
 // Function to print a dataset at a given name in order to
 // produce python visuals.
 void print_dataset(
@@ -63,6 +78,43 @@ void print_dataset(
 	}
 	ofs.close();
 	return;
+}
+
+// Reads a dataset
+matrixdb read_dataset(ifstream& ifs) {
+	// Init
+	string buffer_str;
+	string delimiter(", ");
+
+	// Skip header
+	getline(ifs, buffer_str);
+
+	// Get n_rows, n_cols
+	getline(ifs, buffer_str);
+	vector<string> list_str = split(buffer_str, delimiter);
+	unsigned int n_rows(stoi(list_str[0])), n_cols(stoi(list_str[1]));
+
+	// Skip header
+	getline(ifs, buffer_str);
+
+	// Init
+	matrixdb output(n_rows, n_cols);
+
+	// Get nominal controls
+	vectordb row(n_cols);
+	for (size_t i=0; i<n_rows; i++) {
+		// Get string
+		getline(ifs, buffer_str);
+		list_str = split(buffer_str, delimiter);
+
+		// Assign
+		for (size_t j=0; j<n_cols; j++) {
+			row[j] = stod(list_str[j]);
+			
+		}
+		output.setrow(i, row);
+	}
+	return output;
 }
 
 // Function to propagate a vector without control.

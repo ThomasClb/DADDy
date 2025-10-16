@@ -898,7 +898,7 @@ void DDPSolver::forward_pass_DA_(
 	vector<vectordb> const& list_x, vector<vectordb> const& list_u, vectordb const& x_goal) {
 	// Unpack parameters
 	double tol = solver_parameters_.DDP_tol();
-	double tol_DA = solver_parameters_.AUL_tol();
+	double tol_DA = min(solver_parameters_.AUL_tol(), tol);
 	unsigned int N = solver_parameters_.N();
 	unsigned int Nx = solver_parameters_.Nx();
 	unsigned int Nu = solver_parameters_.Nu();
@@ -931,6 +931,7 @@ void DDPSolver::forward_pass_DA_(
 
 		// Rollout
 		double cost = 0; double z = 1e15;
+		int DA_count = 0;
 		for (size_t i = 0; i < N; i++) {
 
 			// Get state error
@@ -962,6 +963,7 @@ void DDPSolver::forward_pass_DA_(
 			// Checks if [dx, du] belongs to the convergence radius of the dynamics
 			// Thus, if they can be approximated
 			if (list_condition_radius[i]) {
+				DA_count ++;
 
 				// Get DA perturbed vector
 				vectordb dx_star = error;
@@ -1002,6 +1004,7 @@ void DDPSolver::forward_pass_DA_(
 			list_x_star.emplace_back(dynamic_eval);
 			cost += ctg_eval;
 		}
+		// cout << (DA_count*1.0)/(N*1.0) << endl;
 
 		// AUL terminal cost and store constraints
 		vectordb x_star = list_x_star[N];
@@ -1265,7 +1268,7 @@ void DDPSolver::solve(
 		n_iter_++;
 		cost_last = cost_;
 
-		int nb_BS_method = 2;
+		int nb_BS_method = 3;
 
 		// Get times
 		auto start = high_resolution_clock::now();
