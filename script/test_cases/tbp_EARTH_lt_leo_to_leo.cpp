@@ -30,15 +30,15 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_leo(
 	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-3;
-	vectordb homotopy_sequence{0, 0.5, 0.75, 0.9, 0.99 };
-	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 1e-2, 1e-2, 5e-3};
+	vectordb homotopy_sequence{0, 0.75, 0.99 };
+	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 5e-3};
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6;
 	double PN_tol = 1e-12;
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int DDP_max_iter = 200;
 	unsigned int AUL_max_iter = 100;
-	unsigned int PN_max_iter = 200;
+	unsigned int PN_max_iter = 2000;
 	vectordb lambda_parameters{ 0.0, 1e8 };
 	vectordb mu_parameters{ 1, 1e8, 10 };
 	vectordb line_search_parameters{ 1e-8, 10.0, 0.5, 20 };
