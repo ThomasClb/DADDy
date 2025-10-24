@@ -707,6 +707,29 @@ T terminal_cost_equinoctial(
 	return output;
 }
 
+// Returns the terminal cost given
+// the current state, the target state and the parameters.
+// Final difference, without true longitude.
+template<typename T>
+T terminal_cost_geo(
+	DACE::AlgebraicVector<T> const& x, DACE::vectordb const& x_goal,
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
+	SolverParameters const& solver_parameters) {
+	// Unpack
+	double gain = solver_parameters.terminal_cost_gain(); // [-]
+
+	// Get vectors
+	DACE::AlgebraicVector<T> x_{x[0], DACE::sqr(x[1]) + DACE::sqr(x[2]), DACE::sqr(x[3]) + DACE::sqr(x[4])};
+	DACE::vectordb x_goal_{x_goal[0], DACE::sqr(x_goal[1]) + DACE::sqr(x_goal[2]), DACE::sqr(x_goal[3]) + DACE::sqr(x_goal[4])};
+
+	// Compute error
+	DACE::AlgebraicVector<T> loss = x_ - x_goal_;
+	T output = (0.5 * gain) * loss.dot(loss);
+
+	return output;
+}
+
 // Returns the terminal equality constraints given
 // the current state, the target state and the parameters.
 template<typename T>
@@ -754,6 +777,23 @@ DACE::AlgebraicVector<T> terminal_equality_constraints_equinoctial(
 	return (x_ - x_goal_);
 }
 
+// Returns the terminal equality constraints given
+// the current state, the target state and the parameters.
+// Final difference, without true longitude.
+template<typename T>
+DACE::AlgebraicVector<T> terminal_equality_constraints_geo(
+	DACE::AlgebraicVector<T> const& x, DACE::vectordb const& x_goal,
+	SpacecraftParameters const& spacecraft_parameters,
+	Constants const& constants,
+	SolverParameters const& solver_parameters) {
+	// Get vectors
+	DACE::AlgebraicVector<T> x_{x[0], DACE::sqr(x[1]) + DACE::sqr(x[2]), DACE::sqr(x[3]) + DACE::sqr(x[4])};
+	DACE::vectordb x_goal_{x_goal[0], DACE::sqr(x_goal[1]) + DACE::sqr(x_goal[2]), DACE::sqr(x_goal[3]) + DACE::sqr(x_goal[4])};
+
+	// Return error
+	return x_ - x_goal_;
+}
+
 // Returns the terminal inequality constraints given
 // the current state, the target state and the parameters.
 // Null.
@@ -799,6 +839,7 @@ DACE::vectordb cart_2_RTN(
 Dynamics get_double_integrator_dynamics();
 Dynamics get_tbp_SUN_lt_dynamics();
 Dynamics get_tbp_EARTH_lt_dynamics();
+Dynamics get_tbp_EARTH_geo_lt_dynamics();
 Dynamics get_cr3bp_EARTH_MOON_lt_dynamics();
 
 #endif

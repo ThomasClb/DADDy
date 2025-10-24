@@ -26,19 +26,13 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(
 	unsigned int Nteq = 6;
 	unsigned int Ntineq = 0;
 	bool with_J2 = false;
-	double cost_to_go_gain = 1e-3;
+	double cost_to_go_gain = 1e-2;
 	double terminal_cost_gain = 1e6;
 	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-4;
-	vectordb homotopy_sequence{0, 0.75, 0.9, 0.999};
-	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 1e-3, 1e-4};
-	if (ToF > 30) {
-		cost_to_go_gain = 1e-3;
-		terminal_cost_gain = 1e7;
-		homotopy_sequence = vectordb{ 0, 0.8, 0.95, 0.999};
-		huber_loss_coefficient_sequence = vectordb{ 1e-2, 1e-2, 5e-3, 5e-4};
-	}
+	vectordb homotopy_sequence{0, 0.75, 0.9, 0.995};
+	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 1e-3, 5e-4};
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6;
 	double PN_tol = 1e-10;
@@ -51,7 +45,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(
 	vectordb mu_parameters{1, 1e8, 10};
 	vectordb line_search_parameters{1e-8, 10.0, 0.5, 20};
 	bool backward_sweep_regulation = true;
-	vectordb backward_sweep_regulation_parameters{0, 1e-8, 1e8, 1.6};
+	vectordb backward_sweep_regulation_parameters{0, 1e-8, 1e12, 1.6};
 	double PN_regularisation(1e-8);
 	double PN_cv_rate_threshold(1.1);
 	double PN_alpha(1.0); double PN_gamma(0.5);

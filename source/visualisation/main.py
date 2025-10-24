@@ -45,7 +45,7 @@ if __name__ == "__main__":
     T2m_ratio = list_arguments[1]
     ToF = int(list_arguments[2])
     DDP_type = int(list_arguments[3])
-    
+
     extra = ""
     
     file_name = ""
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     if extra != "":
         extra = "_" + extra
 
-    file_name = file_name + "_" + T2m_ratio + "_" + str(ToF) + "_" + str(DDP_type) + extra + ".dat"
+    file_name = file_name + extra + "_" + T2m_ratio + "_" + str(ToF) + "_" + str(DDP_type) + ".dat"
 
     # 
     list_2d = ["tbp", "lyapunov", "dro", "leo", "meo", "halo"]

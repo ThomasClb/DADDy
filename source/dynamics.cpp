@@ -720,6 +720,105 @@ Dynamics get_tbp_EARTH_lt_dynamics() {
 		dyn_db, ctg_db, eq_db, ineq_db, tc_db, teq_db, tineq_db);
 }
 
+// Returns dynamics with acceleration_2bp_EARTH as accelerations.
+// Terminal constraints and thrust constraints.
+// Anomaly is free.
+Dynamics get_tbp_EARTH_geo_lt_dynamics() {
+	double a_GEO = pow(MU_EARTH * pow(SEC2DAYS, -2.0) / pow(2 * PI, 2), 1.0 / 3.0);
+	Constants constants(MU_EARTH, a_GEO,
+		sqrt((MU_EARTH) / pow(a_GEO, 3)), 1000);
+	dynFunction dyn([](
+		vectorDA const& a, vectorDA const& b,
+		SpacecraftParameters const& c,
+		Constants const& e,
+		SolverParameters const& d) {
+			return dynamic_tbp_EARTH_lt(a, b, c, e, d); });
+	ctgFunction ctg([](
+		vectorDA const& a, vectorDA const& b,
+		SpacecraftParameters const& c,
+		Constants const& e,
+		SolverParameters const& d) {
+			return cost_to_go(a, b, c, e, d); });
+	eqFunction eq([](
+		vectorDA const& a, vectorDA const& b,
+		SpacecraftParameters const& c,
+		Constants const& e,
+		SolverParameters const& d) {
+			return equality_constraints_null(a, b, c, e, d); });
+	ineqFunction ineq([](
+		vectorDA const& a, vectorDA const& b,
+		SpacecraftParameters const& c,
+		Constants const& e,
+		SolverParameters const& d) {
+			return inequality_constraints_tbp_lt(a, b, c, e, d); });
+	tcFunction tc([](
+		vectorDA const& a, vectordb const& b,
+		SpacecraftParameters const& c,
+		Constants const& e,
+		SolverParameters const& d) {
+			return terminal_cost_geo(a, b, c, e, d); });
+	teqFunction teq([](
+		vectorDA const& a, vectordb const& b,
+		SpacecraftParameters const& c,
+		Constants const& e,
+		SolverParameters const& d) {
+			return terminal_equality_constraints_geo(a, b, c, e, d); });
+	tineqFunction tineq([](
+		vectorDA const& a, vectordb const& b,
+		SpacecraftParameters const& c,
+		Constants const& e,
+		SolverParameters const& d) {
+			return terminal_inequality_constraints_null(a, b, c, e, d); });
+
+	dynFunction_db dyn_db([](
+		vectordb const& a, vectordb const& b,
+		SpacecraftParameters const& c,
+		Constants const& e,
+		SolverParameters const& d) {
+			return dynamic_tbp_EARTH_lt(a, b, c, e, d); });
+	ctgFunction_db ctg_db([](
+		vectordb const& a, vectordb const& b,
+		SpacecraftParameters const& c,
+		Constants const& e,
+		SolverParameters const& d) {
+			return cost_to_go(a, b, c, e, d); });
+	eqFunction_db eq_db([](
+		vectordb const& a, vectordb const& b,
+		SpacecraftParameters const& c,
+		Constants const& e,
+		SolverParameters const& d) {
+			return equality_constraints_null(a, b, c, e, d); });
+	ineqFunction_db ineq_db([](
+		vectordb const& a, vectordb const& b,
+		SpacecraftParameters const& c,
+		Constants const& e,
+		SolverParameters const& d) {
+			return inequality_constraints_tbp_lt(a, b, c, e, d); });
+	tcFunction_db tc_db([](
+		vectordb const& a, vectordb const& b,
+		SpacecraftParameters const& c,
+		Constants const& e,
+		SolverParameters const& d) {
+			return terminal_cost_geo(a, b, c, e, d); });
+	teqFunction_db teq_db([](
+		vectordb const& a, vectordb const& b,
+		SpacecraftParameters const& c,
+		Constants const& e,
+		SolverParameters const& d) {
+			return terminal_equality_constraints_geo(a, b, c, e, d); });
+	tineqFunction_db tineq_db([](
+		vectordb const& a, vectordb const& b,
+		SpacecraftParameters const& c,
+		Constants const& e,
+		SolverParameters const& d) {
+			return terminal_inequality_constraints_null(a, b, c, e, d); });
+	return Dynamics(
+		constants,
+		dyn, ctg, eq, ineq, tc, teq, tineq,
+		dyn_db, ctg_db, eq_db, ineq_db, tc_db, teq_db, tineq_db);
+}
+
+
 // Returns dynamics with acceleration_cr3bp as accelerations.
 // Terminal constraints and thrust constraints.
 Dynamics get_cr3bp_EARTH_MOON_lt_dynamics() {

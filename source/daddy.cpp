@@ -150,6 +150,10 @@ void DADDy::solve(
 			for (size_t j=0; j<list_u_init.size(); j++) {
 				list_u_init_[j] = AULsolver_.list_u()[j]*(1.0 - AUL_tol); // Small perturbation
 			}
+		} else {
+			for (size_t j=0; j<list_u_init.size(); j++) {
+				list_u_init_[j] = list_u_init_[j]*(1.0 - AUL_tol); // Small perturbation
+			}
 		}
 		AULsolver_.solve(x0, list_u_init_, x_goal);
 		DDP_n_iter_ += AULsolver_.DDP_n_iter();

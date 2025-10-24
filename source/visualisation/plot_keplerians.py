@@ -232,7 +232,13 @@ def plot_keplerians(dataset):
     dpi = 200
     
     # Keplerian selection
-    list_coordinate = [0, 1, 2]
+    if ("meo" in dataset.file_name):
+        list_coordinate = [0, 2, 3]
+    if ("leo" in dataset.file_name):
+        list_coordinate = [0, 2]
+    if ("geo" in dataset.file_name):
+        list_coordinate = [0, 1, 2]
+
     color = "black"
     
     # Normalisation
@@ -247,7 +253,7 @@ def plot_keplerians(dataset):
     show_grid = True
     save_figure = True
     saving_format = "pdf"
-    show_plot = False
+    show_plot = True
     
     # Retreive data
     nb_dataets = len(dataset.list_dataset_names)

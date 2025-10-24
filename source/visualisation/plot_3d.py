@@ -238,8 +238,8 @@ def plot_3d(dataset):
     denormalise = False
 
     # Interpolation
-    interpolation = False
-    interpolation_rate = 5
+    interpolation = True
+    interpolation_rate = 15
     
     # Legend
     show_legend = False

@@ -22,22 +22,22 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_leo(
 	unsigned int Nu = SIZE_VECTOR / 2;
 	unsigned int Neq = 0;
 	unsigned int Nineq = 2;
-	unsigned int Nteq = 5;
+	unsigned int Nteq = 3;
 	unsigned int Ntineq = 0;
 	bool with_J2 = false;
-	double cost_to_go_gain = 1e-5;
-	double terminal_cost_gain = 1e5;
+	double cost_to_go_gain = 1e-4;
+	double terminal_cost_gain = 1e4;
 	double mass_leak = 1e-8;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-3;
 	vectordb homotopy_sequence{0, 0.75, 0.99 };
-	vectordb huber_loss_coefficient_sequence{1e-2, 1e-2, 5e-3};
+	vectordb huber_loss_coefficient_sequence{1e-2, 5e-3, 5e-3};
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6;
-	double PN_tol = 1e-12;
-	double PN_active_constraint_tol = 1e-13;
-	unsigned int DDP_max_iter = 200;
-	unsigned int AUL_max_iter = 100;
+	double PN_tol = 1e-10;
+	double PN_active_constraint_tol = 1e-11;
+	unsigned int DDP_max_iter = 100;
+	unsigned int AUL_max_iter = 30;
 	unsigned int PN_max_iter = 2000;
 	vectordb lambda_parameters{ 0.0, 1e8 };
 	vectordb mu_parameters{ 1, 1e8, 10 };
@@ -104,7 +104,7 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 	cout.precision(5);
 
 	// Set dynamics
-	Dynamics dynamics = get_tbp_EARTH_lt_dynamics();
+	Dynamics dynamics = get_tbp_EARTH_geo_lt_dynamics();
 	
 	// Normalisation constants
 	Constants constants(dynamics.constants());
@@ -147,7 +147,7 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 	vectordb x_goal = x_arrival; x_goal[Nx - 1] = ToF; // ToF
 
 	// First guess command
-	vectordb u_init(Nu, 1e-6 / thrustu); // [VU]
+	vectordb u_init(Nu, 1e-4 / thrustu); // [VU]
 	vector<vectordb> list_u_init(N, u_init);
 
 	// Solver
