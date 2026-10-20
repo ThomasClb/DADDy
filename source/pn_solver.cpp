@@ -607,7 +607,9 @@ linearised_constraints PNSolver::get_linearised_constraints_() {
 		// Equality constraints
 		for (size_t j = 0; j < Neq; j++) {
 			double abs_eq_i_j = abs(EQ_INEQ_[i*(Neq + Nx + Nineq) + j]);
-			if (abs_eq_i_j > active_constraint_tol) {
+			// if (abs_eq_i_j > active_constraint_tol) {
+			if (true) {
+
 				// Assign to d
 				d.push_back(abs_eq_i_j);
 
@@ -631,7 +633,8 @@ linearised_constraints PNSolver::get_linearised_constraints_() {
 		// Continuity constraints
 		for (size_t j = 0; j < Nx; j++) {
 			double eq_i_j = EQ_INEQ_[i*(Neq + Nx + Nineq) + Neq + j];
-			if (abs(eq_i_j) > active_constraint_tol) {
+			// if (abs(eq_i_j) > active_constraint_tol) {
+			if (true) {
 				// Assign to d
 				d.push_back(eq_i_j);
 
@@ -733,7 +736,8 @@ linearised_constraints PNSolver::get_linearised_constraints_() {
 	// Equality constraints
 	for (size_t j = 0; j < Nteq; j++) {
 		double teq_j = EQ_INEQ_[N*(Neq + Nx + Nineq) + j];
-		if (abs(teq_j) > active_constraint_tol) {
+		// if (abs(teq_j) > active_constraint_tol) {
+		if (true) {
 			// Assign to d
 			d.push_back(teq_j);
 
