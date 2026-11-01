@@ -472,7 +472,7 @@ void PNSolver::update_constraints_(
 	for (size_t k = 0; k < Nteq; k++) {
 		EQ_INEQ_[N*(Nx + Neq + Nineq) + k] = teq_eval.cons()[k];}
 	for (size_t k = 0; k < Ntineq; k++) {
-		EQ_INEQ_[N*(Nx + Neq + Nineq) + Nteq + Nx + k] = tineq_eval.cons()[k];}
+		EQ_INEQ_[N*(Nx + Neq + Nineq) + Nteq + k] = tineq_eval.cons()[k];}
 	der_EQ_INEQ_[6*N] = der_teq[0];
 	der_EQ_INEQ_[6*N + 1] = der_teq[1];
 	der_EQ_INEQ_[6*N + 2] = der_tineq[0];
@@ -572,7 +572,7 @@ vectordb PNSolver::update_constraints_double_(
 	for (size_t k = 0; k < Nteq; k++) {
 		EQ_INEQ[N*(Nx + Neq + Nineq) + k] = teq_eval[k];}
 	for (size_t k = 0; k < Ntineq; k++) {
-		EQ_INEQ[N*(Nx + Neq + Nineq) + Nteq + Nx + k] = tineq_eval[k];}
+		EQ_INEQ[N*(Nx + Neq + Nineq) + Nteq + k] = tineq_eval[k];}
 	return EQ_INEQ;
 }
 
@@ -606,16 +606,10 @@ linearised_constraints PNSolver::get_linearised_constraints_() {
 
 		// Equality constraints
 		for (size_t j = 0; j < Neq; j++) {
-			double abs_eq_i_j = abs(EQ_INEQ_[i*(Neq + Nx + Nineq) + j]);
-			// if (abs_eq_i_j > active_constraint_tol) {
-			if (true) {
-
-				// Assign to d
-				d.push_back(abs_eq_i_j);
-
-				// Save index
-				list_active_eq_index.push_back(j);
-			}
+			// Assign to d
+			d.push_back(EQ_INEQ_[i*(Neq + Nx + Nineq) + j]);
+			// Save index
+			list_active_eq_index.push_back(j);
 		}
 
 		// Inequality constraints
@@ -632,15 +626,10 @@ linearised_constraints PNSolver::get_linearised_constraints_() {
 
 		// Continuity constraints
 		for (size_t j = 0; j < Nx; j++) {
-			double eq_i_j = EQ_INEQ_[i*(Neq + Nx + Nineq) + Neq + j];
-			// if (abs(eq_i_j) > active_constraint_tol) {
-			if (true) {
-				// Assign to d
-				d.push_back(eq_i_j);
-
-				// Save index
-				list_active_c_index.push_back(Neq + j);
-			}
+			// Assign to d
+			d.push_back(EQ_INEQ_[i*(Neq + Nx + Nineq) + Neq + j]);
+			// Save index
+			list_active_c_index.push_back(Neq + j);
 		}
 
 		// Build gradient
@@ -798,6 +787,7 @@ sym_tridiag_matrixdb PNSolver::get_block_sigma_sq_(
 	unsigned int N = solver_parameters_.N();
 	unsigned int Nx = solver_parameters_.Nx();
 	unsigned int Nu = solver_parameters_.Nu();
+	unsigned int Neq = solver_parameters_.Neq();
 
 	//  Init lists
 	vector<matrixdb> list_diag, list_subdiag;
@@ -909,7 +899,7 @@ sym_tridiag_matrixdb PNSolver::get_block_sigma_sq_(
 					vectordb col_W_j = W_i.getcol(active_index_c_im1_j);
 					col_W_j.reserve(Y_i.nrows());
 					for (size_t k = 0; k < Y_i.nrows(); k++) {
-						col_W_j.push_back(Y_i.at(k, active_index_c_im1_j));
+						col_W_j.push_back(Y_i.at(k, active_index_c_im1_j - Neq));
 					}
 
 					// Assign
@@ -956,7 +946,7 @@ sym_tridiag_matrixdb PNSolver::get_block_sigma_sq_(
 	if (size_diag_i != 0 && Nc_im1 != 0 && size_diag_im1 != 0) {
 		for (size_t j = 0; j < Nc_im1; j++) {
 			// Get cols
-			vectordb col_W_j = W_i.getcol(list_active_index_c_im1[j]);
+			vectordb col_W_j = W_i.getcol(list_active_index_c_im1[j] - Neq);
 
 			// Assign
 			subdiag_i.setcol(size_diag_im1 - Nc_im1 + j, col_W_j);

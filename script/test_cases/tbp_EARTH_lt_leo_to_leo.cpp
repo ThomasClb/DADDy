@@ -22,12 +22,14 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_leo(
 	unsigned int Nu = SIZE_VECTOR / 2;
 	unsigned int Neq = 0;
 	unsigned int Nineq = 2;
-	unsigned int Nteq = 3;
+	unsigned int Nteq = 5;
 	unsigned int Ntineq = 0;
 	bool with_J2 = false;
-	double cost_to_go_gain = 1e-4;
-	double terminal_cost_gain = 1e4;
-	double mass_leak = 1e-8;
+	double cost_to_go_gain = 1e-5;
+	double terminal_cost_gain = 1e4; //1e3
+	cout << cost_to_go_gain << ", " << terminal_cost_gain << endl;
+
+	double mass_leak = 1e-7;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-3;
 	vectordb homotopy_sequence{0, 0.75, 0.99 };
@@ -35,15 +37,18 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_leo(
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6;
 	double PN_tol = 1e-10;
-	double PN_active_constraint_tol = 1e-11;
-	unsigned int DDP_max_iter = 100;
-	unsigned int AUL_max_iter = 30;
-	unsigned int PN_max_iter = 2000;
+	double PN_active_constraint_tol = 1e-12;
+	unsigned int DDP_max_iter = 50;
+	DDP_max_iter = 50;
+	unsigned int AUL_max_iter = 20;
+	AUL_max_iter = 20;
+	unsigned int PN_max_iter = 500;
+	PN_max_iter = 50;
 	vectordb lambda_parameters{ 0.0, 1e8 };
 	vectordb mu_parameters{ 1, 1e8, 10 };
 	vectordb line_search_parameters{ 1e-8, 10.0, 0.5, 20 };
 	bool backward_sweep_regulation = true;
-	vectordb backward_sweep_regulation_parameters{ 0, 1e-8, 1e8, 1.6 };
+	vectordb backward_sweep_regulation_parameters{ 0, 1e-8, 1e12, 1.6 };
 	double PN_regularisation(1e-8);
 	double PN_cv_rate_threshold(1.1);
 	double PN_alpha(1.0); double PN_gamma(0.5);
@@ -104,7 +109,7 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 	cout.precision(5);
 
 	// Set dynamics
-	Dynamics dynamics = get_tbp_EARTH_geo_lt_dynamics();
+	Dynamics dynamics = get_tbp_EARTH_lt_dynamics();
 	
 	// Normalisation constants
 	Constants constants(dynamics.constants());
@@ -147,7 +152,7 @@ void tbp_EARTH_lt_leo_to_leo(int argc, char** argv) {
 	vectordb x_goal = x_arrival; x_goal[Nx - 1] = ToF; // ToF
 
 	// First guess command
-	vectordb u_init(Nu, 1e-4 / thrustu); // [VU]
+	vectordb u_init(Nu, 1e-4/ thrustu); // [VU]
 	vector<vectordb> list_u_init(N, u_init);
 
 	// Solver

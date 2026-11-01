@@ -16,7 +16,7 @@ using namespace std;
 
 SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
 	unsigned int const& N, unsigned int const& DDP_type,
-	unsigned int verbosity) {
+	unsigned int verbosity, bool fuel_optimal) {
 	// Solver parameters
 	unsigned int Nx = (SIZE_VECTOR + 1) + 1;
 	unsigned int Nu = SIZE_VECTOR / 2;
@@ -25,25 +25,27 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
 	unsigned int Nteq = 3;
 	unsigned int Ntineq = 0;
 	bool with_J2 = false;
-	double cost_to_go_gain = 1e-3;
-	double terminal_cost_gain = 1e5;
-	double mass_leak = 1e-8;
+	double cost_to_go_gain = 1e-2;
+	double terminal_cost_gain = 1e2; // 1e-5
+	double mass_leak = 1e-6;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-3;
-	vectordb homotopy_sequence{0, 0.5, 0.9, 0.99};
-	vectordb huber_loss_coefficient_sequence{1e-2, 5e-3, 5e-3, 5e-3};
+	vectordb homotopy_sequence{0, 0.5, 0.99};
+	vectordb huber_loss_coefficient_sequence{1e-2, 5e-3, 2e-3}; // 5e-3 OK
+	homotopy_sequence = vectordb{0, 0.75};
+	huber_loss_coefficient_sequence = vectordb{1e-2, 5e-3};
 	double DDP_tol = 1e-4;
 	double AUL_tol = 1e-6; 
 	double PN_tol = 1e-10;
-	double PN_active_constraint_tol = 1e-11;
+	double PN_active_constraint_tol = 1e-12;
 	unsigned int DDP_max_iter = 50;
-	unsigned int AUL_max_iter = 50;
-	unsigned int PN_max_iter = 2000;
+	unsigned int AUL_max_iter = 25;
+	unsigned int PN_max_iter = 1000;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
 	vectordb line_search_parameters{1e-8, 10.0, 0.5, 20};
 	bool backward_sweep_regulation = true;
-	vectordb backward_sweep_regulation_parameters{0, 1e-8, 1e8, 1.6};
+	vectordb backward_sweep_regulation_parameters{0, 1e-8, 1e12, 1.6};
 	double PN_regularisation(1e-8);
 	double PN_cv_rate_threshold(1.1);
 	double PN_alpha(1.0); double PN_gamma(0.5);
@@ -116,7 +118,7 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 
 	// Init solver parameters
 	SolverParameters solver_parameters = get_SolverParameters_tbp_EARTH_lt_leo_to_geo(
-		N, DDP_type, verbosity);
+		N, DDP_type, verbosity, fuel_optimal);
 
 	// Solver parameters
 	unsigned int Nx = solver_parameters.Nx();
@@ -126,8 +128,10 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	ToF = ToF / SEC2DAYS / tu; // [TU]
 	double dt = ToF / N; // [TU]
 	double r_p = 6846.8; // [km]
+	double a_gto = (lu + r_p) / 2.0;
+	double e_gto = (lu - r_p) / (lu + r_p);
 	vectordb x_departure{ // Kep coordinates
-		(lu + r_p) / 2.0 / lu, (lu - r_p) / (lu + r_p),
+		a_gto / lu, e_gto,
 		7 * DEG_2_RAD, 0 * DEG_2_RAD,
 		0 * DEG_2_RAD, 0 * DEG_2_RAD,
 		spacecraft_parameters.initial_mass(), 2 * PI};
@@ -142,12 +146,11 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 	vectordb x_goal = x_arrival; x_goal[Nx - 1] = ToF; // ToF
 
 	// First guess command
-	vectordb u_init(Nu, 1e-6 / thrustu); // [VU]
+	vectordb u_init(Nu, 1e-4 / thrustu); // [VU]
 	vector<vectordb> list_u_init(N, u_init);
-	
+		
 	string file_name = "./data/datasets/tbp_EARTH_lt_leo_to_geo";
-
-	/**/
+	
 	// Set double precision
 	typedef std::numeric_limits<double> dbl;
 	cout.precision(5);
@@ -202,10 +205,9 @@ void tbp_EARTH_lt_leo_to_geo(int argc, char** argv) {
 			list_u[i] = u_i;
 			list_x[i] = x_i;
 		}
-		list_x[list_u.size()] = kep_2_cart(equi_2_kep(list_x[list_u.size()]), mu);
-
-		
+		list_x[list_u.size()] = kep_2_cart(equi_2_kep(list_x[list_u.size()]), mu);		
 		string system_name = "TBP EARTH EQUINOCTIAL LT";
+		file_name = "./data/datasets/tbp_EARTH_lt_leo_to_geo";
 		print_transfer_dataset(
 			file_name, system_name,
 			list_x, list_u,

@@ -46,7 +46,10 @@ if __name__ == "__main__":
     ToF = int(list_arguments[2])
     DDP_type = int(list_arguments[3])
 
-    extra = ""
+    if len(list_arguments) > 4:
+        extra = list_arguments[4]
+    else:
+        extra = ""
     
     file_name = ""
     if test_case == 0:
@@ -71,15 +74,14 @@ if __name__ == "__main__":
         file_name = './data/datasets/cr3bp_EARTH_MOON_lt_dro_to_dro' 
     elif test_case == 9:
         file_name = ''  
+
+
     
     # Build name
-    if extra != "":
-        extra = "_" + extra
-
     file_name = file_name + extra + "_" + T2m_ratio + "_" + str(ToF) + "_" + str(DDP_type) + ".dat"
 
     # 
-    list_2d = ["tbp", "lyapunov", "dro", "leo", "meo", "halo"]
+    list_2d = ["tbp_SUN", "lyapunov", "dro", "halo"]
     list_3d = ["nrho", "halo", "leo", "meo"]
     
     # Load dataset
@@ -102,5 +104,5 @@ if __name__ == "__main__":
                 plot_3d(dataset)
                 break
 
-        if ("tbp" in file_name):
+        if ("tbp_EARTH" in file_name):
             plot_keplerians(dataset)

@@ -36,14 +36,14 @@ SolverParameters get_SolverParameters_tbp_EARTH_lt_meo_to_meo(
 	double AUL_tol = 1e-6;
 	double PN_tol = 1e-10;
 	double PN_active_constraint_tol = 1e-11;
-	unsigned int DDP_max_iter = 50;
+	unsigned int DDP_max_iter = 25;
 	unsigned int AUL_max_iter = 25;
-	unsigned int PN_max_iter = 2000;
+	unsigned int PN_max_iter = 200;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
 	vectordb line_search_parameters{1e-8, 10.0, 0.5, 20};
 	bool backward_sweep_regulation = true;
-	vectordb backward_sweep_regulation_parameters{0, 1e-8, 1e8, 1.6};
+	vectordb backward_sweep_regulation_parameters{0, 1e-8, 1e10, 1.6};
 	double PN_regularisation(1e-8);
 	double PN_cv_rate_threshold(1.1);
 	double PN_alpha(1.0); double PN_gamma(0.5);

@@ -86,6 +86,7 @@ void cr3bp_EARTH_MOON_lt_haloL2_to_haloL1(int argc, char** argv) {
 		cout << "7 - Save results [0/1]." << endl;
 		cout << "8 - Verbosity [0-2]." << endl;
 		return;
+
 	}
 
 	// Unpack inputs

@@ -317,7 +317,7 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 	T sin_L = sin(L);
 	T B = sqrt(1.0 - P_1 * P_1 - P_2 * P_2);
 	T G = 1.0 + Q_1 * Q_1 + Q_2 * Q_2;
-	T Phi_L = 1 + P_1 * cos_L + P_2 * sin_L;
+	T Phi_L = 1 + P_1 * sin_L + P_2 * cos_L;
 	T inv_Phi_L = 1.0 / Phi_L;
 	T sqrt_a_mu = sqrt(sma / mu);
 	T Q_1_cos_L = Q_1 * cos_L;
@@ -354,14 +354,14 @@ DACE::AlgebraicVector<T> acceleration_tbp_EARTH_lt(
 		+ ((P_1 + sin_L) * inv_Phi_L + sin_L) * pert_T
 		- P_2 * Q_1_cos_L_m_Q_2_sin_L * inv_Phi_L * pert_N);
 	T d_P_2 = B * sqrt_a_mu * (
-		- sin_L * pert_R
+		sin_L * pert_R
 		+ ((P_2 + cos_L) * inv_Phi_L + cos_L) * pert_T
-		- P_1 * Q_1_cos_L_m_Q_2_sin_L * inv_Phi_L * pert_N);
+		+ P_1 * Q_1_cos_L_m_Q_2_sin_L * inv_Phi_L * pert_N);
 	T d_Q = 0.5 * B * sqrt_a_mu * G * inv_Phi_L * pert_N;
 	T d_Q_1 = d_Q * sin_L;
 	T d_Q_2 = d_Q * cos_L;
-	T d_L = Phi_L * Phi_L * pow(B, -3.0) / sqrt_a_mu  // Mean motion
-		- sma * sqrt_a_mu * B * inv_Phi_L * Q_1_cos_L_m_Q_2_sin_L * pert_N;
+	T d_L = Phi_L * Phi_L * pow(B, -3.0) / (sma * sqrt_a_mu)  // Mean motion
+		- sqrt_a_mu * B * inv_Phi_L * Q_1_cos_L_m_Q_2_sin_L * pert_N;
 
 	// dm [MASSU/LU]
 	T thrust_norm = u.vnorm();

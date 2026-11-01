@@ -150,7 +150,7 @@ void DADDy::solve(
 			for (size_t j=0; j<list_u_init.size(); j++) {
 				list_u_init_[j] = AULsolver_.list_u()[j]*(1.0 - AUL_tol); // Small perturbation
 			}
-		} else {
+		} else if ((i == 0) && (homotopy_sequence[i] == 0)) {
 			for (size_t j=0; j<list_u_init.size(); j++) {
 				list_u_init_[j] = list_u_init_[j]*(1.0 - AUL_tol); // Small perturbation
 			}

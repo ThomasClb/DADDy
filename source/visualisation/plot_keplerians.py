@@ -1,18 +1,20 @@
 """
-	plot_keplerians.py
+    plot_keplerians.py
 
-	Purpose: Implements the functions to output Keplerian visualisations
+    Purpose: Implements the functions to output Keplerian visualisations
 
-	@author Thomas Caleb
+    @author Thomas Caleb
 
-	@version 1.0 25/01/2024
+    @version 1.0 25/01/2024
     
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
-#plt.switch_backend('agg')
+
 from classes import Dataset
+
+plt.rcParams.update({'font.size': 15})
 
 """convert cartesian to orbital parameters"""
 def cart_2_kep(x, y, z, vx, vy, vz, mu):
@@ -232,14 +234,15 @@ def plot_keplerians(dataset):
     dpi = 200
     
     # Keplerian selection
-    if ("meo" in dataset.file_name):
-        list_coordinate = [0, 2, 3]
+    list_coordinate = [0, 2, 3]
+    linewidth = 2.0
+    color = "black"
     if ("leo" in dataset.file_name):
         list_coordinate = [0, 2]
+    if ("meo" in dataset.file_name):
+        list_coordinate = [0, 2, 3]
     if ("geo" in dataset.file_name):
         list_coordinate = [0, 1, 2]
-
-    color = "black"
     
     # Normalisation
     denormalise = True
@@ -344,14 +347,14 @@ def plot_keplerians(dataset):
         
     elif len(list_coordinate) == 2:
         list_index = [(0), (1)]
-        shape = (len(list_coordinate), 1)
-        fig, ax = plt.subplots(shape[0], shape[1],dpi=dpi)
+        shape = (1, len(list_coordinate))
+        fig, ax = plt.subplots(shape[0], shape[1],dpi=dpi, figsize=[10,5])
         fig.tight_layout(pad=0.3)
 
     elif len(list_coordinate) == 3:
         list_index = [(0), (1), (2)]
-        shape = (len(list_coordinate), 1)
-        fig, ax = plt.subplots(shape[0], shape[1],dpi=dpi)
+        shape = (1, len(list_coordinate))
+        fig, ax = plt.subplots(shape[0], shape[1],dpi=dpi, figsize=[15,5])
         fig.tight_layout(pad=0.3)
         
     elif len(list_coordinate) == 4:
@@ -375,21 +378,21 @@ def plot_keplerians(dataset):
     # Make plot
     for i, y in enumerate(list_y):
         ax_i = ax[list_index[i]]
-        ax_i.plot(t, y, color=color)
+        ax_i.plot(t, y, color=color, linewidth=linewidth)
         ax_i.set_xlabel(x_label)
         ax_i.set_ylabel(list_y_label[i])
+        if show_grid:
+            ax_i.grid(alpha=0.5, color="#d3d3d3")
     
-
-    if show_grid:
-        plt.grid()
+    fig.tight_layout(pad=0.2)
     
     if show_legend: 
-        plt.legend(loc=legend_loc)
+        plt.legend(loc=legend_loc, frameon=True, fancybox=True, facecolor='white', edgecolor='black')
     
     if save_figure:
         # Get adress
         file_name = dataset.file_name.replace(
-            "datasets", "plots")
+            "data/datasets", "data/plots")
                 
         # Add signature
         signature_list = ""
@@ -406,4 +409,3 @@ def plot_keplerians(dataset):
         plt.show()
     else:
         plt.close(fig)
-    

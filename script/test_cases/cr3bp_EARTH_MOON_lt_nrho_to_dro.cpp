@@ -28,7 +28,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro(
 	bool with_J2 = false;
 	double cost_to_go_gain = 1e-4;
 	double terminal_cost_gain = 1e6;
-	double mass_leak = 1e-8;
+	double mass_leak = 1e-7;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 5e-4;
 	vectordb homotopy_sequence{0, 0.75, 0.95, 0.999};
@@ -38,7 +38,7 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_nrho_to_dro(
 	double PN_tol = 1e-10;
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int max_iter = 10000;
-	unsigned int DDP_max_iter = 200;
+	unsigned int DDP_max_iter = 50;
 	unsigned int AUL_max_iter = max_iter / DDP_max_iter;
 	unsigned int PN_max_iter = 400;
 	vectordb lambda_parameters{0.0, 1e8};

@@ -27,8 +27,8 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro(
 	unsigned int Ntineq = 0;
 	bool with_J2 = false;
 	double cost_to_go_gain = 1e-1;
-	double terminal_cost_gain = 1e4;
-	double mass_leak = 1e-8;
+	double terminal_cost_gain = 1e5;
+	double mass_leak = 1e-6;
 	double homotopy_coefficient = 0.0;
 	double huber_loss_coefficient = 1e-4;
 	double DDP_tol = 1e-4;
@@ -36,8 +36,8 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro(
 	double PN_tol = 1e-10;
 	double PN_active_constraint_tol = 1e-13;
 	unsigned int max_iter = 10000;
-	unsigned int DDP_max_iter = 500;
-	unsigned int AUL_max_iter = 200;
+	unsigned int DDP_max_iter = 30;
+	unsigned int AUL_max_iter = 100;
 	unsigned int PN_max_iter = 2000;
 	vectordb lambda_parameters{0.0, 1e8};
 	vectordb mu_parameters{1, 1e8, 10};
@@ -48,24 +48,9 @@ SolverParameters get_SolverParameters_cr3bp_EARTH_MOON_lt_dro_to_dro(
 	double PN_cv_rate_threshold(1.1);
 	double PN_alpha(1.0); double PN_gamma(0.5);
 	unsigned int saving_iterations = 0;
-	vectordb homotopy_sequence{0, 1};
-	vectordb huber_loss_coefficient_sequence{1e-2, 1e-3};
 
-	// Split cases
-	if (ToF >= 37.5) { // OK 3 revs
-		terminal_cost_gain = 1e5;
-		cost_to_go_gain = 1e-1;
-		homotopy_sequence = vectordb{0, 0.95, 0.999};
-		huber_loss_coefficient_sequence = vectordb{1e-2, 1e-3, 5e-4};
-	}
-	if (ToF == 33) { // OK 2 revs
-		homotopy_sequence = vectordb{0, 0.75, 0.95, 0.999};
-		huber_loss_coefficient_sequence = vectordb{1e-2, 1e-3, 5e-4, 1e-4};
-	}
-	else if (ToF == 17.5) { // OK 1 revs 
-		homotopy_sequence = vectordb{0, 0.85, 1};
-		huber_loss_coefficient_sequence = vectordb{1e-2, 1e-3, 1e-4};
-	}
+	vectordb homotopy_sequence = vectordb{0, 0.5, 0.9, 0.99};
+	vectordb huber_loss_coefficient_sequence = vectordb{1e-2, 1e-3, 1e-3, 2e-4};
 
 	return SolverParameters(
 		N, Nx, Nu,
